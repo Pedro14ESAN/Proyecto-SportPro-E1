@@ -10,8 +10,4 @@
 ## Integrantes
 
 - Manrique Perales Pedro Luis - 23200100
-- Valle Cristobal Cielo Camyla - 25102283
-- Navarrete Pinedo Italo Alejandro - 25100012
-- Chahuaillacc Aldana Piero Jair - 24100634
-- Gamarra Quinto Bruno Sebastian - 24100022
-- Roger Nahim Georgy Patiño Rodulfo - 25100190
+
