@@ -11,4 +11,5 @@
 
 - Manrique Perales Pedro Luis - 23200100
 - Chahuailacc Aldana Piero Jair - 24100634
+- Gamarra Quinto Bruno Sebastian - 24100022
 
