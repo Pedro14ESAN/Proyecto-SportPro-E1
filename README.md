@@ -14,4 +14,4 @@
 - Gamarra Quinto Bruno Sebastian - 24100022
 - Navarrete Pinedo Italo Alejandro - 25100012
 - Patiño Rodulfo Roger Nahim -25100190
-- Calle cristobal Cielo Camyla - 25102283
+- Valle Cristóbal Cielo Camyla - 25102283
