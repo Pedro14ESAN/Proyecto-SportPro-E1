@@ -19,10 +19,12 @@ class TrainingRepository {
         startTime: String,
         durationMinutes: Long,
         location: String,
+        exerciseIds: List<String>,
         onResult: (Result<Training>) -> Unit
     ) {
 
-        val document = firestore.collection("trainings").document()
+        val document =
+            firestore.collection("trainings").document()
 
         val training = Training(
             id = document.id,
@@ -35,6 +37,7 @@ class TrainingRepository {
             startTime = startTime,
             durationMinutes = durationMinutes,
             location = location,
+            exerciseIds = exerciseIds,
             status = Training.STATUS_SCHEDULED,
             createdAt = Timestamp.now()
         )
@@ -42,10 +45,14 @@ class TrainingRepository {
         document
             .set(training)
             .addOnSuccessListener {
-                onResult(Result.success(training))
+                onResult(
+                    Result.success(training)
+                )
             }
             .addOnFailureListener { exception ->
-                onResult(Result.failure(exception))
+                onResult(
+                    Result.failure(exception)
+                )
             }
     }
 
