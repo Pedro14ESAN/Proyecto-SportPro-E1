@@ -15,9 +15,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,27 +28,36 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pe.edu.esan.sportpro.data.model.Training
+import java.text.SimpleDateFormat
+import java.util.Locale
 
-private val PrimaryDark = Color(0xFF0F2C3A)
-private val AccentGreen = Color(0xFF8CE093)
-private val LightBackground = Color(0xFFF8F9FA)
+private val TrainingDark = Color(0xFF0F2C3A)
+private val TrainingBackground = Color(0xFFF8F9FA)
 
-private data class TrainingUi(
-    val title: String,
-    val team: String,
-    val date: String,
-    val time: String,
-    val duration: String,
-    val status: String
-)
+private val TrainingCardBackground = Color(0xFFF0F2F4)
+private val TrainingBubbleBackground = Color(0xFFE4E8EB)
+
+private val ScheduledBackground = Color(0xFFE1F1FF)
+private val ScheduledText = Color(0xFF246A96)
+
+private val CancelledBackground = Color(0xFFFFE3E3)
+private val CancelledText = Color(0xFFB33A3A)
+
+private val FinishedBackground = Color(0xFFDFF3E4)
+private val FinishedText = Color(0xFF287A3E)
 
 @Composable
 fun TrainingScreen(
+    trainings: List<Training>,
+    isLoading: Boolean,
+    errorMessage: String?,
     onBack: () -> Unit,
     onNavigateToExerciseLibrary: () -> Unit,
     onCreateTraining: () -> Unit
@@ -56,264 +67,612 @@ fun TrainingScreen(
         mutableStateOf("Todos")
     }
 
-    val trainings = listOf(
-        TrainingUi(
-            title = "Mejora de posesión y presión alta",
-            team = "SportPro Norte A",
-            date = "09/09/2026",
-            time = "18:30",
-            duration = "100 min",
-            status = "PROGRAMADO"
-        ),
-        TrainingUi(
-            title = "Definición y contragolpe",
-            team = "SportPro Norte A",
-            date = "12/09/2026",
-            time = "17:30",
-            duration = "90 min",
-            status = "PROGRAMADO"
-        ),
-        TrainingUi(
-            title = "Técnica individual base",
-            team = "SportPro Norte A",
-            date = "11/09/2026",
-            time = "16:00",
-            duration = "80 min",
-            status = "CANCELADO"
-        )
-    )
+    val filteredTrainings = trainings.filter { training ->
 
-    val filteredTrainings = when (selectedFilter) {
+        when (selectedFilter) {
 
-        "Programados" -> trainings.filter {
-            it.status == "PROGRAMADO"
+            "Programados" ->
+                training.status == Training.STATUS_SCHEDULED
+
+            "Cancelados" ->
+                training.status == Training.STATUS_CANCELLED
+
+            else ->
+                true
         }
-
-        "Cancelados" -> trainings.filter {
-            it.status == "CANCELADO"
-        }
-
-        else -> trainings
     }
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateTraining,
-                containerColor = AccentGreen
-            ) {
-                Text(
-                    text = "+",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryDark
-                )
-            }
-        }
-    ) { innerPadding ->
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = TrainingBackground
+    ) {
 
-        Surface(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            color = LightBackground
+                .padding(
+                    horizontal = 18.dp,
+                    vertical = 12.dp
+                )
         ) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp)
+            // CABECERA
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                TextButton(
+                    onClick = onBack
                 ) {
+                    Text(
+                        text = "← Volver",
+                        color = TrainingDark
+                    )
+                }
 
-                    TextButton(
-                        onClick = onBack
+                Text(
+                    text = "SPORTPRO",
+                    fontWeight = FontWeight.Bold,
+                    color = TrainingDark
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            Text(
+                text = "Entrenamientos",
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = TrainingDark
+            )
+
+            Text(
+                text = "Sesiones creadas por el Director Técnico",
+                fontSize = 13.sp,
+                color = Color.Gray
+            )
+
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
+
+            // BIBLIOTECA
+
+            OutlinedButton(
+                onClick = onNavigateToExerciseLibrary,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+
+                Text(
+                    text = "Biblioteca de ejercicios",
+                    color = TrainingDark,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
+
+            // FILTROS
+
+            Row(
+                horizontalArrangement =
+                    Arrangement.spacedBy(8.dp)
+            ) {
+
+                listOf(
+                    "Todos",
+                    "Programados",
+                    "Cancelados"
+                ).forEach { filter ->
+
+                    FilterChip(
+                        selected =
+                            selectedFilter == filter,
+
+                        onClick = {
+                            selectedFilter = filter
+                        },
+
+                        label = {
+                            Text(filter)
+                        },
+
+                        colors =
+                            FilterChipDefaults.filterChipColors(
+                                selectedContainerColor =
+                                    TrainingDark,
+
+                                selectedLabelColor =
+                                    Color.White
+                            )
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
+
+            // CONTENIDO
+
+            when {
+
+                isLoading -> {
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment =
+                            Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "← Volver",
-                            color = PrimaryDark
-                        )
-                    }
 
-                    Text(
-                        text = "SPORTPRO",
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryDark,
-                        modifier = Modifier.padding(top = 12.dp)
-                    )
-                }
+                        CircularProgressIndicator()
 
-                Spacer(
-                    modifier = Modifier.height(12.dp)
-                )
-
-                Text(
-                    text = "Entrenamientos",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryDark
-                )
-
-                Text(
-                    text = "Organiza y administra las sesiones de tu equipo",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-
-                Spacer(
-                    modifier = Modifier.height(20.dp)
-                )
-
-                Button(
-                    onClick = onNavigateToExerciseLibrary,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryDark
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-
-                    Text(
-                        text = "Biblioteca de ejercicios",
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                Spacer(
-                    modifier = Modifier.height(20.dp)
-                )
-
-                Text(
-                    text = "Sesiones de entrenamiento",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryDark
-                )
-
-                Spacer(
-                    modifier = Modifier.height(12.dp)
-                )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-
-                    listOf(
-                        "Todos",
-                        "Programados",
-                        "Cancelados"
-                    ).forEach { filter ->
-
-                        FilterChip(
-                            selected = selectedFilter == filter,
-                            onClick = {
-                                selectedFilter = filter
-                            },
-                            label = {
-                                Text(filter)
-                            }
-                        )
-                    }
-                }
-
-                Spacer(
-                    modifier = Modifier.height(16.dp)
-                )
-
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-
-                    items(filteredTrainings) { training ->
-
-                        TrainingCard(
-                            training = training
-                        )
-                    }
-
-                    item {
                         Spacer(
-                            modifier = Modifier.height(80.dp)
+                            modifier =
+                                Modifier.height(10.dp)
+                        )
+
+                        Text(
+                            text =
+                                "Cargando entrenamientos...",
+                            color = Color.Gray
                         )
                     }
                 }
+
+                errorMessage != null -> {
+
+                    Card(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor =
+                                    TrainingCardBackground
+                            ),
+
+                        shape =
+                            RoundedCornerShape(18.dp)
+                    ) {
+
+                        Text(
+                            text = errorMessage,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .error,
+
+                            modifier =
+                                Modifier.padding(18.dp)
+                        )
+                    }
+                }
+
+                filteredTrainings.isEmpty() -> {
+
+                    Card(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor =
+                                    TrainingCardBackground
+                            ),
+
+                        shape =
+                            RoundedCornerShape(18.dp)
+                    ) {
+
+                        Column(
+                            modifier =
+                                Modifier.padding(20.dp)
+                        ) {
+
+                            Text(
+                                text =
+                                    "No tienes entrenamientos creados",
+                                fontWeight =
+                                    FontWeight.Bold,
+                                color = TrainingDark
+                            )
+
+                            Spacer(
+                                modifier =
+                                    Modifier.height(6.dp)
+                            )
+
+                            Text(
+                                text =
+                                    "Crea una nueva sesión de entrenamiento para comenzar.",
+                                color = Color.Gray,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+
+                else -> {
+
+                    LazyColumn(
+                        modifier =
+                            Modifier.weight(1f),
+
+                        verticalArrangement =
+                            Arrangement.spacedBy(14.dp)
+                    ) {
+
+                        items(
+                            items = filteredTrainings,
+                            key = { training ->
+                                training.id
+                            }
+                        ) { training ->
+
+                            TrainingCard(
+                                training = training
+                            )
+                        }
+
+                        item {
+
+                            Spacer(
+                                modifier =
+                                    Modifier.height(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            // CREAR ENTRENAMIENTO
+
+            Button(
+                onClick = onCreateTraining,
+
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor =
+                            TrainingDark
+                    ),
+
+                shape =
+                    RoundedCornerShape(14.dp)
+            ) {
+
+                Text(
+                    text = "+ Crear entrenamiento",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
         }
     }
 }
 
+
 @Composable
 private fun TrainingCard(
-    training: TrainingUi
+    training: Training
 ) {
 
+    val formattedDate = training.date?.let {
+
+        SimpleDateFormat(
+            "dd/MM/yyyy",
+            Locale.getDefault()
+        ).format(it.toDate())
+
+    } ?: "Sin fecha"
+
+
+    val statusText =
+        when (training.status) {
+
+            Training.STATUS_SCHEDULED ->
+                "PROGRAMADO"
+
+            Training.STATUS_IN_PROGRESS ->
+                "EN CURSO"
+
+            Training.STATUS_FINISHED ->
+                "FINALIZADO"
+
+            Training.STATUS_CANCELLED ->
+                "CANCELADO"
+
+            else ->
+                training.status
+        }
+
+
+    val statusBackground =
+        when (training.status) {
+
+            Training.STATUS_CANCELLED ->
+                CancelledBackground
+
+            Training.STATUS_FINISHED ->
+                FinishedBackground
+
+            else ->
+                ScheduledBackground
+        }
+
+
+    val statusColor =
+        when (training.status) {
+
+            Training.STATUS_CANCELLED ->
+                CancelledText
+
+            Training.STATUS_FINISHED ->
+                FinishedText
+
+            else ->
+                ScheduledText
+        }
+
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        modifier =
+            Modifier.fillMaxWidth(),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    TrainingCardBackground
+            ),
+
+        shape =
+            RoundedCornerShape(20.dp),
+
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 1.dp
+            )
     ) {
 
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier =
+                Modifier.padding(18.dp)
         ) {
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier =
+                    Modifier.fillMaxWidth(),
+
+                horizontalArrangement =
+                    Arrangement.SpaceBetween,
+
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 Text(
-                    text = training.title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = PrimaryDark,
-                    modifier = Modifier.weight(1f)
+                    text =
+                        if (training.title.isNotBlank())
+                            training.title
+                        else
+                            "Entrenamiento",
+
+                    fontSize = 18.sp,
+
+                    fontWeight =
+                        FontWeight.Bold,
+
+                    color =
+                        TrainingDark,
+
+                    modifier =
+                        Modifier.weight(1f)
                 )
 
-                Text(
-                    text = training.status,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (training.status == "CANCELADO") {
-                        Color.Red
-                    } else {
-                        Color(0xFF388E3C)
+
+                Surface(
+                    color =
+                        statusBackground,
+
+                    shape =
+                        RoundedCornerShape(50.dp)
+                ) {
+
+                    Text(
+                        text =
+                            statusText,
+
+                        fontSize = 10.sp,
+
+                        fontWeight =
+                            FontWeight.Bold,
+
+                        color =
+                            statusColor,
+
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 10.dp,
+                                vertical = 5.dp
+                            )
+                    )
+                }
+            }
+
+
+            if (training.objective.isNotBlank()) {
+
+                Spacer(
+                    modifier =
+                        Modifier.height(12.dp)
+                )
+
+
+                Surface(
+                    color =
+                        TrainingBubbleBackground,
+
+                    shape =
+                        RoundedCornerShape(50.dp)
+                ) {
+
+                    Text(
+                        text =
+                            training.objective,
+
+                        fontSize = 12.sp,
+
+                        fontWeight =
+                            FontWeight.SemiBold,
+
+                        color =
+                            TrainingDark,
+
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 12.dp,
+                                vertical = 6.dp
+                            )
+                    )
+                }
+            }
+
+
+            Spacer(
+                modifier =
+                    Modifier.height(14.dp)
+            )
+
+
+            Row(
+                horizontalArrangement =
+                    Arrangement.spacedBy(8.dp)
+            ) {
+
+                Surface(
+                    color = Color.White,
+                    shape =
+                        RoundedCornerShape(50.dp)
+                ) {
+
+                    Text(
+                        text =
+                            "📅 $formattedDate",
+
+                        fontSize = 12.sp,
+
+                        color =
+                            TrainingDark,
+
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 11.dp,
+                                vertical = 6.dp
+                            )
+                    )
+                }
+
+
+                if (
+                    training.startTime
+                        .isNotBlank()
+                ) {
+
+                    Surface(
+                        color = Color.White,
+                        shape =
+                            RoundedCornerShape(50.dp)
+                    ) {
+
+                        Text(
+                            text =
+                                "⏰ ${training.startTime}",
+
+                            fontSize = 12.sp,
+
+                            color =
+                                TrainingDark,
+
+                            modifier =
+                                Modifier.padding(
+                                    horizontal = 11.dp,
+                                    vertical = 6.dp
+                                )
+                        )
                     }
+                }
+            }
+
+
+            Spacer(
+                modifier =
+                    Modifier.height(8.dp)
+            )
+
+
+            Surface(
+                color = Color.White,
+                shape =
+                    RoundedCornerShape(50.dp)
+            ) {
+
+                Text(
+                    text =
+                        "⏱ ${training.durationMinutes} min",
+
+                    fontSize = 12.sp,
+
+                    fontWeight =
+                        FontWeight.SemiBold,
+
+                    color =
+                        TrainingDark,
+
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 11.dp,
+                            vertical = 6.dp
+                        )
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
 
-            Text(
-                text = training.team,
-                color = Color.Gray,
-                fontSize = 13.sp
-            )
+            if (
+                training.location
+                    .isNotBlank()
+            ) {
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
+                Spacer(
+                    modifier =
+                        Modifier.height(10.dp)
+                )
 
-            Text(
-                text = "${training.date} • ${training.time}",
-                fontSize = 13.sp,
-                color = PrimaryDark
-            )
+                Text(
+                    text =
+                        "Lugar: ${training.location}",
 
-            Text(
-                text = training.duration,
-                fontSize = 13.sp,
-                color = Color.Gray
-            )
+                    color =
+                        Color(0xFF5F6368),
+
+                    fontSize = 13.sp
+                )
+            }
         }
     }
 }

@@ -11,12 +11,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,26 +28,39 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pe.edu.esan.sportpro.data.model.Exercise
 
-private val ExercisePrimaryDark = Color(0xFF0F2C3A)
-private val ExerciseAccentGreen = Color(0xFF8CE093)
+
+private val ExerciseDark = Color(0xFF0F2C3A)
+
 private val ExerciseBackground = Color(0xFFF8F9FA)
 
-private data class ExerciseUi(
-    val name: String,
-    val objective: String,
-    val description: String,
-    val durationMinutes: Int,
-    val active: Boolean
-)
+// Gris suave para las tarjetas
+private val ExerciseCardBackground = Color(0xFFF0F2F4)
+
+// Gris un poco más claro para las burbujas internas
+private val ExerciseBubbleBackground = Color(0xFFE4E8EB)
+
+// Verde suave para ejercicios activos
+private val ActiveBackground = Color(0xFFDFF3E4)
+private val ActiveText = Color(0xFF287A3E)
+
+// Gris para inactivos
+private val InactiveBackground = Color(0xFFE1E3E5)
+private val InactiveText = Color(0xFF666666)
+
 
 @Composable
 fun ExerciseLibraryScreen(
+    exercises: List<Exercise>,
+    isLoading: Boolean,
+    errorMessage: String?,
     onBack: () -> Unit,
     onCreateExercise: () -> Unit
 ) {
@@ -57,40 +73,6 @@ fun ExerciseLibraryScreen(
         mutableStateOf("Todos")
     }
 
-    val exercises = listOf(
-
-        ExerciseUi(
-            name = "Rondo 4v2",
-            objective = "Posesión y presión",
-            description = "Mantener la posesión en espacio reducido.",
-            durationMinutes = 15,
-            active = true
-        ),
-
-        ExerciseUi(
-            name = "Conducción en slalom",
-            objective = "Control de balón",
-            description = "Conducción entre conos utilizando ambos perfiles.",
-            durationMinutes = 10,
-            active = true
-        ),
-
-        ExerciseUi(
-            name = "Pase en triángulo",
-            objective = "Precisión de pase",
-            description = "Ejercicio de pase y movimiento.",
-            durationMinutes = 12,
-            active = true
-        ),
-
-        ExerciseUi(
-            name = "Circuito físico",
-            objective = "Resistencia",
-            description = "Circuito de trabajo físico general.",
-            durationMinutes = 20,
-            active = false
-        )
-    )
 
     val filteredExercises = exercises.filter { exercise ->
 
@@ -104,249 +86,549 @@ fun ExerciseLibraryScreen(
                         ignoreCase = true
                     )
 
-        val matchesFilter = when (selectedFilter) {
+        val matchesStatus =
+            when (selectedFilter) {
 
-            "Activos" ->
-                exercise.active
+                "Activos" ->
+                    exercise.active
 
-            "Inactivos" ->
-                !exercise.active
+                "Inactivos" ->
+                    !exercise.active
 
-            else ->
-                true
-        }
+                else ->
+                    true
+            }
 
-        matchesSearch && matchesFilter
+        matchesSearch && matchesStatus
     }
 
-    Scaffold(
 
-        floatingActionButton = {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = ExerciseBackground
+    ) {
 
-            FloatingActionButton(
-                onClick = onCreateExercise,
-                containerColor = ExerciseAccentGreen
-            ) {
-
-                Text(
-                    text = "+",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ExercisePrimaryDark
-                )
-            }
-        }
-
-    ) { innerPadding ->
-
-        Surface(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            color = ExerciseBackground
+                .padding(
+                    horizontal = 18.dp,
+                    vertical = 12.dp
+                )
         ) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(18.dp)
+            // =====================================================
+            // CABECERA
+            // =====================================================
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement =
+                    Arrangement.SpaceBetween,
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement =
-                        Arrangement.SpaceBetween
+                TextButton(
+                    onClick = onBack
                 ) {
 
-                    TextButton(
-                        onClick = onBack
-                    ) {
-
-                        Text(
-                            text = "← Volver",
-                            color = ExercisePrimaryDark
-                        )
-                    }
-
                     Text(
-                        text = "SPORTPRO",
-                        fontWeight = FontWeight.Bold,
-                        color = ExercisePrimaryDark,
-                        modifier = Modifier.padding(top = 12.dp)
+                        text = "← Volver",
+                        color = ExerciseDark
                     )
                 }
 
-                Spacer(
-                    modifier = Modifier.height(8.dp)
-                )
-
                 Text(
-                    text = "Biblioteca de ejercicios",
-                    fontSize = 26.sp,
+                    text = "SPORTPRO",
                     fontWeight = FontWeight.Bold,
-                    color = ExercisePrimaryDark
+                    color = ExerciseDark
                 )
+            }
 
-                Text(
-                    text = "Ejercicios reutilizables para tus entrenamientos",
-                    fontSize = 13.sp,
-                    color = Color.Gray
-                )
 
-                Spacer(
-                    modifier = Modifier.height(18.dp)
-                )
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
-                OutlinedTextField(
-                    value = searchText,
-                    onValueChange = {
-                        searchText = it
-                    },
-                    label = {
-                        Text("Buscar por nombre u objetivo")
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                )
 
-                Spacer(
-                    modifier = Modifier.height(14.dp)
-                )
+            Text(
+                text = "Biblioteca de ejercicios",
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = ExerciseDark
+            )
 
-                Row(
-                    horizontalArrangement =
-                        Arrangement.spacedBy(8.dp)
-                ) {
 
-                    listOf(
-                        "Todos",
-                        "Activos",
-                        "Inactivos"
-                    ).forEach { filter ->
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
 
-                        FilterChip(
-                            selected =
-                                selectedFilter == filter,
 
-                            onClick = {
-                                selectedFilter = filter
-                            },
+            Text(
+                text = "Ejercicios disponibles para tu academia",
+                fontSize = 13.sp,
+                color = Color.Gray
+            )
 
-                            label = {
-                                Text(filter)
-                            }
-                        )
-                    }
+
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
+
+
+            // =====================================================
+            // BUSCADOR
+            // =====================================================
+
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = {
+                    searchText = it
+                },
+                label = {
+                    Text("Buscar ejercicio")
+                },
+                placeholder = {
+                    Text("Nombre u objetivo")
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(14.dp)
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+
+            // =====================================================
+            // FILTROS
+            // =====================================================
+
+            Row(
+                horizontalArrangement =
+                    Arrangement.spacedBy(8.dp)
+            ) {
+
+                listOf(
+                    "Todos",
+                    "Activos",
+                    "Inactivos"
+                ).forEach { filter ->
+
+                    FilterChip(
+                        selected =
+                            selectedFilter == filter,
+
+                        onClick = {
+                            selectedFilter = filter
+                        },
+
+                        label = {
+                            Text(filter)
+                        },
+
+                        colors =
+                            FilterChipDefaults.filterChipColors(
+                                selectedContainerColor =
+                                    ExerciseDark,
+
+                                selectedLabelColor =
+                                    Color.White
+                            )
+                    )
                 }
+            }
 
-                Spacer(
-                    modifier = Modifier.height(18.dp)
-                )
 
-                LazyColumn(
-                    verticalArrangement =
-                        Arrangement.spacedBy(12.dp)
-                ) {
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
 
-                    items(filteredExercises) { exercise ->
 
-                        ExerciseCard(
-                            exercise = exercise
-                        )
-                    }
+            // =====================================================
+            // CONTENIDO
+            // =====================================================
 
-                    item {
+            when {
+
+                isLoading -> {
+
+                    Column(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        horizontalAlignment =
+                            Alignment.CenterHorizontally
+                    ) {
+
+                        CircularProgressIndicator()
 
                         Spacer(
-                            modifier = Modifier.height(80.dp)
+                            modifier =
+                                Modifier.height(10.dp)
+                        )
+
+                        Text(
+                            text = "Cargando ejercicios...",
+                            color = Color.Gray
                         )
                     }
                 }
+
+
+                errorMessage != null -> {
+
+                    Card(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor =
+                                    ExerciseCardBackground
+                            ),
+
+                        shape =
+                            RoundedCornerShape(18.dp)
+                    ) {
+
+                        Text(
+                            text = errorMessage,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .error,
+
+                            modifier =
+                                Modifier.padding(18.dp)
+                        )
+                    }
+                }
+
+
+                filteredExercises.isEmpty() -> {
+
+                    Card(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor =
+                                    ExerciseCardBackground
+                            ),
+
+                        shape =
+                            RoundedCornerShape(18.dp)
+                    ) {
+
+                        Column(
+                            modifier =
+                                Modifier.padding(20.dp)
+                        ) {
+
+                            Text(
+                                text =
+                                    "No hay ejercicios disponibles",
+                                fontWeight =
+                                    FontWeight.Bold,
+                                color = ExerciseDark
+                            )
+
+
+                            Spacer(
+                                modifier =
+                                    Modifier.height(6.dp)
+                            )
+
+
+                            Text(
+                                text =
+                                    "Crea un ejercicio para comenzar a llenar la biblioteca.",
+                                color = Color.Gray,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+
+
+                else -> {
+
+                    LazyColumn(
+                        modifier =
+                            Modifier.weight(1f),
+
+                        verticalArrangement =
+                            Arrangement.spacedBy(14.dp)
+                    ) {
+
+                        items(
+                            items =
+                                filteredExercises,
+
+                            key = { exercise ->
+                                exercise.id
+                            }
+                        ) { exercise ->
+
+                            ExerciseBubbleCard(
+                                exercise = exercise
+                            )
+                        }
+
+
+                        item {
+
+                            Spacer(
+                                modifier =
+                                    Modifier.height(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+
+            // =====================================================
+            // CREAR EJERCICIO
+            // =====================================================
+
+            Button(
+                onClick = onCreateExercise,
+
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor =
+                            ExerciseDark
+                    ),
+
+                shape =
+                    RoundedCornerShape(14.dp)
+            ) {
+
+                Text(
+                    text = "+ Crear ejercicio",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
         }
     }
 }
 
+
+// =============================================================
+// TARJETA / BURBUJA DE EJERCICIO
+// =============================================================
+
 @Composable
-private fun ExerciseCard(
-    exercise: ExerciseUi
+private fun ExerciseBubbleCard(
+    exercise: Exercise
 ) {
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        modifier =
+            Modifier.fillMaxWidth(),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    ExerciseCardBackground
+            ),
+
+        shape =
+            RoundedCornerShape(20.dp),
+
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 1.dp
+            )
     ) {
 
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier =
+                Modifier.padding(18.dp)
         ) {
 
+            // Nombre + Estado
+
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                    Modifier.fillMaxWidth(),
+
                 horizontalArrangement =
-                    Arrangement.SpaceBetween
+                    Arrangement.SpaceBetween,
+
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 Text(
                     text = exercise.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = ExercisePrimaryDark,
-                    modifier = Modifier.weight(1f)
+                    fontWeight =
+                        FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = ExerciseDark,
+
+                    modifier =
+                        Modifier.weight(1f)
                 )
+
+
+                Spacer(
+                    modifier =
+                        Modifier.padding(4.dp)
+                )
+
+
+                // Burbuja ACTIVO / INACTIVO
+
+                Surface(
+                    color =
+                        if (exercise.active)
+                            ActiveBackground
+                        else
+                            InactiveBackground,
+
+                    shape =
+                        RoundedCornerShape(50.dp)
+                ) {
+
+                    Text(
+                        text =
+                            if (exercise.active)
+                                "ACTIVO"
+                            else
+                                "INACTIVO",
+
+                        fontSize = 10.sp,
+
+                        fontWeight =
+                            FontWeight.Bold,
+
+                        color =
+                            if (exercise.active)
+                                ActiveText
+                            else
+                                InactiveText,
+
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 10.dp,
+                                vertical = 5.dp
+                            )
+                    )
+                }
+            }
+
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+
+            // Objetivo en burbuja
+
+            Surface(
+                color =
+                    ExerciseBubbleBackground,
+
+                shape =
+                    RoundedCornerShape(50.dp)
+            ) {
 
                 Text(
                     text =
-                        if (exercise.active)
-                            "ACTIVO"
-                        else
-                            "INACTIVO",
+                        exercise.objective,
 
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    color = ExerciseDark,
 
-                    color =
-                        if (exercise.active)
-                            Color(0xFF388E3C)
-                        else
-                            Color.Gray
+                    fontSize = 12.sp,
+
+                    fontWeight =
+                        FontWeight.SemiBold,
+
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 12.dp,
+                            vertical = 6.dp
+                        )
                 )
             }
 
+
+            if (
+                exercise.description
+                    .isNotBlank()
+            ) {
+
+                Spacer(
+                    modifier =
+                        Modifier.height(12.dp)
+                )
+
+
+                Text(
+                    text =
+                        exercise.description,
+
+                    color =
+                        Color(0xFF5F6368),
+
+                    fontSize = 13.sp,
+
+                    lineHeight = 18.sp
+                )
+            }
+
+
             Spacer(
-                modifier = Modifier.height(6.dp)
+                modifier =
+                    Modifier.height(14.dp)
             )
 
-            Text(
-                text = exercise.objective,
-                color = ExercisePrimaryDark,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold
-            )
 
-            Spacer(
-                modifier = Modifier.height(5.dp)
-            )
+            // Duración
 
-            Text(
-                text = exercise.description,
-                color = Color.Gray,
-                fontSize = 12.sp
-            )
+            Surface(
+                color =
+                    Color.White,
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
+                shape =
+                    RoundedCornerShape(50.dp)
+            ) {
 
-            Text(
-                text = "${exercise.durationMinutes} min",
-                color = Color.Gray,
-                fontSize = 12.sp
-            )
+                Text(
+                    text =
+                        "⏱ ${exercise.durationMinutes} min",
+
+                    fontSize = 12.sp,
+
+                    fontWeight =
+                        FontWeight.SemiBold,
+
+                    color = ExerciseDark,
+
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 12.dp,
+                            vertical = 6.dp
+                        )
+                )
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package pe.edu.esan.sportpro.ui.training
 
-
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,10 +33,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pe.edu.esan.sportpro.data.model.Exercise
+import java.util.Calendar
+import java.util.Locale
 
 private val TrainingDark = Color(0xFF0F2C3A)
 private val TrainingBackground = Color(0xFFF8F9FA)
@@ -46,8 +50,17 @@ fun CreateTrainingScreen(
     isLoadingExercises: Boolean,
     exerciseError: String?,
     onBack: () -> Unit,
-    onTrainingCreated: () -> Unit
+    onTrainingCreated: (
+        team: String,
+        date: String,
+        time: String,
+        objective: String,
+        durationMinutes: Long,
+        exerciseIds: List<String>
+    ) -> Unit
 ) {
+
+    val context = LocalContext.current
 
     var team by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
@@ -62,6 +75,53 @@ fun CreateTrainingScreen(
         mutableStateListOf<Exercise>()
     }
 
+    // =========================================================
+    // CALENDARIO
+    // =========================================================
+
+    val calendar = Calendar.getInstance()
+
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+
+            date = String.format(
+                Locale.getDefault(),
+                "%02d/%02d/%04d",
+                dayOfMonth,
+                month + 1,
+                year
+            )
+
+            showError = false
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
+    // =========================================================
+    // SELECTOR DE HORA
+    // =========================================================
+
+    val timePickerDialog = TimePickerDialog(
+        context,
+        { _, hourOfDay, minute ->
+
+            time = String.format(
+                Locale.getDefault(),
+                "%02d:%02d",
+                hourOfDay,
+                minute
+            )
+
+            showError = false
+        },
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        true
+    )
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = TrainingBackground
@@ -70,9 +130,15 @@ fun CreateTrainingScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(
+                    rememberScrollState()
+                )
                 .padding(18.dp)
         ) {
+
+            // =====================================================
+            // CABECERA
+            // =====================================================
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -96,7 +162,9 @@ fun CreateTrainingScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
             Text(
                 text = "Crear entrenamiento",
@@ -111,7 +179,13 @@ fun CreateTrainingScreen(
                 color = Color.Gray
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
+
+            // =====================================================
+            // EQUIPO
+            // =====================================================
 
             OutlinedTextField(
                 value = team,
@@ -127,45 +201,91 @@ fun CreateTrainingScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = date,
-                onValueChange = {
-                    date = it
-                    showError = false
-                },
-                label = {
-                    Text("Fecha *")
-                },
-                placeholder = {
-                    Text("Ej. 15/09/2026")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+            Spacer(
+                modifier = Modifier.height(16.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            // =====================================================
+            // FECHA
+            // =====================================================
 
-            OutlinedTextField(
-                value = time,
-                onValueChange = {
-                    time = it
-                    showError = false
-                },
-                label = {
-                    Text("Hora *")
-                },
-                placeholder = {
-                    Text("Ej. 18:30")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+            Text(
+                text = "Fecha *",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TrainingDark
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(6.dp)
+            )
+
+            OutlinedButton(
+                onClick = {
+                    datePickerDialog.show()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+
+                Text(
+                    text =
+                        if (date.isBlank())
+                            "📅 Seleccionar fecha"
+                        else
+                            "📅 $date",
+                    color = TrainingDark
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+            // =====================================================
+            // HORA
+            // =====================================================
+
+            Text(
+                text = "Hora *",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TrainingDark
+            )
+
+            Spacer(
+                modifier = Modifier.height(6.dp)
+            )
+
+            OutlinedButton(
+                onClick = {
+                    timePickerDialog.show()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+
+                Text(
+                    text =
+                        if (time.isBlank())
+                            "🕒 Seleccionar hora"
+                        else
+                            "🕒 $time",
+                    color = TrainingDark
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+            // =====================================================
+            // OBJETIVO
+            // =====================================================
 
             OutlinedTextField(
                 value = objective,
@@ -181,7 +301,13 @@ fun CreateTrainingScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
+
+            // =====================================================
+            // DURACIÓN TOTAL
+            // =====================================================
 
             OutlinedTextField(
                 value = duration,
@@ -200,7 +326,13 @@ fun CreateTrainingScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
+
+            // =====================================================
+            // EJERCICIOS
+            // =====================================================
 
             Text(
                 text = "Ejercicios",
@@ -209,16 +341,18 @@ fun CreateTrainingScreen(
                 color = TrainingDark
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
 
             if (selectedExercises.isEmpty()) {
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = Color(0xFFF0F2F4)
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ) {
 
                     Text(
@@ -237,16 +371,17 @@ fun CreateTrainingScreen(
                             .fillMaxWidth()
                             .padding(bottom = 8.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White
+                            containerColor = Color(0xFFF0F2F4)
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp)
                     ) {
 
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement =
+                                Arrangement.SpaceBetween
                         ) {
 
                             Column(
@@ -259,7 +394,9 @@ fun CreateTrainingScreen(
                                     color = TrainingDark
                                 )
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(
+                                    modifier = Modifier.height(4.dp)
+                                )
 
                                 Text(
                                     text = "${exercise.durationMinutes} min • ${exercise.objective}",
@@ -273,6 +410,7 @@ fun CreateTrainingScreen(
                                     selectedExercises.remove(exercise)
                                 }
                             ) {
+
                                 Text(
                                     text = "Quitar",
                                     color = Color.Red
@@ -283,7 +421,9 @@ fun CreateTrainingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
             OutlinedButton(
                 onClick = {
@@ -296,7 +436,9 @@ fun CreateTrainingScreen(
 
                 if (isLoadingExercises) {
 
-                    Text("Cargando ejercicios...")
+                    Text(
+                        text = "Cargando ejercicios..."
+                    )
 
                 } else {
 
@@ -310,16 +452,25 @@ fun CreateTrainingScreen(
 
             if (exerciseError != null) {
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
                 Text(
                     text = exerciseError,
-                    color = MaterialTheme.colorScheme.error,
+                    color =
+                        MaterialTheme.colorScheme.error,
                     fontSize = 12.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
+
+            // =====================================================
+            // DURACIÓN DE EJERCICIOS
+            // =====================================================
 
             val totalExerciseMinutes =
                 selectedExercises.sumOf {
@@ -339,27 +490,43 @@ fun CreateTrainingScreen(
                 totalExerciseMinutes > trainingDuration
             ) {
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(
+                    modifier = Modifier.height(6.dp)
+                )
 
                 Text(
                     text = "La duración de los ejercicios supera la duración total del entrenamiento.",
-                    color = MaterialTheme.colorScheme.error,
+                    color =
+                        MaterialTheme.colorScheme.error,
                     fontSize = 12.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
+
+            // =====================================================
+            // ERROR
+            // =====================================================
 
             if (showError) {
 
                 Text(
                     text = "Completa los campos obligatorios y agrega al menos un ejercicio.",
-                    color = MaterialTheme.colorScheme.error,
+                    color =
+                        MaterialTheme.colorScheme.error,
                     fontSize = 13.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
             }
+
+            // =====================================================
+            // GUARDAR
+            // =====================================================
 
             Button(
                 onClick = {
@@ -382,28 +549,47 @@ fun CreateTrainingScreen(
                     } else {
 
                         showError = false
-                        onTrainingCreated()
+
+                        onTrainingCreated(
+                            team,
+                            date,
+                            time,
+                            objective,
+                            durationNumber,
+                            selectedExercises.map {
+                                it.id
+                            }
+                        )
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = TrainingDark,
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp)
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor =
+                            TrainingDark
+                    ),
+                shape =
+                    RoundedCornerShape(12.dp)
             ) {
 
                 Text(
                     text = "Guardar entrenamiento",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(
+                modifier = Modifier.height(30.dp)
+            )
         }
     }
+
+    // =========================================================
+    // SELECTOR DE EJERCICIOS DE FIREBASE
+    // =========================================================
 
     if (showExerciseDialog) {
 
@@ -413,6 +599,7 @@ fun CreateTrainingScreen(
             },
 
             title = {
+
                 Text(
                     text = "Ejercicios de la biblioteca",
                     fontWeight = FontWeight.Bold,
@@ -428,17 +615,21 @@ fun CreateTrainingScreen(
 
                         CircularProgressIndicator()
 
-                    } else if (availableExercises.isEmpty()) {
+                    } else if (
+                        availableExercises.isEmpty()
+                    ) {
 
                         Text(
-                            text = "No hay ejercicios activos registrados en Firebase.",
+                            text = "No hay ejercicios activos disponibles.",
                             color = Color.Gray
                         )
 
                     } else {
 
                         availableExercises
-                            .filter { it.active }
+                            .filter {
+                                it.active
+                            }
                             .forEach { exercise ->
 
                                 val alreadyAdded =
@@ -450,37 +641,55 @@ fun CreateTrainingScreen(
                                     onClick = {
 
                                         if (!alreadyAdded) {
-                                            selectedExercises.add(exercise)
+
+                                            selectedExercises.add(
+                                                exercise
+                                            )
                                         }
 
-                                        showExerciseDialog = false
+                                        showExerciseDialog =
+                                            false
                                     },
-                                    enabled = !alreadyAdded,
-                                    modifier = Modifier.fillMaxWidth()
+
+                                    enabled =
+                                        !alreadyAdded,
+
+                                    modifier =
+                                        Modifier.fillMaxWidth()
                                 ) {
 
                                     Column(
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier =
+                                            Modifier.fillMaxWidth()
                                     ) {
 
                                         Text(
-                                            text = exercise.name,
-                                            fontWeight = FontWeight.Bold,
-                                            color = TrainingDark
+                                            text =
+                                                exercise.name,
+                                            fontWeight =
+                                                FontWeight.Bold,
+                                            color =
+                                                TrainingDark
                                         )
 
                                         Text(
-                                            text = "${exercise.objective} • ${exercise.durationMinutes} min",
-                                            fontSize = 12.sp,
-                                            color = Color.Gray
+                                            text =
+                                                "${exercise.objective} • ${exercise.durationMinutes} min",
+                                            fontSize =
+                                                12.sp,
+                                            color =
+                                                Color.Gray
                                         )
 
                                         if (alreadyAdded) {
 
                                             Text(
-                                                text = "Ya agregado",
-                                                fontSize = 11.sp,
-                                                color = Color.Gray
+                                                text =
+                                                    "Ya agregado",
+                                                fontSize =
+                                                    11.sp,
+                                                color =
+                                                    Color.Gray
                                             )
                                         }
                                     }
@@ -497,6 +706,7 @@ fun CreateTrainingScreen(
                         showExerciseDialog = false
                     }
                 ) {
+
                     Text(
                         text = "Cerrar",
                         color = TrainingDark
