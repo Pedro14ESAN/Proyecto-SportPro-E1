@@ -72,15 +72,7 @@ fun AppNavigation() {
 
         // 3. Tu Pantalla de Home
         composable(Screen.Home.route) {
-            val user = FirebaseAuth.getInstance().currentUser
-            val userName = user?.displayName
-                ?: user?.email?.substringBefore("@")
-                ?: "Usuario SportPro"
-            val role = "DT"
-
             HomeScreen(
-                userName = userName,
-                role = role,
                 onNavigateToTeams = {
                     navController.navigate(Screen.Teams.route)
                 },
