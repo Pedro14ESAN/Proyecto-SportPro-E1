@@ -2,19 +2,15 @@ package pe.edu.esan.sportpro.navigation
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import pe.edu.esan.sportpro.ui.home.HomeScreen
-import com.google.firebase.auth.FirebaseAuth
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-
 import androidx.compose.runtime.remember
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
 import pe.edu.esan.sportpro.ui.auth.AuthViewModel
 import pe.edu.esan.sportpro.ui.auth.LoginScreen
 import pe.edu.esan.sportpro.ui.auth.RegisterScreen
+import pe.edu.esan.sportpro.ui.home.HomeScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -28,15 +24,13 @@ sealed class Screen(val route: String) {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val authViewModel = remember {
-        AuthViewModel()
-    }
+    val authViewModel = remember { AuthViewModel() }
 
     // Verificamos si hay un usuario logueado en Firebase
     val currentUser = FirebaseAuth.getInstance().currentUser
 
-    // Definimos la ruta inicial según el estado del usuario
-    val startDestination = if (currentUser != null) {
+    // Definimos la ruta inicial según si hay sesión activa
+    val initialDestination = if (currentUser != null) {
         Screen.Home.route
     } else {
         Screen.Login.route
@@ -44,41 +38,60 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = initialDestination // Usamos la variable dinámica
     ) {
+        // 1. Pantalla de Login (Corregido)
         composable(Screen.Login.route) {
-            Text("Pantalla de Login asignada al INTEGRANTE 2")
+            LoginScreen(
+                viewModel = authViewModel,
+                onLoginSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onGoToRegister = { // <-- Cambiado a onGoToRegister
+                    navController.navigate(Screen.Register.route)
+                }
+            )
         }
 
+        // 2. Pantalla de Registro (Corregido)
         composable(Screen.Register.route) {
-            Text("Pantalla de Registro asignada al INTEGRANTE 2")
+            RegisterScreen(
+                viewModel = authViewModel,
+                onRegisterSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onGoToLogin = { // <-- Cambiado a onGoToLogin
+                    navController.popBackStack()
+                }
+            )
         }
 
+        // 3. Tu Pantalla de Home
         composable(Screen.Home.route) {
-            val currentUser = FirebaseAuth.getInstance().currentUser
-
-            val userName = currentUser?.displayName
-                ?: currentUser?.email?.substringBefore("@")
-                ?: "Entrenador"
-            val role = "DT / Administrador"
+            val user = FirebaseAuth.getInstance().currentUser
+            val userName = user?.displayName
+                ?: user?.email?.substringBefore("@")
+                ?: "Usuario SportPro"
+            val role = "DT"
 
             HomeScreen(
-                userName = "Usuario SportPro",
-                role = "DT",
-
+                userName = userName,
+                role = role,
                 onNavigateToTeams = {
                     navController.navigate(Screen.Teams.route)
                 },
-
                 onNavigateToPlayers = {
                     navController.navigate(Screen.Players.route)
                 },
-
                 onNavigateToTrainings = {
                     navController.navigate(Screen.Trainings.route)
                 },
-
                 onLogout = {
+                    FirebaseAuth.getInstance().signOut()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -86,17 +99,17 @@ fun AppNavigation() {
             )
         }
 
-        // Rutas que faltaban registrar:
+        // 4. Modulos pendientes de conectar cuando los suban los demás
         composable(Screen.Teams.route) {
-            Text("Pantalla de Equipos")
+            Text("Pantalla de Equipos en construcción")
         }
 
         composable(Screen.Players.route) {
-            Text("Pantalla de Jugadores")
+            Text("Pantalla de Jugadores en construcción")
         }
 
         composable(Screen.Trainings.route) {
-            Text("Pantalla de Entrenamientos")
+            Text("Pantalla de Entrenamientos en construcción")
         }
     }
 }
