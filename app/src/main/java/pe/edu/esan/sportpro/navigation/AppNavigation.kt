@@ -11,6 +11,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
+import androidx.compose.runtime.remember
+import pe.edu.esan.sportpro.ui.auth.AuthViewModel
+import pe.edu.esan.sportpro.ui.auth.LoginScreen
+import pe.edu.esan.sportpro.ui.auth.RegisterScreen
+
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
@@ -23,6 +28,9 @@ sealed class Screen(val route: String) {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val authViewModel = remember {
+        AuthViewModel()
+    }
 
     // Verificamos si hay un usuario logueado en Firebase
     val currentUser = FirebaseAuth.getInstance().currentUser
@@ -39,7 +47,11 @@ fun AppNavigation() {
         startDestination = Screen.Home.route
     ) {
         composable(Screen.Login.route) {
-            Text("Pantalla de Login")
+            Text("Pantalla de Login asignada al INTEGRANTE 2")
+        }
+
+        composable(Screen.Register.route) {
+            Text("Pantalla de Registro asignada al INTEGRANTE 2")
         }
 
         composable(Screen.Home.route) {
@@ -51,13 +63,22 @@ fun AppNavigation() {
             val role = "DT / Administrador"
 
             HomeScreen(
-                userName = userName,
-                role = role,
-                onNavigateToTeams = { navController.navigate(Screen.Teams.route) },
-                onNavigateToPlayers = { navController.navigate(Screen.Players.route) },
-                onNavigateToTrainings = { navController.navigate(Screen.Trainings.route) },
+                userName = "Usuario SportPro",
+                role = "DT",
+
+                onNavigateToTeams = {
+                    navController.navigate(Screen.Teams.route)
+                },
+
+                onNavigateToPlayers = {
+                    navController.navigate(Screen.Players.route)
+                },
+
+                onNavigateToTrainings = {
+                    navController.navigate(Screen.Trainings.route)
+                },
+
                 onLogout = {
-                    FirebaseAuth.getInstance().signOut()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
