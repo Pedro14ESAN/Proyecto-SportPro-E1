@@ -18,39 +18,60 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun AppNavigation() {
+
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Login.route
     ) {
+
         composable(Screen.Login.route) {
-            Text("Pantalla de Login asignado al INTEGRANTE 2")
+            Text("Pantalla de Login asignada al INTEGRANTE 2")
         }
 
         composable(Screen.Register.route) {
-            Text("Pantalla de Registro asigndado al INTEGRANTE 2")
+            Text("Pantalla de Registro asignada al INTEGRANTE 2")
         }
 
         composable(Screen.Home.route) {
+
             HomeScreen(
-                onNavigateToTeams = { navController.navigate(Screen.Teams.route) },
-                onNavigateToPlayers = { navController.navigate(Screen.Players.route) },
-                onNavigateToTrainings = { navController.navigate(Screen.Trainings.route) },
-                onLogout = { navController.navigate(Screen.Login.route) }
+                userName = "Usuario SportPro",
+                role = "DT",
+
+                onNavigateToTeams = {
+                    navController.navigate(Screen.Teams.route)
+                },
+
+                onNavigateToPlayers = {
+                    navController.navigate(Screen.Players.route)
+                },
+
+                onNavigateToTrainings = {
+                    navController.navigate(Screen.Trainings.route)
+                },
+
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) {
+                            inclusive = true
+                        }
+                    }
+                }
             )
         }
 
         composable(Screen.Teams.route) {
-            Text("Pantalla de Equipos (Asignada al Compañero 4)")
+            Text("Pantalla de Equipos - Integrante 4")
         }
 
         composable(Screen.Players.route) {
-            Text("Pantalla de Jugadores (Asignada al Compañero 5)")
+            Text("Pantalla de Jugadores - Integrante 5")
         }
 
         composable(Screen.Trainings.route) {
-            Text("Pantalla de Entrenamientos (Asignada a Bruno)")
+            Text("Pantalla de Entrenamientos - Bruno")
         }
     }
 }
