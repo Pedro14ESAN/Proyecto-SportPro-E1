@@ -6,12 +6,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 val PrimaryDark = Color(0xFF0F2C3A)
 val AccentGreen = Color(0xFF8CE093)
@@ -19,13 +22,17 @@ val LightBackground = Color(0xFFF8F9FA)
 
 @Composable
 fun HomeScreen(
-    userName: String,
-    role: String,
+    viewModel: HomeViewModel = viewModel(),
     onNavigateToTeams: () -> Unit,
     onNavigateToPlayers: () -> Unit,
     onNavigateToTrainings: () -> Unit,
     onLogout: () -> Unit
 ) {
+    // Escuchamos los datos del usuario desde Firestore
+    val userState by viewModel.user.collectAsState()
+
+    val userName = userState?.fullName ?: "Cargando..."
+    val role = userState?.role ?: ""
 
     val roleName = when (role) {
         "ADM" -> "Administrador"
@@ -39,24 +46,20 @@ fun HomeScreen(
         modifier = Modifier.fillMaxSize(),
         color = LightBackground
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(20.dp)
         ) {
-
             // Encabezado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -137,11 +140,9 @@ fun HomeScreen(
                     containerColor = PrimaryDark
                 )
             ) {
-
                 Column(
                     modifier = Modifier.padding(20.dp)
                 ) {
-
                     Text(
                         text = "Panel de Control",
                         color = AccentGreen,
@@ -186,7 +187,6 @@ fun HomeScreen(
             Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-
                 Button(
                     onClick = onNavigateToTrainings,
                     modifier = Modifier.fillMaxWidth(),

@@ -23,10 +23,6 @@ import pe.edu.esan.sportpro.ui.auth.AuthViewModel
 import pe.edu.esan.sportpro.ui.auth.LoginScreen
 import pe.edu.esan.sportpro.ui.auth.RegisterScreen
 import pe.edu.esan.sportpro.ui.home.HomeScreen
-import pe.edu.esan.sportpro.ui.players.CreatePlayerScreen
-import pe.edu.esan.sportpro.ui.players.PlayerProfileScreen
-import pe.edu.esan.sportpro.ui.players.PlayersScreen
-import pe.edu.esan.sportpro.ui.players.PlayerViewModel
 import pe.edu.esan.sportpro.ui.training.CreateExerciseScreen
 import pe.edu.esan.sportpro.ui.training.CreateTrainingScreen
 import pe.edu.esan.sportpro.ui.training.ExerciseLibraryScreen
@@ -40,10 +36,6 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Teams : Screen("teams")
     object Players : Screen("players")
-
-    object CreatePlayer : Screen("create_player")
-
-    object PlayerProfile : Screen("player_profile/{playerId}")
     object Trainings : Screen("trainings")
     object ExerciseLibrary : Screen("exercise_library")
     object CreateExercise : Screen("create_exercise")
@@ -54,979 +46,325 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun AppNavigation() {
-
     val navController = rememberNavController()
+    val authViewModel = remember { AuthViewModel() }
 
-    val authViewModel = remember {
-        AuthViewModel()
-    }
+    val currentUser = FirebaseAuth.getInstance().currentUser
 
-    val playerViewModel = remember {
-        PlayerViewModel()
+    val initialDestination = if (currentUser != null) {
+        Screen.Home.route
+    } else {
+        Screen.Login.route
     }
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
+        startDestination = initialDestination
     ) {
-
-        // =========================================================
-        // LOGIN
-        // =========================================================
-
+        // 1. Login
         composable(Screen.Login.route) {
-
             LoginScreen(
                 viewModel = authViewModel,
-
                 onLoginSuccess = {
-
-                    navController.navigate(
-                        Screen.Home.route
-                    ) {
-
-                        popUpTo(
-                            Screen.Login.route
-                        ) {
-                            inclusive = true
-                        }
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
-
                 onGoToRegister = {
-
-                    navController.navigate(
-                        Screen.Register.route
-                    )
+                    navController.navigate(Screen.Register.route)
                 }
             )
         }
 
-        // =========================================================
-        // REGISTRO
-        // =========================================================
-
+        // 2. Registro
         composable(Screen.Register.route) {
-
             RegisterScreen(
                 viewModel = authViewModel,
-
                 onRegisterSuccess = {
-
-                    authViewModel.logout()
-
-                    navController.navigate(
-                        Screen.Login.route
-                    ) {
-
-                        popUpTo(
-                            Screen.Register.route
-                        ) {
-                            inclusive = true
-                        }
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
-
                 onGoToLogin = {
-
                     navController.popBackStack()
                 }
             )
         }
 
-        // =========================================================
-        // HOME
-        // =========================================================
-
+        // 3. Home
         composable(Screen.Home.route) {
-
             HomeScreen(
-                userName =
-                    authViewModel.currentUser?.fullName
-                        ?: "Usuario SportPro",
-
-                role =
-                    authViewModel.currentUser?.role
-                        ?: "",
-
                 onNavigateToTeams = {
-
-                    navController.navigate(
-                        Screen.Teams.route
-                    )
+                    navController.navigate(Screen.Teams.route)
                 },
-
                 onNavigateToPlayers = {
-
-                    navController.navigate(
-                        Screen.Players.route
-                    )
+                    navController.navigate(Screen.Players.route)
                 },
-
                 onNavigateToTrainings = {
-
-                    navController.navigate(
-                        Screen.Trainings.route
-                    )
+                    navController.navigate(Screen.Trainings.route)
                 },
-
                 onLogout = {
-
-                    authViewModel.logout()
-
-                    navController.navigate(
-                        Screen.Login.route
-                    ) {
-
-                        popUpTo(
-                            Screen.Home.route
-                        ) {
-                            inclusive = true
-                        }
+                    FirebaseAuth.getInstance().signOut()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
         }
 
-        // =========================================================
-        // EQUIPOS
-        // =========================================================
-
+        // 4. Equipos
         composable(Screen.Teams.route) {
-
-            Text(
-                "Pantalla de Equipos - Integrante 4"
-            )
+            Text("Pantalla de Equipos - Integrante 4")
         }
 
-        // =========================================================
-// JUGADORES
-// =========================================================
-
+        // 5. Jugadores
         composable(Screen.Players.route) {
-
-            val role =
-                authViewModel.currentUser?.role
-                    ?: ""
-
-            if (role == "DT" || role == "ADM") {
-
-                val academyId =
-                    authViewModel.currentUser?.academyId
-                        ?: ""
-
-                PlayersScreen(
-                    academyId = academyId,
-                    viewModel = playerViewModel,
-                    onBack = {
-                        navController.popBackStack()
-                    },
-
-                    onAddPlayer = {
-                        navController.navigate(
-                            Screen.CreatePlayer.route
-                        )
-                    },
-
-                    onPlayerClick = { playerId ->
-                        navController.navigate(
-                            "player_profile/$playerId"
-                        )
-                    }
-                )
-
-            } else {
-
-                LaunchedEffect(Unit) {
-                    navController.popBackStack()
-                }
-
-                Text(
-                    text = "Acceso no autorizado"
-                )
-            }
+            Text("Pantalla de Jugadores - Integrante 5")
         }
 
-
-// =========================================================
-// CREAR JUGADOR
-// =========================================================
-
-        composable(Screen.CreatePlayer.route) {
-
-            val academyId =
-                authViewModel.currentUser?.academyId
-                    ?: ""
-
-            CreatePlayerScreen(
-                viewModel = playerViewModel,
-                academyId = academyId,
-
-                onBack = {
-                    navController.popBackStack()
-                },
-
-                onPlayerCreated = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-
-// =========================================================
-// PERFIL DEL JUGADOR
-// =========================================================
-
-        composable(Screen.PlayerProfile.route) {
-                backStackEntry ->
-
-            val playerId =
-                backStackEntry.arguments
-                    ?.getString("playerId")
-                    ?: ""
-
-            PlayerProfileScreen(
-                playerId = playerId,
-                viewModel = playerViewModel,
-
-                onBack = {
-
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        // =========================================================
-        // ENTRENAMIENTOS
-        // =========================================================
-
+        // 6. Entrenamientos
         composable(Screen.Trainings.route) {
+            val trainingRepository = remember { TrainingRepository() }
+            val user = FirebaseAuth.getInstance().currentUser
+            var trainings by remember { mutableStateOf<List<Training>>(emptyList()) }
+            var isLoadingTrainings by remember { mutableStateOf(true) }
+            var trainingError by remember { mutableStateOf<String?>(null) }
 
-            val trainingRepository = remember {
-                TrainingRepository()
-            }
-
-            val currentUser =
-                FirebaseAuth
-                    .getInstance()
-                    .currentUser
-
-            var trainings by remember {
-                mutableStateOf<List<Training>>(
-                    emptyList()
-                )
-            }
-
-            var isLoadingTrainings by remember {
-                mutableStateOf(true)
-            }
-
-            var trainingError by remember {
-                mutableStateOf<String?>(null)
-            }
-
-            LaunchedEffect(
-                currentUser?.uid
-            ) {
-
-                if (currentUser == null) {
-
-                    isLoadingTrainings =
-                        false
-
-                    trainingError =
-                        "No existe una sesión activa."
-
+            LaunchedEffect(user?.uid) {
+                if (user == null) {
+                    isLoadingTrainings = false
+                    trainingError = "No existe una sesión activa."
                 } else {
-
-                    trainingRepository
-                        .getTrainingsByCoach(
-                            coachUid =
-                                currentUser.uid
-                        ) { result ->
-
-                            result.onSuccess {
-                                    firebaseTrainings ->
-
-                                trainings =
-                                    firebaseTrainings
-                                        .sortedByDescending {
-                                            it.date
-                                                ?.seconds
-                                                ?: 0
-                                        }
-
-                                isLoadingTrainings =
-                                    false
-
-                                trainingError =
-                                    null
-                            }
-
-                            result.onFailure {
-                                    exception ->
-
-                                trainings =
-                                    emptyList()
-
-                                isLoadingTrainings =
-                                    false
-
-                                trainingError =
-                                    "No se pudieron cargar los entrenamientos: ${exception.message}"
-                            }
+                    trainingRepository.getTrainingsByCoach(coachUid = user.uid) { result ->
+                        result.onSuccess { firebaseTrainings ->
+                            trainings = firebaseTrainings.sortedByDescending { it.date?.seconds ?: 0 }
+                            isLoadingTrainings = false
+                            trainingError = null
                         }
+                        result.onFailure { exception ->
+                            trainings = emptyList()
+                            isLoadingTrainings = false
+                            trainingError = "No se pudieron cargar los entrenamientos: ${exception.message}"
+                        }
+                    }
                 }
             }
 
             TrainingScreen(
-                trainings =
-                    trainings,
-
-                isLoading =
-                    isLoadingTrainings,
-
-                errorMessage =
-                    trainingError,
-
-                onBack = {
-
-                    navController
-                        .popBackStack()
-                },
-
-                onNavigateToExerciseLibrary = {
-
-                    navController.navigate(
-                        Screen.ExerciseLibrary.route
-                    )
-                },
-
-                onCreateTraining = {
-
-                    navController.navigate(
-                        Screen.CreateTraining.route
-                    )
-                }
+                trainings = trainings,
+                isLoading = isLoadingTrainings,
+                errorMessage = trainingError,
+                onBack = { navController.popBackStack() },
+                onNavigateToExerciseLibrary = { navController.navigate(Screen.ExerciseLibrary.route) },
+                onCreateTraining = { navController.navigate(Screen.CreateTraining.route) }
             )
         }
 
-        // =========================================================
-        // BIBLIOTECA DE EJERCICIOS
-        // =========================================================
+        // 7. Biblioteca de Ejercicios
+        composable(Screen.ExerciseLibrary.route) {
+            val exerciseRepository = remember { ExerciseRepository() }
+            val user = FirebaseAuth.getInstance().currentUser
+            var exercises by remember { mutableStateOf<List<Exercise>>(emptyList()) }
+            var isLoading by remember { mutableStateOf(true) }
+            var errorMessage by remember { mutableStateOf<String?>(null) }
 
-        composable(
-            Screen.ExerciseLibrary.route
-        ) {
-
-            val exerciseRepository =
-                remember {
-                    ExerciseRepository()
-                }
-
-            val currentUser =
-                FirebaseAuth
-                    .getInstance()
-                    .currentUser
-
-            var exercises by remember {
-                mutableStateOf<List<Exercise>>(
-                    emptyList()
-                )
-            }
-
-            var isLoading by remember {
-                mutableStateOf(true)
-            }
-
-            var errorMessage by remember {
-                mutableStateOf<String?>(null)
-            }
-
-            LaunchedEffect(
-                currentUser?.uid
-            ) {
-
-                if (currentUser == null) {
-
+            LaunchedEffect(user?.uid) {
+                if (user == null) {
                     isLoading = false
-
-                    errorMessage =
-                        "No existe una sesión activa."
-
+                    errorMessage = "No existe una sesión activa."
                 } else {
-
-                    FirebaseFirestore
-                        .getInstance()
-                        .collection("users")
-                        .document(
-                            currentUser.uid
-                        )
+                    FirebaseFirestore.getInstance().collection("users").document(user.uid)
                         .get()
-
-                        .addOnSuccessListener {
-                                userDocument ->
-
-                            val academyId =
-                                userDocument
-                                    .getString(
-                                        "academyId"
-                                    )
-
-                            if (
-                                academyId
-                                    .isNullOrBlank()
-                            ) {
-
-                                isLoading =
-                                    false
-
-                                errorMessage =
-                                    "Tu usuario no tiene una academia asignada."
-
+                        .addOnSuccessListener { userDocument ->
+                            val academyId = userDocument.getString("academyId")
+                            if (academyId.isNullOrBlank()) {
+                                isLoading = false
+                                errorMessage = "Tu usuario no tiene una academia asignada."
                             } else {
-
-                                exerciseRepository
-                                    .getExercisesByAcademy(
-                                        academyId =
-                                            academyId
-                                    ) { result ->
-
-                                        result.onSuccess {
-                                                firebaseExercises ->
-
-                                            exercises =
-                                                firebaseExercises
-                                                    .sortedBy {
-                                                        it.name
-                                                    }
-
-                                            isLoading =
-                                                false
-
-                                            errorMessage =
-                                                null
-                                        }
-
-                                        result.onFailure {
-                                                exception ->
-
-                                            exercises =
-                                                emptyList()
-
-                                            isLoading =
-                                                false
-
-                                            errorMessage =
-                                                "No se pudieron cargar los ejercicios: ${exception.message}"
-                                        }
+                                exerciseRepository.getExercisesByAcademy(academyId = academyId) { result ->
+                                    result.onSuccess { firebaseExercises ->
+                                        exercises = firebaseExercises.sortedBy { it.name }
+                                        isLoading = false
+                                        errorMessage = null
                                     }
+                                    result.onFailure { exception ->
+                                        exercises = emptyList()
+                                        isLoading = false
+                                        errorMessage = "No se pudieron cargar los ejercicios: ${exception.message}"
+                                    }
+                                }
                             }
                         }
-
-                        .addOnFailureListener {
-                                exception ->
-
-                            isLoading =
-                                false
-
-                            errorMessage =
-                                "No se pudo obtener tu academia: ${exception.message}"
+                        .addOnFailureListener { exception ->
+                            isLoading = false
+                            errorMessage = "No se pudo obtener tu academia: ${exception.message}"
                         }
                 }
             }
 
             ExerciseLibraryScreen(
-                exercises =
-                    exercises,
-
-                isLoading =
-                    isLoading,
-
-                errorMessage =
-                    errorMessage,
-
-                onBack = {
-
-                    navController
-                        .popBackStack()
-                },
-
-                onCreateExercise = {
-
-                    navController.navigate(
-                        Screen.CreateExercise.route
-                    )
-                }
+                exercises = exercises,
+                isLoading = isLoading,
+                errorMessage = errorMessage,
+                onBack = { navController.popBackStack() },
+                onCreateExercise = { navController.navigate(Screen.CreateExercise.route) }
             )
         }
 
-        // =========================================================
-        // CREAR EJERCICIO
-        // =========================================================
-
-        composable(
-            Screen.CreateExercise.route
-        ) {
-
-            val appContext =
-                LocalContext.current
-
-            val exerciseRepository =
-                remember {
-                    ExerciseRepository()
-                }
+        // 8. Crear Ejercicio
+        composable(Screen.CreateExercise.route) {
+            val appContext = LocalContext.current
+            val exerciseRepository = remember { ExerciseRepository() }
 
             CreateExerciseScreen(
-
-                onBack = {
-
-                    navController
-                        .popBackStack()
-                },
-
-                onExerciseCreated = {
-                        name,
-                        objective,
-                        description,
-                        durationMinutes ->
-
-                    val currentUser =
-                        FirebaseAuth
-                            .getInstance()
-                            .currentUser
-
-                    if (
-                        currentUser == null
-                    ) {
-
-                        Toast.makeText(
-                            appContext,
-                            "Debes iniciar sesión.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
+                onBack = { navController.popBackStack() },
+                onExerciseCreated = { name, objective, description, durationMinutes ->
+                    val user = FirebaseAuth.getInstance().currentUser
+                    if (user == null) {
+                        Toast.makeText(appContext, "Debes iniciar sesión.", Toast.LENGTH_SHORT).show()
                     } else {
-
-                        FirebaseFirestore
-                            .getInstance()
-                            .collection("users")
-                            .document(
-                                currentUser.uid
-                            )
+                        FirebaseFirestore.getInstance().collection("users").document(user.uid)
                             .get()
-
-                            .addOnSuccessListener {
-                                    document ->
-
-                                val academyId =
-                                    document
-                                        .getString(
-                                            "academyId"
-                                        )
-
-                                if (
-                                    academyId
-                                        .isNullOrBlank()
-                                ) {
-
-                                    Toast.makeText(
-                                        appContext,
-                                        "El usuario no tiene una academia asignada.",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-
+                            .addOnSuccessListener { document ->
+                                val academyId = document.getString("academyId")
+                                if (academyId.isNullOrBlank()) {
+                                    Toast.makeText(appContext, "El usuario no tiene una academia asignada.", Toast.LENGTH_LONG).show()
                                 } else {
-
-                                    exerciseRepository
-                                        .createExercise(
-                                            academyId =
-                                                academyId,
-
-                                            createdBy =
-                                                currentUser.uid,
-
-                                            name =
-                                                name,
-
-                                            objective =
-                                                objective,
-
-                                            description =
-                                                description,
-
-                                            durationMinutes =
-                                                durationMinutes
-                                        ) { result ->
-
-                                            result.onSuccess {
-
-                                                Toast.makeText(
-                                                    appContext,
-                                                    "Ejercicio guardado en Firebase",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-
-                                                navController
-                                                    .popBackStack()
-                                            }
-
-                                            result.onFailure {
-                                                    exception ->
-
-                                                Toast.makeText(
-                                                    appContext,
-                                                    "Error: ${exception.message}",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                            }
+                                    exerciseRepository.createExercise(
+                                        academyId = academyId,
+                                        createdBy = user.uid,
+                                        name = name,
+                                        objective = objective,
+                                        description = description,
+                                        durationMinutes = durationMinutes
+                                    ) { result ->
+                                        result.onSuccess {
+                                            Toast.makeText(appContext, "Ejercicio guardado en Firebase", Toast.LENGTH_SHORT).show()
+                                            navController.popBackStack()
                                         }
+                                        result.onFailure { exception ->
+                                            Toast.makeText(appContext, "Error: ${exception.message}", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
                                 }
                             }
-
-                            .addOnFailureListener {
-                                    exception ->
-
-                                Toast.makeText(
-                                    appContext,
-                                    "No se pudo obtener la academia: ${exception.message}",
-                                    Toast.LENGTH_LONG
-                                ).show()
+                            .addOnFailureListener { exception ->
+                                Toast.makeText(appContext, "No se pudo obtener la academia: ${exception.message}", Toast.LENGTH_LONG).show()
                             }
                     }
                 }
             )
         }
 
-        // =========================================================
-        // CREAR ENTRENAMIENTO
-        // =========================================================
+        // 9. Crear Entrenamiento
+        composable(Screen.CreateTraining.route) {
+            val appContext = LocalContext.current
+            val exerciseRepository = remember { ExerciseRepository() }
+            val trainingRepository = remember { TrainingRepository() }
+            val user = FirebaseAuth.getInstance().currentUser
 
-        composable(
-            Screen.CreateTraining.route
-        ) {
+            var exercises by remember { mutableStateOf<List<Exercise>>(emptyList()) }
+            var isLoadingExercises by remember { mutableStateOf(true) }
+            var exerciseError by remember { mutableStateOf<String?>(null) }
+            var academyId by remember { mutableStateOf<String?>(null) }
 
-            val appContext =
-                LocalContext.current
-
-            val exerciseRepository =
-                remember {
-                    ExerciseRepository()
-                }
-
-            val trainingRepository =
-                remember {
-                    TrainingRepository()
-                }
-
-            val currentUser =
-                FirebaseAuth
-                    .getInstance()
-                    .currentUser
-
-            var exercises by remember {
-                mutableStateOf<List<Exercise>>(
-                    emptyList()
-                )
-            }
-
-            var isLoadingExercises by remember {
-                mutableStateOf(true)
-            }
-
-            var exerciseError by remember {
-                mutableStateOf<String?>(null)
-            }
-
-            var academyId by remember {
-                mutableStateOf<String?>(null)
-            }
-
-            LaunchedEffect(
-                currentUser?.uid
-            ) {
-
-                if (currentUser == null) {
-
-                    isLoadingExercises =
-                        false
-
-                    exerciseError =
-                        "No existe una sesión activa."
-
+            LaunchedEffect(user?.uid) {
+                if (user == null) {
+                    isLoadingExercises = false
+                    exerciseError = "No existe una sesión activa."
                 } else {
-
-                    FirebaseFirestore
-                        .getInstance()
-                        .collection("users")
-                        .document(
-                            currentUser.uid
-                        )
+                    FirebaseFirestore.getInstance().collection("users").document(user.uid)
                         .get()
-
-                        .addOnSuccessListener {
-                                userDocument ->
-
-                            val userAcademyId =
-                                userDocument
-                                    .getString(
-                                        "academyId"
-                                    )
-
-                            if (
-                                userAcademyId
-                                    .isNullOrBlank()
-                            ) {
-
-                                isLoadingExercises =
-                                    false
-
-                                exerciseError =
-                                    "Tu usuario no tiene una academia asignada."
-
+                        .addOnSuccessListener { userDocument ->
+                            val userAcademyId = userDocument.getString("academyId")
+                            if (userAcademyId.isNullOrBlank()) {
+                                isLoadingExercises = false
+                                exerciseError = "Tu usuario no tiene una academia asignada."
                             } else {
-
-                                academyId =
-                                    userAcademyId
-
-                                exerciseRepository
-                                    .getExercisesByAcademy(
-                                        academyId =
-                                            userAcademyId
-                                    ) { result ->
-
-                                        result.onSuccess {
-                                                firebaseExercises ->
-
-                                            exercises =
-                                                firebaseExercises
-                                                    .filter {
-                                                        it.active
-                                                    }
-                                                    .sortedBy {
-                                                        it.name
-                                                    }
-
-                                            isLoadingExercises =
-                                                false
-
-                                            exerciseError =
-                                                null
-                                        }
-
-                                        result.onFailure {
-                                                exception ->
-
-                                            exercises =
-                                                emptyList()
-
-                                            isLoadingExercises =
-                                                false
-
-                                            exerciseError =
-                                                "No se pudieron cargar los ejercicios: ${exception.message}"
-                                        }
+                                academyId = userAcademyId
+                                exerciseRepository.getExercisesByAcademy(academyId = userAcademyId) { result ->
+                                    result.onSuccess { firebaseExercises ->
+                                        exercises = firebaseExercises.filter { it.active }.sortedBy { it.name }
+                                        isLoadingExercises = false
+                                        exerciseError = null
                                     }
+                                    result.onFailure { exception ->
+                                        exercises = emptyList()
+                                        isLoadingExercises = false
+                                        exerciseError = "No se pudieron cargar los ejercicios: ${exception.message}"
+                                    }
+                                }
                             }
                         }
-
-                        .addOnFailureListener {
-                                exception ->
-
-                            isLoadingExercises =
-                                false
-
-                            exerciseError =
-                                "No se pudo obtener tu academia: ${exception.message}"
+                        .addOnFailureListener { exception ->
+                            isLoadingExercises = false
+                            exerciseError = "No se pudo obtener tu academia: ${exception.message}"
                         }
                 }
             }
 
             CreateTrainingScreen(
-                availableExercises =
-                    exercises,
+                availableExercises = exercises,
+                isLoadingExercises = isLoadingExercises,
+                exerciseError = exerciseError,
+                onBack = { navController.popBackStack() },
+                onTrainingCreated = { team, date, time, objective, durationMinutes, exerciseIds ->
+                    val currentUser = FirebaseAuth.getInstance().currentUser
+                    val currentAcademy = academyId
 
-                isLoadingExercises =
-                    isLoadingExercises,
-
-                exerciseError =
-                    exerciseError,
-
-                onBack = {
-
-                    navController
-                        .popBackStack()
-                },
-
-                onTrainingCreated = {
-                        team,
-                        date,
-                        time,
-                        objective,
-                        durationMinutes,
-                        exerciseIds ->
-
-                    val user =
-                        FirebaseAuth
-                            .getInstance()
-                            .currentUser
-
-                    val currentAcademy =
-                        academyId
-
-                    if (
-                        user == null
-                    ) {
-
-                        Toast.makeText(
-                            appContext,
-                            "No existe una sesión activa.",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                    } else if (
-                        currentAcademy
-                            .isNullOrBlank()
-                    ) {
-
-                        Toast.makeText(
-                            appContext,
-                            "No tienes una academia asignada.",
-                            Toast.LENGTH_LONG
-                        ).show()
-
+                    if (currentUser == null) {
+                        Toast.makeText(appContext, "No existe una sesión activa.", Toast.LENGTH_LONG).show()
+                    } else if (currentAcademy.isNullOrBlank()) {
+                        Toast.makeText(appContext, "No tienes una academia asignada.", Toast.LENGTH_LONG).show()
                     } else {
-
                         try {
-
-                            val formatter =
-                                SimpleDateFormat(
-                                    "dd/MM/yyyy HH:mm",
-                                    Locale.getDefault()
-                                ).apply {
-
-                                    isLenient =
-                                        false
-                                }
-
-                            val parsedDate =
-                                formatter.parse(
-                                    "$date $time"
-                                )
-
-                            if (
-                                parsedDate == null
-                            ) {
-
-                                Toast.makeText(
-                                    appContext,
-                                    "Fecha u hora inválida.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-
-                            } else {
-
-                                val firebaseDate =
-                                    Timestamp(
-                                        parsedDate
-                                    )
-
-                                trainingRepository
-                                    .createTraining(
-                                        teamId =
-                                            team,
-
-                                        academyId =
-                                            currentAcademy,
-
-                                        coachUid =
-                                            user.uid,
-
-                                        title =
-                                            "Entrenamiento - $team",
-
-                                        objective =
-                                            objective,
-
-                                        date =
-                                            firebaseDate,
-
-                                        startTime =
-                                            time,
-
-                                        durationMinutes =
-                                            durationMinutes,
-
-                                        location =
-                                            "",
-
-                                        exerciseIds =
-                                            exerciseIds
-                                    ) { result ->
-
-                                        result.onSuccess {
-
-                                            Toast.makeText(
-                                                appContext,
-                                                "Entrenamiento guardado en Firebase",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-
-                                            navController
-                                                .popBackStack()
-                                        }
-
-                                        result.onFailure {
-                                                exception ->
-
-                                            Toast.makeText(
-                                                appContext,
-                                                "Error al guardar: ${exception.message}",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                    }
+                            val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).apply {
+                                isLenient = false
                             }
+                            val parsedDate = formatter.parse("$date $time")
 
-                        } catch (
-                            exception: Exception
-                        ) {
+                            if (parsedDate == null) {
+                                Toast.makeText(appContext, "Fecha u hora inválida.", Toast.LENGTH_LONG).show()
+                            } else {
+                                val firebaseDate = Timestamp(parsedDate)
 
-                            Toast.makeText(
-                                appContext,
-                                "Usa la fecha dd/MM/yyyy y hora HH:mm",
-                                Toast.LENGTH_LONG
-                            ).show()
+                                trainingRepository.createTraining(
+                                    teamId = team,
+                                    academyId = currentAcademy,
+                                    coachUid = currentUser.uid,
+                                    title = "Entrenamiento - $team",
+                                    objective = objective,
+                                    date = firebaseDate,
+                                    startTime = time,
+                                    durationMinutes = durationMinutes,
+                                    location = "",
+                                    exerciseIds = exerciseIds
+                                ) { result ->
+                                    result.onSuccess {
+                                        Toast.makeText(appContext, "Entrenamiento guardado en Firebase", Toast.LENGTH_SHORT).show()
+                                        navController.popBackStack()
+                                    }
+                                    result.onFailure { exception ->
+                                        Toast.makeText(appContext, "Error al guardar: ${exception.message}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            }
+                        } catch (exception: Exception) {
+                            Toast.makeText(appContext, "Usa la fecha dd/MM/yyyy y hora HH:mm", Toast.LENGTH_LONG).show()
                         }
                     }
                 }
             )
         }
 
-        // =========================================================
-        // DETALLE
-        // =========================================================
-
-        composable(
-            Screen.TrainingDetail.route
-        ) {
-
-            Text(
-                "Detalle del entrenamiento - Bruno"
-            )
+        // 10. Detalle de Entrenamiento
+        composable(Screen.TrainingDetail.route) {
+            Text("Detalle del entrenamiento - Bruno")
         }
 
-        // =========================================================
-        // ASISTENCIA
-        // =========================================================
-
-        composable(
-            Screen.Attendance.route
-        ) {
-
-            Text(
-                "Registro de asistencia - Bruno"
-            )
+        // 11. Registro de Asistencia
+        composable(Screen.Attendance.route) {
+            Text("Registro de asistencia - Bruno")
         }
     }
 }
