@@ -23,6 +23,10 @@ import pe.edu.esan.sportpro.ui.auth.AuthViewModel
 import pe.edu.esan.sportpro.ui.auth.LoginScreen
 import pe.edu.esan.sportpro.ui.auth.RegisterScreen
 import pe.edu.esan.sportpro.ui.home.HomeScreen
+import pe.edu.esan.sportpro.ui.players.CreatePlayerScreen
+import pe.edu.esan.sportpro.ui.players.PlayerProfileScreen
+import pe.edu.esan.sportpro.ui.players.PlayersScreen
+import pe.edu.esan.sportpro.ui.players.PlayerViewModel
 import pe.edu.esan.sportpro.ui.training.CreateExerciseScreen
 import pe.edu.esan.sportpro.ui.training.CreateTrainingScreen
 import pe.edu.esan.sportpro.ui.training.ExerciseLibraryScreen
@@ -36,6 +40,10 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Teams : Screen("teams")
     object Players : Screen("players")
+
+    object CreatePlayer : Screen("create_player")
+
+    object PlayerProfile : Screen("player_profile/{playerId}")
     object Trainings : Screen("trainings")
     object ExerciseLibrary : Screen("exercise_library")
     object CreateExercise : Screen("create_exercise")
@@ -51,6 +59,10 @@ fun AppNavigation() {
 
     val authViewModel = remember {
         AuthViewModel()
+    }
+
+    val playerViewModel = remember {
+        PlayerViewModel()
     }
 
     NavHost(
@@ -188,13 +200,99 @@ fun AppNavigation() {
         }
 
         // =========================================================
-        // JUGADORES
-        // =========================================================
+// JUGADORES
+// =========================================================
 
         composable(Screen.Players.route) {
 
-            Text(
-                "Pantalla de Jugadores - Integrante 5"
+            val role =
+                authViewModel.currentUser?.role
+                    ?: ""
+
+            if (role == "DT" || role == "ADM") {
+
+                val academyId =
+                    authViewModel.currentUser?.academyId
+                        ?: ""
+
+                PlayersScreen(
+                    academyId = academyId,
+                    viewModel = playerViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    },
+
+                    onAddPlayer = {
+                        navController.navigate(
+                            Screen.CreatePlayer.route
+                        )
+                    },
+
+                    onPlayerClick = { playerId ->
+                        navController.navigate(
+                            "player_profile/$playerId"
+                        )
+                    }
+                )
+
+            } else {
+
+                LaunchedEffect(Unit) {
+                    navController.popBackStack()
+                }
+
+                Text(
+                    text = "Acceso no autorizado"
+                )
+            }
+        }
+
+
+// =========================================================
+// CREAR JUGADOR
+// =========================================================
+
+        composable(Screen.CreatePlayer.route) {
+
+            val academyId =
+                authViewModel.currentUser?.academyId
+                    ?: ""
+
+            CreatePlayerScreen(
+                viewModel = playerViewModel,
+                academyId = academyId,
+
+                onBack = {
+                    navController.popBackStack()
+                },
+
+                onPlayerCreated = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+
+// =========================================================
+// PERFIL DEL JUGADOR
+// =========================================================
+
+        composable(Screen.PlayerProfile.route) {
+                backStackEntry ->
+
+            val playerId =
+                backStackEntry.arguments
+                    ?.getString("playerId")
+                    ?: ""
+
+            PlayerProfileScreen(
+                playerId = playerId,
+                viewModel = playerViewModel,
+
+                onBack = {
+
+                    navController.popBackStack()
+                }
             )
         }
 
