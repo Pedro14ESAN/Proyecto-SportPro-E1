@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,7 +21,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -40,33 +39,203 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.FirebaseAuth
 import pe.edu.esan.sportpro.data.model.Team
 import pe.edu.esan.sportpro.data.model.TeamCategories
+import pe.edu.esan.sportpro.data.model.User
 
 /**
- * HU-03 · Pantalla de equipos de una academia.
+ * HU-03 · Punto de entrada de la pantalla de equipos.
  *
+ * - Sin academia: el ADM puede crear una; los demás roles ven un aviso.
+ * - Con academia: lista de equipos activos e inactivos, crear, editar y desactivar.
  *
- * - Lista equipos activos e inactivos por separado (CA-06).
- * - Solo ADM y DT ven los botones de crear, editar y desactivar (CA-04).
- *   La seguridad real está en las reglas de Firestore.
- * - Desactivar no elimina: el equipo conserva su historial (CA-05).
+ * onAcademyCreated recibe el id de la academia nueva, para que quien navega
+ * actualice el usuario en memoria (ver AuthViewModel.updateAcademy).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeamsScreen(
     academyId: String,
     role: String,
     onBack: () -> Unit,
-    viewModel: TeamsViewModel = viewModel()
+    onAcademyCreated: (String) -> Unit
 ) {
     if (academyId.isBlank()) {
-        NoAcademyScreen(role = role, onBack = onBack)
-        return
+        NoAcademyScreen(
+            role = role,
+            onBack = onBack,
+            onAcademyCreated = onAcademyCreated
+        )
+    } else {
+        TeamsContent(
+            academyId = academyId,
+            role = role,
+            onBack = onBack
+        )
     }
+}
+
+// =====================================================================
+// SIN ACADEMIA
+// =====================================================================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NoAcademyScreen(
+    role: String,
+    onBack: () -> Unit,
+    onAcademyCreated: (String) -> Unit,
+    academyViewModel: AcademyViewModel = viewModel()
+) {
+    val state by academyViewModel.uiState.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
+    val isAdmin = role == User.ROLE_ADMIN
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Equipos") },
+                navigationIcon = { TextButton(onClick = onBack) { Text("Volver") } }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = if (isAdmin) {
+                    "Aún no has creado tu academia. Crea una para empezar a registrar equipos."
+                } else {
+                    "Aún no perteneces a una academia. Pide al administrador que te asigne una."
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
+            )
+
+            if (isAdmin) {
+                Spacer(Modifier.height(24.dp))
+                Button(
+                    onClick = {
+                        academyViewModel.clearError()
+                        showDialog = true
+                    }
+                ) {
+                    Text("Crear academia")
+                }
+            }
+        }
+    }
+
+    if (showDialog) {
+        CreateAcademyDialog(
+            isSaving = state.isSaving,
+            errorMessage = state.errorMessage,
+            onDismiss = {
+                showDialog = false
+                academyViewModel.clearError()
+            },
+            onSave = { name, description, address ->
+                academyViewModel.createAcademy(name, description, address) { newAcademyId ->
+                    showDialog = false
+                    onAcademyCreated(newAcademyId)
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun CreateAcademyDialog(
+    isSaving: Boolean,
+    errorMessage: String?,
+    onDismiss: () -> Unit,
+    onSave: (name: String, description: String, address: String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var nameError by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = { if (!isSaving) onDismiss() },
+        title = { Text("Crear academia") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        nameError = null
+                    },
+                    label = { Text("Nombre de la academia") },
+                    singleLine = true,
+                    isError = nameError != null,
+                    supportingText = { nameError?.let { Text(it) } },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Descripción (opcional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = address,
+                    onValueChange = { address = it },
+                    label = { Text("Dirección (opcional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !isSaving,
+                onClick = {
+                    if (name.isBlank()) {
+                        nameError = "El nombre de la academia es obligatorio"
+                    } else {
+                        onSave(name, description, address)
+                    }
+                }
+            ) {
+                Text(if (isSaving) "Guardando..." else "Crear")
+            }
+        },
+        dismissButton = {
+            TextButton(enabled = !isSaving, onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
+}
+
+// =====================================================================
+// CON ACADEMIA: LISTA DE EQUIPOS
+// =====================================================================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TeamsContent(
+    academyId: String,
+    role: String,
+    onBack: () -> Unit,
+    viewModel: TeamsViewModel = viewModel()
+) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -74,11 +243,11 @@ fun TeamsScreen(
     var editingTeam by remember { mutableStateOf<Team?>(null) }
     var teamToDeactivate by remember { mutableStateOf<Team?>(null) }
 
-    val canManage = role == "ADM" || role == "DT"
+    val canManage = role == User.ROLE_ADMIN || role == User.ROLE_COACH
 
     LaunchedEffect(academyId) { viewModel.load(academyId) }
 
-    // Los errores se muestran en un Snackbar, salvo cuando el formulario está abierto:
+    // Los errores salen en un Snackbar, salvo cuando el formulario está abierto:
     // ahí aparecen dentro del propio formulario.
     LaunchedEffect(state.errorMessage, showForm) {
         val message = state.errorMessage
@@ -104,7 +273,6 @@ fun TeamsScreen(
                         showForm = true
                     }
                 ) {
-
                     Text("+ Nuevo equipo")
                 }
             }
@@ -133,8 +301,11 @@ fun TeamsScreen(
                 if (state.activeTeams.isEmpty()) {
                     item {
                         Text(
-                            text = if (canManage) "Aún no hay equipos activos. Crea el primero con «Nuevo equipo»."
-                            else "Aún no hay equipos activos.",
+                            text = if (canManage) {
+                                "Aún no hay equipos activos. Crea el primero con «+ Nuevo equipo»."
+                            } else {
+                                "Aún no hay equipos activos."
+                            },
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -372,33 +543,4 @@ private fun TeamFormDialog(
             TextButton(enabled = !isSaving, onClick = onDismiss) { Text("Cancelar") }
         }
     )
-}
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NoAcademyScreen(role: String, onBack: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Equipos") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Volver") } }
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = if (role == "ADM") {
-                    "Aún no has creado tu academia. Crea una para empezar a registrar equipos."
-                } else {
-                    "Aún no perteneces a una academia. Pide al administrador que te asigne una."
-                },
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
 }

@@ -109,7 +109,8 @@ fun AppNavigation() {
             TeamsScreen(
                 academyId = currentUser?.academyId.orEmpty(),
                 role = currentUser?.role.orEmpty(),
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onAcademyCreated = { academyId -> authViewModel.updateAcademy(academyId) }
             )
         }
 
