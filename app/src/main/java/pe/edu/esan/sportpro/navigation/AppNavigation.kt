@@ -1,31 +1,34 @@
 package pe.edu.esan.sportpro.navigation
 
+import android.widget.Toast
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import pe.edu.esan.sportpro.ui.home.HomeScreen
-import pe.edu.esan.sportpro.ui.training.TrainingScreen
-import pe.edu.esan.sportpro.ui.training.ExerciseLibraryScreen
-import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import pe.edu.esan.sportpro.data.model.Exercise
 import pe.edu.esan.sportpro.data.model.Training
 import pe.edu.esan.sportpro.data.repository.ExerciseRepository
 import pe.edu.esan.sportpro.data.repository.TrainingRepository
+import pe.edu.esan.sportpro.ui.auth.AuthViewModel
+import pe.edu.esan.sportpro.ui.auth.LoginScreen
+import pe.edu.esan.sportpro.ui.auth.RegisterScreen
+import pe.edu.esan.sportpro.ui.home.HomeScreen
 import pe.edu.esan.sportpro.ui.training.CreateExerciseScreen
 import pe.edu.esan.sportpro.ui.training.CreateTrainingScreen
+import pe.edu.esan.sportpro.ui.training.ExerciseLibraryScreen
+import pe.edu.esan.sportpro.ui.training.TrainingScreen
 import java.text.SimpleDateFormat
 import java.util.Locale
-import com.google.firebase.Timestamp
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -43,36 +46,161 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun AppNavigation() {
+
     val navController = rememberNavController()
+
+    val authViewModel = remember {
+        AuthViewModel()
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Login.route
     ) {
+
+        // =========================================================
+        // LOGIN
+        // =========================================================
+
         composable(Screen.Login.route) {
-            Text("Pantalla de Login asignado al INTEGRANTE 2")
-        }
 
-        composable(Screen.Register.route) {
-            Text("Pantalla de Registro asigndado al INTEGRANTE 2")
-        }
+            LoginScreen(
+                viewModel = authViewModel,
 
-        composable(Screen.Home.route) {
-            HomeScreen(
-                onNavigateToTeams = { navController.navigate(Screen.Teams.route) },
-                onNavigateToPlayers = { navController.navigate(Screen.Players.route) },
-                onNavigateToTrainings = { navController.navigate(Screen.Trainings.route) },
-                onLogout = { navController.navigate(Screen.Login.route) }
+                onLoginSuccess = {
+
+                    navController.navigate(
+                        Screen.Home.route
+                    ) {
+
+                        popUpTo(
+                            Screen.Login.route
+                        ) {
+                            inclusive = true
+                        }
+                    }
+                },
+
+                onGoToRegister = {
+
+                    navController.navigate(
+                        Screen.Register.route
+                    )
+                }
             )
         }
 
-        composable(Screen.Teams.route) {
-            Text("Pantalla de Equipos (Asignada al Compañero 4)")
+        // =========================================================
+        // REGISTRO
+        // =========================================================
+
+        composable(Screen.Register.route) {
+
+            RegisterScreen(
+                viewModel = authViewModel,
+
+                onRegisterSuccess = {
+
+                    authViewModel.logout()
+
+                    navController.navigate(
+                        Screen.Login.route
+                    ) {
+
+                        popUpTo(
+                            Screen.Register.route
+                        ) {
+                            inclusive = true
+                        }
+                    }
+                },
+
+                onGoToLogin = {
+
+                    navController.popBackStack()
+                }
+            )
         }
 
-        composable(Screen.Players.route) {
-            Text("Pantalla de Jugadores (Asignada al Compañero 5)")
+        // =========================================================
+        // HOME
+        // =========================================================
+
+        composable(Screen.Home.route) {
+
+            HomeScreen(
+                userName =
+                    authViewModel.currentUser?.fullName
+                        ?: "Usuario SportPro",
+
+                role =
+                    authViewModel.currentUser?.role
+                        ?: "",
+
+                onNavigateToTeams = {
+
+                    navController.navigate(
+                        Screen.Teams.route
+                    )
+                },
+
+                onNavigateToPlayers = {
+
+                    navController.navigate(
+                        Screen.Players.route
+                    )
+                },
+
+                onNavigateToTrainings = {
+
+                    navController.navigate(
+                        Screen.Trainings.route
+                    )
+                },
+
+                onLogout = {
+
+                    authViewModel.logout()
+
+                    navController.navigate(
+                        Screen.Login.route
+                    ) {
+
+                        popUpTo(
+                            Screen.Home.route
+                        ) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
         }
+
+        // =========================================================
+        // EQUIPOS
+        // =========================================================
+
+        composable(Screen.Teams.route) {
+
+            Text(
+                "Pantalla de Equipos - Integrante 4"
+            )
+        }
+
+        // =========================================================
+        // JUGADORES
+        // =========================================================
+
+        composable(Screen.Players.route) {
+
+            Text(
+                "Pantalla de Jugadores - Integrante 5"
+            )
+        }
+
+        // =========================================================
+        // ENTRENAMIENTOS
+        // =========================================================
 
         composable(Screen.Trainings.route) {
 
@@ -99,12 +227,14 @@ fun AppNavigation() {
                 mutableStateOf<String?>(null)
             }
 
-
-            LaunchedEffect(currentUser?.uid) {
+            LaunchedEffect(
+                currentUser?.uid
+            ) {
 
                 if (currentUser == null) {
 
-                    isLoadingTrainings = false
+                    isLoadingTrainings =
+                        false
 
                     trainingError =
                         "No existe una sesión activa."
@@ -135,7 +265,6 @@ fun AppNavigation() {
                                     null
                             }
 
-
                             result.onFailure {
                                     exception ->
 
@@ -152,10 +281,9 @@ fun AppNavigation() {
                 }
             }
 
-
             TrainingScreen(
-
-                trainings = trainings,
+                trainings =
+                    trainings,
 
                 isLoading =
                     isLoadingTrainings,
@@ -164,7 +292,9 @@ fun AppNavigation() {
                     trainingError,
 
                 onBack = {
-                    navController.popBackStack()
+
+                    navController
+                        .popBackStack()
                 },
 
                 onNavigateToExerciseLibrary = {
@@ -183,11 +313,18 @@ fun AppNavigation() {
             )
         }
 
-        composable(Screen.ExerciseLibrary.route) {
+        // =========================================================
+        // BIBLIOTECA DE EJERCICIOS
+        // =========================================================
 
-            val exerciseRepository = remember {
-                ExerciseRepository()
-            }
+        composable(
+            Screen.ExerciseLibrary.route
+        ) {
+
+            val exerciseRepository =
+                remember {
+                    ExerciseRepository()
+                }
 
             val currentUser =
                 FirebaseAuth
@@ -208,8 +345,9 @@ fun AppNavigation() {
                 mutableStateOf<String?>(null)
             }
 
-
-            LaunchedEffect(currentUser?.uid) {
+            LaunchedEffect(
+                currentUser?.uid
+            ) {
 
                 if (currentUser == null) {
 
@@ -223,21 +361,27 @@ fun AppNavigation() {
                     FirebaseFirestore
                         .getInstance()
                         .collection("users")
-                        .document(currentUser.uid)
+                        .document(
+                            currentUser.uid
+                        )
                         .get()
 
-                        .addOnSuccessListener { userDocument ->
+                        .addOnSuccessListener {
+                                userDocument ->
 
                             val academyId =
                                 userDocument
-                                    .getString("academyId")
+                                    .getString(
+                                        "academyId"
+                                    )
 
                             if (
                                 academyId
                                     .isNullOrBlank()
                             ) {
 
-                                isLoading = false
+                                isLoading =
+                                    false
 
                                 errorMessage =
                                     "Tu usuario no tiene una academia asignada."
@@ -246,7 +390,8 @@ fun AppNavigation() {
 
                                 exerciseRepository
                                     .getExercisesByAcademy(
-                                        academyId = academyId
+                                        academyId =
+                                            academyId
                                     ) { result ->
 
                                         result.onSuccess {
@@ -284,7 +429,8 @@ fun AppNavigation() {
                         .addOnFailureListener {
                                 exception ->
 
-                            isLoading = false
+                            isLoading =
+                                false
 
                             errorMessage =
                                 "No se pudo obtener tu academia: ${exception.message}"
@@ -292,18 +438,20 @@ fun AppNavigation() {
                 }
             }
 
-
             ExerciseLibraryScreen(
+                exercises =
+                    exercises,
 
-                exercises = exercises,
+                isLoading =
+                    isLoading,
 
-                isLoading = isLoading,
-
-                errorMessage = errorMessage,
+                errorMessage =
+                    errorMessage,
 
                 onBack = {
 
-                    navController.popBackStack()
+                    navController
+                        .popBackStack()
                 },
 
                 onCreateExercise = {
@@ -315,7 +463,13 @@ fun AppNavigation() {
             )
         }
 
-        composable(Screen.CreateExercise.route) {
+        // =========================================================
+        // CREAR EJERCICIO
+        // =========================================================
+
+        composable(
+            Screen.CreateExercise.route
+        ) {
 
             val appContext =
                 LocalContext.current
@@ -344,8 +498,9 @@ fun AppNavigation() {
                             .getInstance()
                             .currentUser
 
-
-                    if (currentUser == null) {
+                    if (
+                        currentUser == null
+                    ) {
 
                         Toast.makeText(
                             appContext,
@@ -358,7 +513,9 @@ fun AppNavigation() {
                         FirebaseFirestore
                             .getInstance()
                             .collection("users")
-                            .document(currentUser.uid)
+                            .document(
+                                currentUser.uid
+                            )
                             .get()
 
                             .addOnSuccessListener {
@@ -385,7 +542,6 @@ fun AppNavigation() {
 
                                     exerciseRepository
                                         .createExercise(
-
                                             academyId =
                                                 academyId,
 
@@ -403,32 +559,29 @@ fun AppNavigation() {
 
                                             durationMinutes =
                                                 durationMinutes
-
                                         ) { result ->
 
-                                            result
-                                                .onSuccess {
+                                            result.onSuccess {
 
-                                                    Toast.makeText(
-                                                        appContext,
-                                                        "Ejercicio guardado en Firebase",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
+                                                Toast.makeText(
+                                                    appContext,
+                                                    "Ejercicio guardado en Firebase",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
 
-                                                    navController
-                                                        .popBackStack()
-                                                }
+                                                navController
+                                                    .popBackStack()
+                                            }
 
-                                            result
-                                                .onFailure {
-                                                        exception ->
+                                            result.onFailure {
+                                                    exception ->
 
-                                                    Toast.makeText(
-                                                        appContext,
-                                                        "Error: ${exception.message}",
-                                                        Toast.LENGTH_LONG
-                                                    ).show()
-                                                }
+                                                Toast.makeText(
+                                                    appContext,
+                                                    "Error: ${exception.message}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
                                         }
                                 }
                             }
@@ -447,17 +600,26 @@ fun AppNavigation() {
             )
         }
 
-        composable(Screen.CreateTraining.route) {
+        // =========================================================
+        // CREAR ENTRENAMIENTO
+        // =========================================================
 
-            val appContext = LocalContext.current
+        composable(
+            Screen.CreateTraining.route
+        ) {
 
-            val exerciseRepository = remember {
-                ExerciseRepository()
-            }
+            val appContext =
+                LocalContext.current
 
-            val trainingRepository = remember {
-                TrainingRepository()
-            }
+            val exerciseRepository =
+                remember {
+                    ExerciseRepository()
+                }
+
+            val trainingRepository =
+                remember {
+                    TrainingRepository()
+                }
 
             val currentUser =
                 FirebaseAuth
@@ -482,12 +644,14 @@ fun AppNavigation() {
                 mutableStateOf<String?>(null)
             }
 
-
-            LaunchedEffect(currentUser?.uid) {
+            LaunchedEffect(
+                currentUser?.uid
+            ) {
 
                 if (currentUser == null) {
 
-                    isLoadingExercises = false
+                    isLoadingExercises =
+                        false
 
                     exerciseError =
                         "No existe una sesión activa."
@@ -497,18 +661,27 @@ fun AppNavigation() {
                     FirebaseFirestore
                         .getInstance()
                         .collection("users")
-                        .document(currentUser.uid)
+                        .document(
+                            currentUser.uid
+                        )
                         .get()
 
-                        .addOnSuccessListener { userDocument ->
+                        .addOnSuccessListener {
+                                userDocument ->
 
                             val userAcademyId =
                                 userDocument
-                                    .getString("academyId")
+                                    .getString(
+                                        "academyId"
+                                    )
 
-                            if (userAcademyId.isNullOrBlank()) {
+                            if (
+                                userAcademyId
+                                    .isNullOrBlank()
+                            ) {
 
-                                isLoadingExercises = false
+                                isLoadingExercises =
+                                    false
 
                                 exerciseError =
                                     "Tu usuario no tiene una academia asignada."
@@ -571,9 +744,7 @@ fun AppNavigation() {
                 }
             }
 
-
             CreateTrainingScreen(
-
                 availableExercises =
                     exercises,
 
@@ -605,8 +776,9 @@ fun AppNavigation() {
                     val currentAcademy =
                         academyId
 
-
-                    if (user == null) {
+                    if (
+                        user == null
+                    ) {
 
                         Toast.makeText(
                             appContext,
@@ -615,7 +787,8 @@ fun AppNavigation() {
                         ).show()
 
                     } else if (
-                        currentAcademy.isNullOrBlank()
+                        currentAcademy
+                            .isNullOrBlank()
                     ) {
 
                         Toast.makeText(
@@ -633,7 +806,9 @@ fun AppNavigation() {
                                     "dd/MM/yyyy HH:mm",
                                     Locale.getDefault()
                                 ).apply {
-                                    isLenient = false
+
+                                    isLenient =
+                                        false
                                 }
 
                             val parsedDate =
@@ -641,7 +816,9 @@ fun AppNavigation() {
                                     "$date $time"
                                 )
 
-                            if (parsedDate == null) {
+                            if (
+                                parsedDate == null
+                            ) {
 
                                 Toast.makeText(
                                     appContext,
@@ -652,12 +829,14 @@ fun AppNavigation() {
                             } else {
 
                                 val firebaseDate =
-                                    Timestamp(parsedDate)
+                                    Timestamp(
+                                        parsedDate
+                                    )
 
                                 trainingRepository
                                     .createTraining(
-
-                                        teamId = team,
+                                        teamId =
+                                            team,
 
                                         academyId =
                                             currentAcademy,
@@ -680,11 +859,11 @@ fun AppNavigation() {
                                         durationMinutes =
                                             durationMinutes,
 
-                                        location = "",
+                                        location =
+                                            "",
 
                                         exerciseIds =
                                             exerciseIds
-
                                     ) { result ->
 
                                         result.onSuccess {
@@ -726,12 +905,30 @@ fun AppNavigation() {
             )
         }
 
-        composable(Screen.TrainingDetail.route) {
-            Text("Detalle del entrenamiento - Bruno")
+        // =========================================================
+        // DETALLE
+        // =========================================================
+
+        composable(
+            Screen.TrainingDetail.route
+        ) {
+
+            Text(
+                "Detalle del entrenamiento - Bruno"
+            )
         }
 
-        composable(Screen.Attendance.route) {
-            Text("Registro de asistencia - Bruno")
+        // =========================================================
+        // ASISTENCIA
+        // =========================================================
+
+        composable(
+            Screen.Attendance.route
+        ) {
+
+            Text(
+                "Registro de asistencia - Bruno"
+            )
         }
     }
 }
