@@ -1,0 +1,244 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================
+    // FUNCIONES AUXILIARES
+    // =========================================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userData() {
+      return get(
+        /databases/$(database)/documents/users/$(request.auth.uid)
+      ).data;
+    }
+
+    function isAdmin() {
+      return signedIn() && userData().role == "ADM";
+    }
+
+    function isCoach() {
+      return signedIn() && userData().role == "DT";
+    }
+
+
+    // =========================================================
+    // USUARIOS
+    // =========================================================
+
+    match /users/{userId} {
+
+      allow create: if signedIn()
+      && request.auth.uid == userId;
+
+      allow read: if signedIn()
+      && (
+        request.auth.uid == userId
+        || isAdmin()
+      );
+
+      allow update: if signedIn()
+      && (
+        isAdmin()
+        ||
+        (
+          request.auth.uid == userId
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.uid == resource.data.uid
+        )
+      );
+
+      allow delete: if false;
+    }
+
+
+    // =========================================================
+    // ACADEMIAS
+    // =========================================================
+
+    match /academies/{academyId} {
+
+      allow read: if signedIn();
+
+      allow create, update: if isAdmin();
+
+      allow delete: if false;
+    }
+
+
+    // =========================================================
+    // EQUIPOS
+    // =========================================================
+
+    match /teams/{teamId} {
+
+      allow read: if signedIn();
+
+      allow create: if isAdmin()
+      ||
+      (
+        isCoach()
+        && request.resource.data.coachUid == request.auth.uid
+      );
+
+      allow update: if isAdmin()
+      ||
+      (
+        isCoach()
+        && resource.data.coachUid == request.auth.uid
+      );
+
+      allow delete: if false;
+    }
+
+
+    // =========================================================
+    // JUGADORES
+    // =========================================================
+
+    match /players/{playerId} {
+
+      allow read: if signedIn();
+
+      allow create, update: if isAdmin() || isCoach();
+
+      allow delete: if false;
+    }
+
+
+    // =========================================================
+    // ENTRENAMIENTOS
+    // =========================================================
+
+    match /trainings/{trainingId} {
+
+      allow read: if signedIn();
+
+      allow create: if isAdmin()
+      ||
+      (
+        isCoach()
+        && request.resource.data.coachUid == request.auth.uid
+      );
+
+      allow update: if isAdmin()
+      ||
+      (
+        isCoach()
+        && resource.data.coachUid == request.auth.uid
+      );
+
+      allow delete: if false;
+    }
+
+
+    // =========================================================
+    // ASISTENCIA
+    // =========================================================
+
+    match /attendance/{attendanceId} {
+
+      allow read: if signedIn();
+
+      allow create, update: if isAdmin() || isCoach();
+
+      allow delete: if false;
+    }
+
+
+    // =========================================================
+    // PARTIDOS
+    // =========================================================
+
+    match /matches/{matchId} {
+
+      // Usuarios autenticados pueden consultar partidos.
+      allow read: if signedIn();
+
+      // ADM puede crear cualquier partido.
+      // DT solamente puede crear uno indicando su propio UID.
+      allow create: if isAdmin()
+      ||
+      (
+        isCoach()
+        && request.resource.data.createdBy == request.auth.uid
+      );
+
+      // Solo ADM o DT pueden modificar partidos.
+      allow update: if isAdmin() || isCoach();
+
+      // No eliminamos partidos para conservar historial.
+      allow delete: if false;
+
+
+      // =======================================================
+      // EVENTOS DEL PARTIDO
+      // matches/{matchId}/events/{eventId}
+      // =======================================================
+
+      match /events/{eventId} {
+
+        // Usuarios autenticados pueden ver el timeline.
+        allow read: if signedIn();
+
+        // Solo ADM o DT pueden registrar eventos.
+        allow create: if isAdmin() || isCoach();
+
+        // Correcciones/anulaciones únicamente por ADM o DT.
+        allow update: if isAdmin() || isCoach();
+
+        // Nunca se elimina físicamente un evento.
+        allow delete: if false;
+      }
+    }
+
+
+    // =========================================================
+    // RESÚMENES IA
+    // =========================================================
+
+    match /ai_summaries/{summaryId} {
+
+      // Usuarios autenticados pueden consultar
+      // resúmenes permitidos por la app.
+      allow read: if signedIn();
+
+      // Durante el desarrollo permitimos ADM/DT.
+      // En producción, la creación del borrador de IA
+      // se realizará desde backend seguro.
+      allow create: if isAdmin() || isCoach();
+
+      // DT o ADM pueden revisar/aprobar.
+      allow update: if isAdmin() || isCoach();
+
+      // No se elimina para conservar trazabilidad.
+      allow delete: if false;
+    }
+
+      // =========================================================
+      // RESERVA DE NOMBRES DE EQUIPO (HU-03, evita duplicados)
+      // =========================================================
+
+      match /team_keys/{keyId} {
+        allow get: if isAdmin() || isCoach();
+        allow list: if false;
+        allow create: if (isAdmin() || isCoach())
+        && request.resource.data.keys().hasOnly(['teamId', 'academyId']);
+        allow update: if false;
+        allow delete: if isAdmin() || isCoach();
+        }
+
+
+    // =========================================================
+    // BLOQUEO GENERAL
+    // =========================================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
