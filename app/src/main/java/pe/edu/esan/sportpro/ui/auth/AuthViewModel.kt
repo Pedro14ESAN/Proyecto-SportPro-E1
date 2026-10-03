@@ -164,4 +164,7 @@ class AuthViewModel : ViewModel() {
     fun clearError() {
         errorMessage = null
     }
+    fun updateAcademy(academyId: String) {
+        currentUser = currentUser?.copy(academyId = academyId)
+    }
 }
