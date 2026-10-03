@@ -219,6 +219,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+      // =========================================================
+      // RESERVA DE NOMBRES DE EQUIPO (HU-03, evita duplicados)
+      // =========================================================
+
+      match /team_keys/{keyId} {
+        allow get: if isAdmin() || isCoach();
+        allow list: if false;
+        allow create: if (isAdmin() || isCoach())
+        && request.resource.data.keys().hasOnly(['teamId', 'academyId']);
+        allow update: if false;
+        allow delete: if isAdmin() || isCoach();
+        }
+
 
     // =========================================================
     // BLOQUEO GENERAL
