@@ -1,6 +1,7 @@
 package pe.edu.esan.sportpro.navigation
 
 import android.widget.Toast
+
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -9,34 +10,54 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+
 import pe.edu.esan.sportpro.data.model.Exercise
 import pe.edu.esan.sportpro.data.model.Training
 import pe.edu.esan.sportpro.data.repository.ExerciseRepository
 import pe.edu.esan.sportpro.data.repository.TrainingRepository
+
 import pe.edu.esan.sportpro.ui.auth.AuthViewModel
 import pe.edu.esan.sportpro.ui.auth.LoginScreen
 import pe.edu.esan.sportpro.ui.auth.RegisterScreen
 import pe.edu.esan.sportpro.ui.home.HomeScreen
+
+import pe.edu.esan.sportpro.ui.onboarding.OrganizationIntroScreen
+import pe.edu.esan.sportpro.ui.onboarding.WelcomeScreen
+
 import pe.edu.esan.sportpro.ui.training.CreateExerciseScreen
 import pe.edu.esan.sportpro.ui.training.CreateTrainingScreen
 import pe.edu.esan.sportpro.ui.training.ExerciseLibraryScreen
 import pe.edu.esan.sportpro.ui.training.TrainingScreen
+
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+
 sealed class Screen(val route: String) {
+
+    // Onboarding
+    object Welcome : Screen("welcome")
+    object IntroOrganization : Screen("intro_organization")
+
+    // Autenticación
     object Login : Screen("login")
     object Register : Screen("register")
+
+    // Principal
     object Home : Screen("home")
     object Teams : Screen("teams")
     object Players : Screen("players")
     object Trainings : Screen("trainings")
+
+    // Entrenamientos
     object ExerciseLibrary : Screen("exercise_library")
     object CreateExercise : Screen("create_exercise")
     object CreateTraining : Screen("create_training")
@@ -44,82 +65,366 @@ sealed class Screen(val route: String) {
     object Attendance : Screen("attendance")
 }
 
+
 @Composable
 fun AppNavigation() {
+
     val navController = rememberNavController()
     val authViewModel = remember { AuthViewModel() }
+    val context = LocalContext.current
 
+    // Verificamos si Firebase mantiene una sesión activa.
     val currentUser = FirebaseAuth.getInstance().currentUser
 
-    val initialDestination = if (currentUser != null) {
-        Screen.Home.route
-    } else {
-        Screen.Login.route
-    }
+    val initialDestination =
+        if (currentUser != null) {
+            Screen.Home.route
+        } else {
+            Screen.Welcome.route
+        }
+
 
     NavHost(
         navController = navController,
         startDestination = initialDestination
     ) {
-        // 1. Login
-        composable(Screen.Login.route) {
-            LoginScreen(
-                viewModel = authViewModel,
-                onLoginSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                },
-                onGoToRegister = {
-                    navController.navigate(Screen.Register.route)
+
+        // =====================================================
+        // 0. PORTADA
+        // =====================================================
+
+        composable(Screen.Welcome.route) {
+
+            WelcomeScreen(
+                onStart = {
+                    navController.navigate(
+                        Screen.IntroOrganization.route
+                    )
                 }
             )
         }
 
-        // 2. Registro
+
+        // =====================================================
+        // 0.1 INTRODUCCIÓN
+        // =====================================================
+
+        composable(Screen.IntroOrganization.route) {
+
+            OrganizationIntroScreen(
+
+                onBack = {
+                    navController.popBackStack()
+                },
+
+                onContinue = {
+
+                    navController.navigate(
+                        Screen.Login.route
+                    ) {
+
+                        popUpTo(Screen.Welcome.route) {
+                            inclusive = true
+                        }
+                    }
+                },
+
+                onSkip = {
+
+                    navController.navigate(
+                        Screen.Login.route
+                    ) {
+
+                        popUpTo(Screen.Welcome.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
+        }
+
+
+        // =====================================================
+        // 1. LOGIN
+        // =====================================================
+
+        composable(Screen.Login.route) {
+
+            LoginScreen(
+
+                onLoginClick = { email, password ->
+
+                    if (
+                        email.isBlank()
+                        || password.isBlank()
+                    ) {
+
+                        Toast.makeText(
+                            context,
+                            "Completa el correo y la contraseña",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                    } else {
+
+                        FirebaseAuth
+                            .getInstance()
+                            .signInWithEmailAndPassword(
+                                email.trim(),
+                                password
+                            )
+                            .addOnSuccessListener {
+
+                                navController.navigate(
+                                    Screen.Home.route
+                                ) {
+
+                                    popUpTo(
+                                        Screen.Login.route
+                                    ) {
+                                        inclusive = true
+                                    }
+                                }
+                            }
+                            .addOnFailureListener { exception ->
+
+                                Toast.makeText(
+                                    context,
+                                    "No se pudo iniciar sesión: ${exception.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                    }
+                },
+
+                onNavigateToRegister = {
+
+                    navController.navigate(
+                        Screen.Register.route
+                    )
+                },
+
+                onForgotPassword = {
+
+                    Toast.makeText(
+                        context,
+                        "Recuperación de contraseña próximamente",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+        }
+
+
+        // =====================================================
+        // 2. REGISTRO
+        // =====================================================
+
         composable(Screen.Register.route) {
+
             RegisterScreen(
                 viewModel = authViewModel,
+
                 onRegisterSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+
+                    navController.navigate(
+                        Screen.Home.route
+                    ) {
+
+                        popUpTo(Screen.Register.route) {
+                            inclusive = true
+                        }
                     }
                 },
+
                 onGoToLogin = {
-                    navController.popBackStack()
-                }
-            )
-        }
 
-        // 3. Home
-        composable(Screen.Home.route) {
-            HomeScreen(
-                onNavigateToTeams = {
-                    navController.navigate(Screen.Teams.route)
-                },
-                onNavigateToPlayers = {
-                    navController.navigate(Screen.Players.route)
-                },
-                onNavigateToTrainings = {
-                    navController.navigate(Screen.Trainings.route)
-                },
-                onLogout = {
-                    FirebaseAuth.getInstance().signOut()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
+                    navController.navigate(
+                        Screen.Login.route
+                    ) {
+
+                        popUpTo(Screen.Register.route) {
+                            inclusive = true
+                        }
                     }
                 }
             )
         }
 
-        // 4. Equipos
-        composable(Screen.Teams.route) {
-            Text("Pantalla de Equipos - Integrante 4")
+
+        // =====================================================
+        // 3. HOME
+        // =====================================================
+
+        composable(Screen.Home.route) {
+
+            HomeScreen(
+
+                onNavigateToTeams = {
+
+                    navController.navigate(
+                        Screen.Teams.route
+                    )
+                },
+
+                onNavigateToPlayers = {
+
+                    navController.navigate(
+                        Screen.Players.route
+                    )
+                },
+
+                onNavigateToTrainings = {
+
+                    navController.navigate(
+                        Screen.Trainings.route
+                    )
+                },
+
+                onLogout = {
+
+                    FirebaseAuth
+                        .getInstance()
+                        .signOut()
+
+                    navController.navigate(
+                        Screen.Login.route
+                    ) {
+
+                        popUpTo(0) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
         }
 
-        // 5. Jugadores
+
+        // =====================================================
+        // 4. EQUIPOS
+        // =====================================================
+
+        composable(Screen.Teams.route) {
+
+            Text(
+                "Pantalla de Equipos - Integrante 4"
+            )
+        }
+
+
+        // =====================================================
+        // 5. JUGADORES
+        // =====================================================
+
         composable(Screen.Players.route) {
-            Text("Pantalla de Jugadores - Integrante 5")
+
+            Text(
+                "Pantalla de Jugadores - Integrante 5"
+            )
+        }
+
+
+        // =====================================================
+        // 6. ENTRENAMIENTOS
+        // =====================================================
+
+        composable(Screen.Trainings.route) {
+
+            val trainingRepository =
+                remember {
+                    TrainingRepository()
+                }
+
+            val user =
+                FirebaseAuth
+                    .getInstance()
+                    .currentUser
+
+            var trainings by remember {
+                mutableStateOf<List<Training>>(
+                    emptyList()
+                )
+            }
+
+            var isLoadingTrainings by remember {
+                mutableStateOf(true)
+            }
+
+            var trainingError by remember {
+                mutableStateOf<String?>(null)
+            }
+
+            LaunchedEffect(user?.uid) {
+
+                if (user == null) {
+
+                    isLoadingTrainings = false
+
+                    trainingError =
+                        "No existe una sesión activa."
+
+                } else {
+
+                    trainingRepository
+                        .getTrainingsByCoach(
+                            coachUid = user.uid
+                        ) { result ->
+
+                            result.onSuccess {
+                                    firebaseTrainings ->
+
+                                trainings =
+                                    firebaseTrainings
+                                        .sortedByDescending {
+                                            it.date?.seconds ?: 0
+                                        }
+
+                                isLoadingTrainings =
+                                    false
+
+                                trainingError =
+                                    null
+                            }
+
+                            result.onFailure {
+                                    exception ->
+
+                                trainings =
+                                    emptyList()
+
+                                isLoadingTrainings =
+                                    false
+
+                                trainingError =
+                                    "No se pudieron cargar los entrenamientos: ${exception.message}"
+                            }
+                        }
+                }
+            }
+
+            TrainingScreen(
+                trainings = trainings,
+                isLoading = isLoadingTrainings,
+                errorMessage = trainingError,
+
+                onBack = {
+                    navController.popBackStack()
+                },
+
+                onNavigateToExerciseLibrary = {
+
+                    navController.navigate(
+                        Screen.ExerciseLibrary.route
+                    )
+                },
+
+                onCreateTraining = {
+
+                    navController.navigate(
+                        Screen.CreateTraining.route
+                    )
+                }
+            )
         }
 
         // 6. Entrenamientos
