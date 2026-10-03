@@ -21,6 +21,15 @@ class AuthRepository {
         onResult: (Result<User>) -> Unit
     ) {
 
+        if (role == User.ROLE_ADMIN) {
+            onResult(
+                Result.failure(
+                    Exception("El rol Administrador no está disponible para registro público")
+                )
+            )
+            return
+        }
+
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
 
@@ -57,7 +66,18 @@ class AuthRepository {
                         onResult(Result.success(user))
                     }
                     .addOnFailureListener { exception ->
-                        onResult(Result.failure(exception))
+
+                        // Si Firestore falla, eliminamos la cuenta recién creada
+                        // para no dejar un usuario incompleto.
+                        auth.currentUser?.delete()
+                            ?.addOnCompleteListener {
+                                auth.signOut()
+                                onResult(Result.failure(exception))
+                            }
+                            ?: run {
+                                auth.signOut()
+                                onResult(Result.failure(exception))
+                            }
                     }
             }
             .addOnFailureListener { exception ->
