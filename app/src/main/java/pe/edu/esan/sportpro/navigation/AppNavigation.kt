@@ -1,5 +1,6 @@
 package pe.edu.esan.sportpro.navigation
 
+
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
@@ -11,6 +12,9 @@ import androidx.compose.runtime.remember
 import pe.edu.esan.sportpro.ui.auth.AuthViewModel
 import pe.edu.esan.sportpro.ui.auth.LoginScreen
 import pe.edu.esan.sportpro.ui.auth.RegisterScreen
+import pe.edu.esan.sportpro.ui.teams.TeamsScreen
+
+private const val TEMP_ACADEMY_ID = "academia-demo"
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -100,7 +104,13 @@ fun AppNavigation() {
         }
 
         composable(Screen.Teams.route) {
-            Text("Pantalla de Equipos - Integrante 4")
+            val currentUser = authViewModel.currentUser
+
+            TeamsScreen(
+                academyId = currentUser?.academyId.orEmpty(),
+                role = currentUser?.role.orEmpty(),
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Players.route) {
