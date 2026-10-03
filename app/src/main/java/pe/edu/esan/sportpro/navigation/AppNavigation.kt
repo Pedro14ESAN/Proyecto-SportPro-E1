@@ -71,8 +71,10 @@ fun AppNavigation() {
         composable(Screen.Home.route) {
 
             HomeScreen(
-                userName = "Usuario SportPro",
-                role = "DT",
+                userName = authViewModel.currentUser?.fullName
+                    ?: "Usuario SportPro",
+                role = authViewModel.currentUser?.role
+                    ?: "",
 
                 onNavigateToTeams = {
                     navController.navigate(Screen.Teams.route)
@@ -87,6 +89,7 @@ fun AppNavigation() {
                 },
 
                 onLogout = {
+                    authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) {
                             inclusive = true

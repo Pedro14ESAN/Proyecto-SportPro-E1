@@ -166,7 +166,7 @@ fun LoginScreen(
 
         TextButton(
             onClick = {
-                // Lo implementaremos después si queda tiempo.
+                // pendiente de implementarrxd
             },
             modifier = Modifier.fillMaxWidth()
         ) {

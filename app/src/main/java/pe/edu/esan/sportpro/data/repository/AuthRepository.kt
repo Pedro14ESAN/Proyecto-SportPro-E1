@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import pe.edu.esan.sportpro.data.model.User
+import android.util.Log
 
 class AuthRepository {
 
@@ -66,9 +67,14 @@ class AuthRepository {
                         onResult(Result.success(user))
                     }
                     .addOnFailureListener { exception ->
-
+                        Log.e(
+                            "AuthRepository",
+                            "Error al guardar perfil en Firestore",
+                            exception
+                        )
                         // Si Firestore falla, eliminamos la cuenta recién creada
                         // para no dejar un usuario incompleto.
+
                         auth.currentUser?.delete()
                             ?.addOnCompleteListener {
                                 auth.signOut()
@@ -81,6 +87,11 @@ class AuthRepository {
                     }
             }
             .addOnFailureListener { exception ->
+                Log.e(
+                    "AuthRepository",
+                    "Error al crear usuario en Firebase Authentication",
+                    exception
+                )
                 onResult(Result.failure(exception))
             }
     }

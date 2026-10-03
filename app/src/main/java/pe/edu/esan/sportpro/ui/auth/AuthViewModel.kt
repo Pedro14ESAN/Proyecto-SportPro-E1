@@ -118,41 +118,40 @@ class AuthViewModel : ViewModel() {
             password = password
         ) { loginResult ->
 
-            loginResult.onSuccess { firebaseUser ->
+            loginResult.fold(
+                onSuccess = { firebaseUser ->
 
-                repository.getUserProfile(firebaseUser.uid) { profileResult ->
+                    repository.getUserProfile(firebaseUser.uid) { profileResult ->
 
-                    profileResult.onSuccess { user ->
+                        profileResult.fold(
+                            onSuccess = { user ->
 
-                        if (!user.active) {
-                            repository.logout()
-                            isLoading = false
-                            errorMessage = "No se pudo iniciar sesión"
-                            return@onSuccess
-                        }
+                                if (!user.active) {
+                                    repository.logout()
+                                    isLoading = false
+                                    errorMessage = "No se pudo iniciar sesión"
+                                } else {
+                                    currentUser = user
+                                    isLoading = false
+                                    errorMessage = null
+                                    onSuccess()
+                                }
+                            },
 
-                        currentUser = user
-                        isLoading = false
-                        errorMessage = null
-
-                        onSuccess()
+                            onFailure = {
+                                repository.logout()
+                                isLoading = false
+                                errorMessage = "No se pudo iniciar sesión"
+                            }
+                        )
                     }
+                },
 
-                    profileResult.onFailure {
-                        repository.logout()
-                        isLoading = false
-                        errorMessage = "No se pudo iniciar sesión"
-                    }
+                onFailure = {
+                    isLoading = false
+                    errorMessage = "Correo o contraseña incorrectos"
                 }
-            }
-
-            loginResult.onFailure {
-                isLoading = false
-
-                // Mensaje genérico para no revelar
-                // si el correo existe o no.
-                errorMessage = "Correo o contraseña incorrectos"
-            }
+            )
         }
     }
 
