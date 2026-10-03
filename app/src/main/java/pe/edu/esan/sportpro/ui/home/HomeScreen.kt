@@ -68,7 +68,7 @@ fun HomeScreen(
             // 2. Saludo y Usuario
             Text("Buenos días,", fontSize = 14.sp, color = Color.Gray)
             Text(
-                text = "Daniel Mendoza",
+                text = "Piero Jair",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = PrimaryDark
@@ -141,27 +141,36 @@ fun HomeScreen(
                     onClick = onNavigateToTrainings,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryDark,
+                        contentColor = Color.White // <-- Esto hace el texto visible en blanco
+                    )
                 ) {
-                    Text("Gestión de Entrenamientos")
+                    Text("Gestión de Entrenamientos", fontWeight = FontWeight.SemiBold)
                 }
 
                 Button(
                     onClick = onNavigateToPlayers,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryDark,
+                        contentColor = Color.White // <-- Texto blanco
+                    )
                 ) {
-                    Text("Gestión de Jugadores")
+                    Text("Gestión de Jugadores", fontWeight = FontWeight.SemiBold)
                 }
 
                 Button(
                     onClick = onNavigateToTeams,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryDark,
+                        contentColor = Color.White // <-- Texto blanco
+                    )
                 ) {
-                    Text("Gestión de Equipos")
+                    Text("Gestión de Equipos", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
