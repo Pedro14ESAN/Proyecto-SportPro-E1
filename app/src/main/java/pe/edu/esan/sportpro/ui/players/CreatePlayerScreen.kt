@@ -22,11 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import pe.edu.esan.sportpro.data.model.Player
+import androidx.compose.material3.TextButton
 
 @Composable
 fun CreatePlayerScreen(
     viewModel: PlayerViewModel,
     academyId: String,
+    onBack: () -> Unit,
     onPlayerCreated: () -> Unit
 ) {
 
@@ -53,11 +55,16 @@ fun CreatePlayerScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
+        TextButton(
+            onClick = onBack
+        ) {
+            Text("← Volver")
+        }
+
         Text(
             text = "Registrar jugador",
             style = MaterialTheme.typography.headlineMedium
         )
-
         OutlinedTextField(
             value = fullName,
             onValueChange = {

@@ -28,11 +28,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import pe.edu.esan.sportpro.data.model.Player
+import androidx.compose.material3.TextButton
+
 
 @Composable
 fun PlayersScreen(
     academyId: String,
     viewModel: PlayerViewModel,
+    onBack: () -> Unit,
     onAddPlayer: () -> Unit,
     onPlayerClick: (String) -> Unit
 ) {
@@ -65,6 +68,11 @@ fun PlayersScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            TextButton(
+                onClick = onBack
+            ) {
+                Text("← Volver")
+            }
 
             Text(
                 text = "Jugadores",
