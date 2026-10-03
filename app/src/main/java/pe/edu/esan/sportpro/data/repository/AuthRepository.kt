@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import pe.edu.esan.sportpro.data.model.User
+import android.util.Log
 
 class AuthRepository {
 
@@ -20,6 +21,15 @@ class AuthRepository {
         role: String,
         onResult: (Result<User>) -> Unit
     ) {
+
+        if (role == User.ROLE_ADMIN) {
+            onResult(
+                Result.failure(
+                    Exception("El rol Administrador no está disponible para registro público")
+                )
+            )
+            return
+        }
 
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
@@ -57,10 +67,31 @@ class AuthRepository {
                         onResult(Result.success(user))
                     }
                     .addOnFailureListener { exception ->
-                        onResult(Result.failure(exception))
+                        Log.e(
+                            "AuthRepository",
+                            "Error al guardar perfil en Firestore",
+                            exception
+                        )
+                        // Si Firestore falla, eliminamos la cuenta recién creada
+                        // para no dejar un usuario incompleto.
+
+                        auth.currentUser?.delete()
+                            ?.addOnCompleteListener {
+                                auth.signOut()
+                                onResult(Result.failure(exception))
+                            }
+                            ?: run {
+                                auth.signOut()
+                                onResult(Result.failure(exception))
+                            }
                     }
             }
             .addOnFailureListener { exception ->
+                Log.e(
+                    "AuthRepository",
+                    "Error al crear usuario en Firebase Authentication",
+                    exception
+                )
                 onResult(Result.failure(exception))
             }
     }

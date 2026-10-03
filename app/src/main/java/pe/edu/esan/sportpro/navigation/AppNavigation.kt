@@ -7,6 +7,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import pe.edu.esan.sportpro.ui.home.HomeScreen
 
+import androidx.compose.runtime.remember
+import pe.edu.esan.sportpro.ui.auth.AuthViewModel
+import pe.edu.esan.sportpro.ui.auth.LoginScreen
+import pe.edu.esan.sportpro.ui.auth.RegisterScreen
+
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
@@ -20,6 +25,9 @@ sealed class Screen(val route: String) {
 fun AppNavigation() {
 
     val navController = rememberNavController()
+    val authViewModel = remember {
+        AuthViewModel()
+    }
 
     NavHost(
         navController = navController,
@@ -27,18 +35,46 @@ fun AppNavigation() {
     ) {
 
         composable(Screen.Login.route) {
-            Text("Pantalla de Login asignada al INTEGRANTE 2")
+            LoginScreen(
+                viewModel = authViewModel,
+                onLoginSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onGoToRegister = {
+                    navController.navigate(Screen.Register.route)
+                }
+            )
         }
 
         composable(Screen.Register.route) {
-            Text("Pantalla de Registro asignada al INTEGRANTE 2")
+            RegisterScreen(
+                viewModel = authViewModel,
+                onRegisterSuccess = {
+                    authViewModel.logout()
+
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onGoToLogin = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(Screen.Home.route) {
 
             HomeScreen(
-                userName = "Usuario SportPro",
-                role = "DT",
+                userName = authViewModel.currentUser?.fullName
+                    ?: "Usuario SportPro",
+                role = authViewModel.currentUser?.role
+                    ?: "",
 
                 onNavigateToTeams = {
                     navController.navigate(Screen.Teams.route)
@@ -53,6 +89,7 @@ fun AppNavigation() {
                 },
 
                 onLogout = {
+                    authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) {
                             inclusive = true
