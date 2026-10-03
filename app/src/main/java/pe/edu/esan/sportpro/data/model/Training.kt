@@ -13,6 +13,7 @@ data class Training(
     val startTime: String = "",
     val durationMinutes: Long = 0,
     val location: String = "",
+    val exerciseIds: List<String> = emptyList(),
     val status: String = STATUS_SCHEDULED,
     val createdAt: Timestamp? = null
 ) {
