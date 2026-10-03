@@ -9,11 +9,17 @@ import pe.edu.esan.sportpro.ui.home.HomeScreen
 import pe.edu.esan.sportpro.ui.training.TrainingScreen
 import pe.edu.esan.sportpro.ui.training.ExerciseLibraryScreen
 import android.widget.Toast
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.google.firebase.auth.FirebaseAuth
+import pe.edu.esan.sportpro.data.model.Exercise
 import pe.edu.esan.sportpro.data.repository.ExerciseRepository
 import pe.edu.esan.sportpro.ui.training.CreateExerciseScreen
+import pe.edu.esan.sportpro.ui.training.CreateTrainingScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -164,7 +170,71 @@ fun AppNavigation() {
         }
 
         composable(Screen.CreateTraining.route) {
-            Text("Crear entrenamiento - Bruno")
+
+            val appContext = LocalContext.current
+
+            val exerciseRepository = remember {
+                ExerciseRepository()
+            }
+
+            var exercises by remember {
+                mutableStateOf<List<Exercise>>(emptyList())
+            }
+
+            var isLoadingExercises by remember {
+                mutableStateOf(true)
+            }
+
+            var exerciseError by remember {
+                mutableStateOf<String?>(null)
+            }
+
+            LaunchedEffect(Unit) {
+
+                exerciseRepository.getExercisesByAcademy(
+                    academyId = "club_deportivo_norte"
+                ) { result ->
+
+                    result
+                        .onSuccess { firebaseExercises ->
+
+                            exercises = firebaseExercises.filter {
+                                it.active
+                            }
+
+                            isLoadingExercises = false
+                            exerciseError = null
+                        }
+                        .onFailure { exception ->
+
+                            isLoadingExercises = false
+
+                            exerciseError =
+                                "No se pudieron cargar los ejercicios: ${exception.message}"
+                        }
+                }
+            }
+
+            CreateTrainingScreen(
+                availableExercises = exercises,
+                isLoadingExercises = isLoadingExercises,
+                exerciseError = exerciseError,
+
+                onBack = {
+                    navController.popBackStack()
+                },
+
+                onTrainingCreated = {
+
+                    Toast.makeText(
+                        appContext,
+                        "Entrenamiento creado correctamente",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(Screen.TrainingDetail.route) {
