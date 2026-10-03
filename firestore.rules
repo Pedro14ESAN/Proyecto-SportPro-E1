@@ -25,6 +25,14 @@ service cloud.firestore {
       return signedIn() && userData().role == "DT";
     }
 
+    function isPlayer() {
+      return signedIn() && userData().role == "JUG";
+    }
+
+    function isParent() {
+      return signedIn() && userData().role == "PAD";
+    }
+
 
     // =========================================================
     // USUARIOS
@@ -32,26 +40,38 @@ service cloud.firestore {
 
     match /users/{userId} {
 
+      // Un usuario autenticado puede crear únicamente
+      // su propio documento.
+      //
+      // ADM no puede ser autoasignado desde la aplicación.
       allow create: if signedIn()
-      && request.auth.uid == userId;
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.role in ["JUG", "PAD", "DT"];
 
+      // El usuario puede consultar su propio perfil.
+      // El administrador puede consultar usuarios.
       allow read: if signedIn()
-      && (
-        request.auth.uid == userId
-        || isAdmin()
-      );
-
-      allow update: if signedIn()
-      && (
-        isAdmin()
-        ||
-        (
+        && (
           request.auth.uid == userId
-          && request.resource.data.role == resource.data.role
-          && request.resource.data.uid == resource.data.uid
-        )
-      );
+          || isAdmin()
+        );
 
+      // El usuario puede actualizar su perfil,
+      // pero no cambiar su UID ni su rol.
+      // El administrador sí puede administrar los perfiles.
+      allow update: if signedIn()
+        && (
+          isAdmin()
+          ||
+          (
+            request.auth.uid == userId
+            && request.resource.data.uid == resource.data.uid
+            && request.resource.data.role == resource.data.role
+          )
+        );
+
+      // No borramos usuarios físicamente.
       allow delete: if false;
     }
 
@@ -76,23 +96,72 @@ service cloud.firestore {
 
     match /teams/{teamId} {
 
+      // Usuarios autenticados pueden consultar equipos.
       allow read: if signedIn();
 
+      // ADM puede crear equipos.
+      // DT puede crear equipos asignados a él mismo.
       allow create: if isAdmin()
-      ||
-      (
-        isCoach()
-        && request.resource.data.coachUid == request.auth.uid
-      );
+        ||
+        (
+          isCoach()
+          && request.resource.data.coachUid == request.auth.uid
+          && request.resource.data.createdBy == request.auth.uid
+        );
 
+      // ADM puede modificar cualquier equipo.
+      //
+      // DT solo puede modificar equipos donde él
+      // sea actualmente el entrenador.
+      // No puede cambiar academyId ni id.
       allow update: if isAdmin()
-      ||
-      (
-        isCoach()
-        && resource.data.coachUid == request.auth.uid
-      );
+        ||
+        (
+          isCoach()
+          && resource.data.coachUid == request.auth.uid
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.academyId == resource.data.academyId
+        );
 
+      // No se eliminan equipos.
+      // Se utiliza active = false.
       allow delete: if false;
+    }
+
+
+    // =========================================================
+    // RESERVA DE NOMBRES DE EQUIPO
+    // Evita equipos duplicados
+    // =========================================================
+
+    match /team_keys/{keyId} {
+
+      // TeamRepository usa get() dentro de una transacción
+      // para comprobar si una combinación ya existe.
+      allow get: if isAdmin() || isCoach();
+
+      // No permitimos obtener la lista completa de claves.
+      allow list: if false;
+
+      // ADM y DT pueden reservar una clave.
+      //
+      // Solo permitimos exactamente:
+      // teamId
+      // academyId
+      allow create: if (isAdmin() || isCoach())
+        && request.resource.data.keys().hasOnly([
+          "teamId",
+          "academyId"
+        ])
+        && request.resource.data.teamId is string
+        && request.resource.data.academyId is string;
+
+      // Una key existente no se edita.
+      allow update: if false;
+
+      // Se elimina únicamente cuando cambia
+      // nombre/categoría y TeamRepository reemplaza la key.
+      allow delete: if isAdmin() || isCoach();
     }
 
 
@@ -106,6 +175,7 @@ service cloud.firestore {
 
       allow create, update: if isAdmin() || isCoach();
 
+      // Se usa active = false para mantener historial.
       allow delete: if false;
     }
 
@@ -119,18 +189,20 @@ service cloud.firestore {
       allow read: if signedIn();
 
       allow create: if isAdmin()
-      ||
-      (
-        isCoach()
-        && request.resource.data.coachUid == request.auth.uid
-      );
+        ||
+        (
+          isCoach()
+          && request.resource.data.coachUid == request.auth.uid
+        );
 
       allow update: if isAdmin()
-      ||
-      (
-        isCoach()
-        && resource.data.coachUid == request.auth.uid
-      );
+        ||
+        (
+          isCoach()
+          && resource.data.coachUid == request.auth.uid
+          && request.resource.data.teamId == resource.data.teamId
+          && request.resource.data.academyId == resource.data.academyId
+        );
 
       allow delete: if false;
     }
@@ -160,18 +232,18 @@ service cloud.firestore {
       allow read: if signedIn();
 
       // ADM puede crear cualquier partido.
-      // DT solamente puede crear uno indicando su propio UID.
+      // DT puede crear partidos registrados por él.
       allow create: if isAdmin()
-      ||
-      (
-        isCoach()
-        && request.resource.data.createdBy == request.auth.uid
-      );
+        ||
+        (
+          isCoach()
+          && request.resource.data.createdBy == request.auth.uid
+        );
 
-      // Solo ADM o DT pueden modificar partidos.
+      // ADM y DT pueden actualizar partidos.
       allow update: if isAdmin() || isCoach();
 
-      // No eliminamos partidos para conservar historial.
+      // Conservamos historial.
       allow delete: if false;
 
 
@@ -182,55 +254,43 @@ service cloud.firestore {
 
       match /events/{eventId} {
 
-        // Usuarios autenticados pueden ver el timeline.
+        // Timeline visible para usuarios autenticados.
         allow read: if signedIn();
 
-        // Solo ADM o DT pueden registrar eventos.
+        // ADM o DT registran eventos.
         allow create: if isAdmin() || isCoach();
 
-        // Correcciones/anulaciones únicamente por ADM o DT.
+        // Correcciones y anulaciones.
         allow update: if isAdmin() || isCoach();
 
-        // Nunca se elimina físicamente un evento.
+        // Nunca eliminamos eventos físicamente.
+        // Se utiliza status = ANNULLED.
         allow delete: if false;
       }
     }
 
 
     // =========================================================
-    // RESÚMENES IA
+    // RESÚMENES GENERADOS POR IA
     // =========================================================
 
     match /ai_summaries/{summaryId} {
 
-      // Usuarios autenticados pueden consultar
-      // resúmenes permitidos por la app.
       allow read: if signedIn();
 
-      // Durante el desarrollo permitimos ADM/DT.
-      // En producción, la creación del borrador de IA
-      // se realizará desde backend seguro.
+      // Durante el desarrollo:
+      // ADM o DT pueden crear el documento.
+      //
+      // En la versión final la generación debe
+      // ejecutarse mediante backend seguro.
       allow create: if isAdmin() || isCoach();
 
-      // DT o ADM pueden revisar/aprobar.
+      // DT y ADM pueden revisar/aprobar.
       allow update: if isAdmin() || isCoach();
 
-      // No se elimina para conservar trazabilidad.
+      // Conservamos trazabilidad.
       allow delete: if false;
     }
-
-      // =========================================================
-      // RESERVA DE NOMBRES DE EQUIPO (HU-03, evita duplicados)
-      // =========================================================
-
-      match /team_keys/{keyId} {
-        allow get: if isAdmin() || isCoach();
-        allow list: if false;
-        allow create: if (isAdmin() || isCoach())
-        && request.resource.data.keys().hasOnly(['teamId', 'academyId']);
-        allow update: if false;
-        allow delete: if isAdmin() || isCoach();
-        }
 
 
     // =========================================================
