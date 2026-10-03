@@ -6,6 +6,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import pe.edu.esan.sportpro.ui.home.HomeScreen
+import com.google.firebase.auth.FirebaseAuth
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -18,60 +22,60 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun AppNavigation() {
-
     val navController = rememberNavController()
+
+    // Verificamos si hay un usuario logueado en Firebase
+    val currentUser = FirebaseAuth.getInstance().currentUser
+
+    // Definimos la ruta inicial según el estado del usuario
+    val startDestination = if (currentUser != null) {
+        Screen.Home.route
+    } else {
+        Screen.Login.route
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
+        startDestination = Screen.Home.route
     ) {
-
         composable(Screen.Login.route) {
-            Text("Pantalla de Login asignada al INTEGRANTE 2")
-        }
-
-        composable(Screen.Register.route) {
-            Text("Pantalla de Registro asignada al INTEGRANTE 2")
+            Text("Pantalla de Login")
         }
 
         composable(Screen.Home.route) {
+            val currentUser = FirebaseAuth.getInstance().currentUser
+
+            val userName = currentUser?.displayName
+                ?: currentUser?.email?.substringBefore("@")
+                ?: "Entrenador"
+            val role = "DT / Administrador"
 
             HomeScreen(
-                userName = "Usuario SportPro",
-                role = "DT",
-
-                onNavigateToTeams = {
-                    navController.navigate(Screen.Teams.route)
-                },
-
-                onNavigateToPlayers = {
-                    navController.navigate(Screen.Players.route)
-                },
-
-                onNavigateToTrainings = {
-                    navController.navigate(Screen.Trainings.route)
-                },
-
+                userName = userName,
+                role = role,
+                onNavigateToTeams = { navController.navigate(Screen.Teams.route) },
+                onNavigateToPlayers = { navController.navigate(Screen.Players.route) },
+                onNavigateToTrainings = { navController.navigate(Screen.Trainings.route) },
                 onLogout = {
+                    FirebaseAuth.getInstance().signOut()
                     navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) {
-                            inclusive = true
-                        }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
         }
 
+        // Rutas que faltaban registrar:
         composable(Screen.Teams.route) {
-            Text("Pantalla de Equipos - Integrante 4")
+            Text("Pantalla de Equipos")
         }
 
         composable(Screen.Players.route) {
-            Text("Pantalla de Jugadores - Integrante 5")
+            Text("Pantalla de Jugadores")
         }
 
         composable(Screen.Trainings.route) {
-            Text("Pantalla de Entrenamientos - Bruno")
+            Text("Pantalla de Entrenamientos")
         }
     }
 }
