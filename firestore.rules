@@ -3,6 +3,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // =========================================================
+    // FUNCIONES AUXILIARES
+    // =========================================================
+
     function signedIn() {
       return request.auth != null;
     }
@@ -21,25 +25,22 @@ service cloud.firestore {
       return signedIn() && userData().role == "DT";
     }
 
-    // =========================
+
+    // =========================================================
     // USUARIOS
-    // =========================
+    // =========================================================
+
     match /users/{userId} {
 
-      // Un usuario solo puede crear su propio perfil
       allow create: if signedIn()
       && request.auth.uid == userId;
 
-      // El usuario puede ver su perfil.
-      // El administrador también puede consultar usuarios.
       allow read: if signedIn()
       && (
         request.auth.uid == userId
         || isAdmin()
       );
 
-      // El usuario puede actualizar sus datos,
-      // pero no cambiarse a sí mismo de rol.
       allow update: if signedIn()
       && (
         isAdmin()
@@ -54,9 +55,11 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // =========================
+
+    // =========================================================
     // ACADEMIAS
-    // =========================
+    // =========================================================
+
     match /academies/{academyId} {
 
       allow read: if signedIn();
@@ -66,21 +69,25 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // =========================
+
+    // =========================================================
     // EQUIPOS
-    // =========================
+    // =========================================================
+
     match /teams/{teamId} {
 
       allow read: if signedIn();
 
       allow create: if isAdmin()
-      || (
+      ||
+      (
         isCoach()
         && request.resource.data.coachUid == request.auth.uid
       );
 
       allow update: if isAdmin()
-      || (
+      ||
+      (
         isCoach()
         && resource.data.coachUid == request.auth.uid
       );
@@ -88,9 +95,11 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // =========================
+
+    // =========================================================
     // JUGADORES
-    // =========================
+    // =========================================================
+
     match /players/{playerId} {
 
       allow read: if signedIn();
@@ -100,21 +109,25 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // =========================
+
+    // =========================================================
     // ENTRENAMIENTOS
-    // =========================
+    // =========================================================
+
     match /trainings/{trainingId} {
 
       allow read: if signedIn();
 
       allow create: if isAdmin()
-      || (
+      ||
+      (
         isCoach()
         && request.resource.data.coachUid == request.auth.uid
       );
 
       allow update: if isAdmin()
-      || (
+      ||
+      (
         isCoach()
         && resource.data.coachUid == request.auth.uid
       );
@@ -122,9 +135,11 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // =========================
+
+    // =========================================================
     // ASISTENCIA
-    // =========================
+    // =========================================================
+
     match /attendance/{attendanceId} {
 
       allow read: if signedIn();
@@ -134,9 +149,81 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // =========================
+
+    // =========================================================
+    // PARTIDOS
+    // =========================================================
+
+    match /matches/{matchId} {
+
+      // Usuarios autenticados pueden consultar partidos.
+      allow read: if signedIn();
+
+      // ADM puede crear cualquier partido.
+      // DT solamente puede crear uno indicando su propio UID.
+      allow create: if isAdmin()
+      ||
+      (
+        isCoach()
+        && request.resource.data.createdBy == request.auth.uid
+      );
+
+      // Solo ADM o DT pueden modificar partidos.
+      allow update: if isAdmin() || isCoach();
+
+      // No eliminamos partidos para conservar historial.
+      allow delete: if false;
+
+
+      // =======================================================
+      // EVENTOS DEL PARTIDO
+      // matches/{matchId}/events/{eventId}
+      // =======================================================
+
+      match /events/{eventId} {
+
+        // Usuarios autenticados pueden ver el timeline.
+        allow read: if signedIn();
+
+        // Solo ADM o DT pueden registrar eventos.
+        allow create: if isAdmin() || isCoach();
+
+        // Correcciones/anulaciones únicamente por ADM o DT.
+        allow update: if isAdmin() || isCoach();
+
+        // Nunca se elimina físicamente un evento.
+        allow delete: if false;
+      }
+    }
+
+
+    // =========================================================
+    // RESÚMENES IA
+    // =========================================================
+
+    match /ai_summaries/{summaryId} {
+
+      // Usuarios autenticados pueden consultar
+      // resúmenes permitidos por la app.
+      allow read: if signedIn();
+
+      // Durante el desarrollo permitimos ADM/DT.
+      // En producción, la creación del borrador de IA
+      // se realizará desde backend seguro.
+      allow create: if isAdmin() || isCoach();
+
+      // DT o ADM pueden revisar/aprobar.
+      allow update: if isAdmin() || isCoach();
+
+      // No se elimina para conservar trazabilidad.
+      allow delete: if false;
+    }
+
+
+    // =========================================================
     // BLOQUEO GENERAL
-    // =========================
+    // =========================================================
+
     match /{document=**} {
       allow read, write: if false;
     }
