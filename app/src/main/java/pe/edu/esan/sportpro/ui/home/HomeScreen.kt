@@ -202,19 +202,22 @@ fun HomeScreen(
                     )
                 }
 
-                Button(
-                    onClick = onNavigateToPlayers,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryDark,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text(
-                        text = "Gestión de Jugadores",
-                        fontWeight = FontWeight.SemiBold
-                    )
+                if (role == "DT" || role == "ADM") {
+
+                    Button(
+                        onClick = onNavigateToPlayers,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryDark,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text(
+                            text = "Gestión de Jugadores",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
 
                 Button(
