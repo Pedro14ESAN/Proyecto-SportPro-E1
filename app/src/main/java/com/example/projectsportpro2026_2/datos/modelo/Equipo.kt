@@ -7,5 +7,7 @@ data class Equipo(
     val categoria: String = "",
     val idAcademia: String = "",
     val idEntrenador: String = "",
-    val activo: Boolean = true
+    val activo: Boolean = true,
+    val actualizadoPor: String = "",
+    val fechaActualizacion: Long = 0L
 )
