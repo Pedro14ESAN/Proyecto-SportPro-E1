@@ -148,7 +148,7 @@ class RepositorioVinculaciones(
     // Todas las vinculaciones de las academias que el usuario administra
     suspend fun listarParaAdministrador(uid: String): Result<List<Vinculacion>> = intentar {
         val ids = academias.whereArrayContains("idsAutorizados", uid)
-            .get().await().toObjects(Academia::class.java).map { it.id }
+            .get().await().documents.map { it.id }
         if (ids.isEmpty()) {
             emptyList()
         } else {
