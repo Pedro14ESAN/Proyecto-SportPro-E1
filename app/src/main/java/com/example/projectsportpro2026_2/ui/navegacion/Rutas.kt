@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.navegacion
 
+import android.net.Uri
 import com.example.projectsportpro2026_2.datos.modelo.EstadoCuenta
 import com.example.projectsportpro2026_2.datos.modelo.PerfilUsuario
 import com.example.projectsportpro2026_2.datos.modelo.Rol
@@ -12,7 +13,12 @@ object Rutas {
     const val INICIO_JUG = "inicio_jug"
     const val INICIO_PAD = "inicio_pad"
     const val CUENTA_PENDIENTE = "cuenta_pendiente"
+    const val ACADEMIAS = "academias"
+    const val EQUIPOS = "equipos/{idAcademia}/{nombre}"
 }
+
+fun rutaEquipos(idAcademia: String, nombre: String): String =
+    "equipos/$idAcademia/${Uri.encode(nombre)}"
 
 // Decide a qué pantalla va cada usuario según su estado y su rol
 fun rutaInicioPara(perfil: PerfilUsuario): String =

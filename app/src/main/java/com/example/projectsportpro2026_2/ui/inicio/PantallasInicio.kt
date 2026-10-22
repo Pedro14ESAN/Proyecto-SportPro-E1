@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,7 +20,8 @@ import androidx.compose.ui.unit.dp
 private fun PantallaBaseInicio(
     titulo: String,
     descripcion: String,
-    onCerrarSesion: () -> Unit
+    onCerrarSesion: () -> Unit,
+    acciones: @Composable () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -32,19 +34,28 @@ private fun PantallaBaseInicio(
         Spacer(Modifier.height(8.dp))
         Text(descripcion, textAlign = TextAlign.Center)
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onCerrarSesion) { Text("Cerrar sesión") }
+        acciones()
+        OutlinedButton(onClick = onCerrarSesion) { Text("Cerrar sesión") }
     }
 }
 
 @Composable
-fun InicioAdministrador(onCerrarSesion: () -> Unit) = PantallaBaseInicio(
-    "Panel del administrador", "Aquí irá la gestión de la academia.", onCerrarSesion
-)
+fun InicioAdministrador(onGestionarAcademias: () -> Unit, onCerrarSesion: () -> Unit) =
+    PantallaBaseInicio(
+        "Panel del administrador", "Gestiona tus academias, equipos y categorías.", onCerrarSesion
+    ) {
+        Button(onClick = onGestionarAcademias) { Text("Gestionar academias") }
+        Spacer(Modifier.height(12.dp))
+    }
 
 @Composable
-fun InicioEntrenador(onCerrarSesion: () -> Unit) = PantallaBaseInicio(
-    "Panel del director técnico", "Aquí irán equipos, entrenamientos y partidos.", onCerrarSesion
-)
+fun InicioEntrenador(onGestionarAcademias: () -> Unit, onCerrarSesion: () -> Unit) =
+    PantallaBaseInicio(
+        "Panel del director técnico", "Gestiona tus academias y equipos.", onCerrarSesion
+    ) {
+        Button(onClick = onGestionarAcademias) { Text("Gestionar academias") }
+        Spacer(Modifier.height(12.dp))
+    }
 
 @Composable
 fun InicioJugador(onCerrarSesion: () -> Unit) = PantallaBaseInicio(
