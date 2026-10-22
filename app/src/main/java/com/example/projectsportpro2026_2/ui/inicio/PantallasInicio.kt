@@ -40,13 +40,20 @@ private fun PantallaBaseInicio(
 }
 
 @Composable
-fun InicioAdministrador(onGestionarAcademias: () -> Unit, onCerrarSesion: () -> Unit) =
-    PantallaBaseInicio(
-        "Panel del administrador", "Gestiona tus academias, equipos y categorías.", onCerrarSesion
-    ) {
-        Button(onClick = onGestionarAcademias) { Text("Gestionar academias") }
-        Spacer(Modifier.height(12.dp))
-    }
+fun InicioAdministrador(
+    onGestionarAcademias: () -> Unit,
+    onVinculaciones: () -> Unit,
+    onCerrarSesion: () -> Unit
+) = PantallaBaseInicio(
+    "Panel del administrador",
+    "Gestiona tus academias, equipos, jugadores y vinculaciones.",
+    onCerrarSesion
+) {
+    Button(onClick = onGestionarAcademias) { Text("Gestionar academias") }
+    Spacer(Modifier.height(12.dp))
+    Button(onClick = onVinculaciones) { Text("Vinculaciones") }
+    Spacer(Modifier.height(12.dp))
+}
 
 @Composable
 fun InicioEntrenador(onGestionarAcademias: () -> Unit, onCerrarSesion: () -> Unit) =
@@ -63,9 +70,15 @@ fun InicioJugador(onCerrarSesion: () -> Unit) = PantallaBaseInicio(
 )
 
 @Composable
-fun InicioApoderado(onCerrarSesion: () -> Unit) = PantallaBaseInicio(
-    "Panel del apoderado", "Aquí irá la información de tu jugador.", onCerrarSesion
-)
+fun InicioApoderado(onMisJugadores: () -> Unit, onCerrarSesion: () -> Unit) =
+    PantallaBaseInicio(
+        "Panel del apoderado",
+        "Consulta a los jugadores bajo tu responsabilidad.",
+        onCerrarSesion
+    ) {
+        Button(onClick = onMisJugadores) { Text("Mis jugadores") }
+        Spacer(Modifier.height(12.dp))
+    }
 
 @Composable
 fun PantallaCuentaPendiente(onCerrarSesion: () -> Unit) = PantallaBaseInicio(

@@ -16,6 +16,9 @@ object Rutas {
     const val ACADEMIAS = "academias"
     const val EQUIPOS = "equipos/{idAcademia}/{nombre}"
     const val JUGADORES = "jugadores/{idEquipo}/{nombre}"
+
+    const val MIS_JUGADORES = "mis_jugadores"
+    const val VINCULACIONES = "vinculaciones"
 }
 
 fun rutaEquipos(idAcademia: String, nombre: String): String =

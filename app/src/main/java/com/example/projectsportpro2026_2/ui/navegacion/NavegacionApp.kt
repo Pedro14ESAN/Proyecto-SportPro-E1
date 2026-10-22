@@ -27,6 +27,8 @@ import com.example.projectsportpro2026_2.ui.inicio.InicioEntrenador
 import com.example.projectsportpro2026_2.ui.inicio.InicioJugador
 import com.example.projectsportpro2026_2.ui.inicio.PantallaCuentaPendiente
 import com.example.projectsportpro2026_2.ui.jugadores.PantallaJugadores
+import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
+import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
 
 @Composable
 fun NavegacionApp() {
@@ -82,10 +84,21 @@ fun NavegacionApp() {
                 onIrALogin = { navController.popBackStack() }
             )
         }
-        composable(Rutas.INICIO_ADM) { InicioAdministrador(abrirAcademias, cerrarSesion) }
+        composable(Rutas.INICIO_ADM) {
+            InicioAdministrador(
+                onGestionarAcademias = abrirAcademias,
+                onVinculaciones = { navController.navigate(Rutas.VINCULACIONES) },
+                onCerrarSesion = cerrarSesion
+            )
+        }
         composable(Rutas.INICIO_DT) { InicioEntrenador(abrirAcademias, cerrarSesion) }
         composable(Rutas.INICIO_JUG) { InicioJugador(cerrarSesion) }
-        composable(Rutas.INICIO_PAD) { InicioApoderado(cerrarSesion) }
+        composable(Rutas.INICIO_PAD) {
+            InicioApoderado(
+                onMisJugadores = { navController.navigate(Rutas.MIS_JUGADORES) },
+                onCerrarSesion = cerrarSesion
+            )
+        }
         composable(Rutas.CUENTA_PENDIENTE) { PantallaCuentaPendiente(cerrarSesion) }
 
         composable(Rutas.ACADEMIAS) {
@@ -128,6 +141,12 @@ fun NavegacionApp() {
                 nombreEquipo = entrada.arguments?.getString("nombre").orEmpty(),
                 onVolver = { navController.popBackStack() }
             )
+        }
+        composable(Rutas.MIS_JUGADORES) {
+            PantallaMisJugadores(onVolver = { navController.popBackStack() })
+        }
+        composable(Rutas.VINCULACIONES) {
+            PantallaVinculaciones(onVolver = { navController.popBackStack() })
         }
     }
 }
