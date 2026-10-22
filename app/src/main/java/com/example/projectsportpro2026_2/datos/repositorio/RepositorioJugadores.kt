@@ -10,6 +10,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import com.example.projectsportpro2026_2.datos.modelo.Categorias
+import com.example.projectsportpro2026_2.datos.modelo.PoliticaEdad
 
 // Todo lo que se captura en el formulario del jugador
 data class DatosJugador(
@@ -77,6 +79,17 @@ class RepositorioJugadores(
         }
     }
 
+    private fun validarEdadParaCategoria(fechaNacimiento: String, categoria: String) {
+        if (fechaNacimiento.isBlank()) return
+        val rango = Categorias.rangoDeEdad(categoria) ?: return
+        val edad = PoliticaEdad.calcularEdad(LocalDate.parse(fechaNacimiento.trim()))
+        if (edad !in rango) {
+            throw IllegalArgumentException(
+                "Un jugador de $edad años no corresponde a la categoría $categoria " +
+                        "(edades permitidas: ${rango.first} a ${rango.last})"
+            )
+        }
+    }
     private fun privados(d: DatosJugador) = DatosPrivadosJugador(
         estaturaCm = d.estaturaCm,
         pesoKg = d.pesoKg,
@@ -92,6 +105,7 @@ class RepositorioJugadores(
         val equipo = equipos.document(idEquipo).get().await().toObject(Equipo::class.java)
             ?: throw IllegalStateException("El equipo no existe")
         if (!equipo.activo) throw IllegalStateException("El equipo está inactivo")
+        validarEdadParaCategoria(datos.fechaNacimiento, equipo.categoria)
         val academia = academiaAutorizada(equipo.idAcademia, uid)
         if (!academia.activa) throw IllegalStateException("La academia está inactiva")
 
@@ -126,6 +140,7 @@ class RepositorioJugadores(
         val existente = documento.get().await().toObject(Jugador::class.java)
             ?: throw IllegalStateException("El jugador no existe")
         academiaAutorizada(existente.idAcademia, uid)
+        validarEdadParaCategoria(datos.fechaNacimiento, existente.categoria)
 
         val lote = bd.batch()
         lote.update(
