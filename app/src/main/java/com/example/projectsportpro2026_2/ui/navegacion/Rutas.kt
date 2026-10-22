@@ -15,10 +15,14 @@ object Rutas {
     const val CUENTA_PENDIENTE = "cuenta_pendiente"
     const val ACADEMIAS = "academias"
     const val EQUIPOS = "equipos/{idAcademia}/{nombre}"
+    const val JUGADORES = "jugadores/{idEquipo}/{nombre}"
 }
 
 fun rutaEquipos(idAcademia: String, nombre: String): String =
     "equipos/$idAcademia/${Uri.encode(nombre)}"
+
+fun rutaJugadores(idEquipo: String, nombre: String): String =
+    "jugadores/$idEquipo/${Uri.encode(nombre)}"
 
 // Decide a qué pantalla va cada usuario según su estado y su rol
 fun rutaInicioPara(perfil: PerfilUsuario): String =

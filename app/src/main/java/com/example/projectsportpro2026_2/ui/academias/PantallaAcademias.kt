@@ -76,7 +76,7 @@ fun PantallaAcademias(
                     TarjetaAcademia(
                         academia = academia,
                         onEquipos = { onAbrirEquipos(academia.id, academia.nombre) },
-                        onEditar = {
+                            onEditar = {
                             viewModel.limpiarError()
                             enEdicion = academia
                             mostrarFormulario = true

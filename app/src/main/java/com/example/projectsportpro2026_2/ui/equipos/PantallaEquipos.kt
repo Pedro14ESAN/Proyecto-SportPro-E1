@@ -41,6 +41,7 @@ fun PantallaEquipos(
     idAcademia: String,
     nombreAcademia: String,
     onVolver: () -> Unit,
+    onAbrirJugadores: (idEquipo: String, nombre: String) -> Unit,
     viewModel: EquiposViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -84,6 +85,7 @@ fun PantallaEquipos(
                 items(estado.equipos, key = { it.id }) { equipo ->
                     TarjetaEquipo(
                         equipo = equipo,
+                        onJugadores = { onAbrirJugadores(equipo.id, equipo.nombre) },
                         onEditar = {
                             viewModel.limpiarError()
                             enEdicion = equipo
@@ -112,6 +114,7 @@ fun PantallaEquipos(
 @Composable
 private fun TarjetaEquipo(
     equipo: Equipo,
+    onJugadores: () -> Unit,
     onEditar: () -> Unit,
     onCambiarEstado: () -> Unit
 ) {
@@ -130,6 +133,7 @@ private fun TarjetaEquipo(
             }
             Text("Categoría: ${equipo.categoria}")
             Row {
+                TextButton(onClick = onJugadores) { Text("Jugadores") }
                 TextButton(onClick = onEditar) { Text("Editar") }
                 TextButton(onClick = onCambiarEstado) {
                     Text(if (equipo.activo) "Inactivar" else "Activar")

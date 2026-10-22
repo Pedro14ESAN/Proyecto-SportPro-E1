@@ -26,6 +26,7 @@ import com.example.projectsportpro2026_2.ui.inicio.InicioApoderado
 import com.example.projectsportpro2026_2.ui.inicio.InicioEntrenador
 import com.example.projectsportpro2026_2.ui.inicio.InicioJugador
 import com.example.projectsportpro2026_2.ui.inicio.PantallaCuentaPendiente
+import com.example.projectsportpro2026_2.ui.jugadores.PantallaJugadores
 
 @Composable
 fun NavegacionApp() {
@@ -103,6 +104,28 @@ fun NavegacionApp() {
             PantallaEquipos(
                 idAcademia = entrada.arguments?.getString("idAcademia").orEmpty(),
                 nombreAcademia = entrada.arguments?.getString("nombre").orEmpty(),
+                onVolver = { navController.popBackStack() },
+                onAbrirJugadores = { id, nombre ->
+                    navController.navigate(
+                        rutaJugadores(
+                            id,
+                            nombre
+                        )
+                    )
+                }
+
+            )
+        }
+        composable(
+            route = Rutas.JUGADORES,
+            arguments = listOf(
+                navArgument("idEquipo") { type = NavType.StringType },
+                navArgument("nombre") { type = NavType.StringType }
+            )
+        ) { entrada ->
+            PantallaJugadores(
+                idEquipo = entrada.arguments?.getString("idEquipo").orEmpty(),
+                nombreEquipo = entrada.arguments?.getString("nombre").orEmpty(),
                 onVolver = { navController.popBackStack() }
             )
         }
