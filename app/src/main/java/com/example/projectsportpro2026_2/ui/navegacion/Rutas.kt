@@ -17,6 +17,14 @@ object Rutas {
     const val EQUIPOS = "equipos/{idAcademia}/{nombre}"
     const val JUGADORES = "jugadores/{idEquipo}/{nombre}"
 
+    const val PARTIDOS = "partidos/{idAcademia}/{nombre}"
+
+    const val CREAR_PARTIDO = "partidos/{idAcademia}/{nombre}/crear"
+
+    const val DETALLE_PARTIDO = "partido/{idPartido}"
+
+    const val EDITAR_PARTIDO = "partido/{idPartido}/editar"
+
     const val MIS_JUGADORES = "mis_jugadores"
     const val VINCULACIONES = "vinculaciones"
 }
@@ -26,6 +34,28 @@ fun rutaEquipos(idAcademia: String, nombre: String): String =
 
 fun rutaJugadores(idEquipo: String, nombre: String): String =
     "jugadores/$idEquipo/${Uri.encode(nombre)}"
+
+fun rutaPartidos(
+    idAcademia: String,
+    nombre: String
+): String =
+    "partidos/$idAcademia/${Uri.encode(nombre)}"
+
+fun rutaCrearPartido(
+    idAcademia: String,
+    nombre: String
+): String =
+    "partidos/$idAcademia/${Uri.encode(nombre)}/crear"
+
+fun rutaDetallePartido(
+    idPartido: String
+): String =
+    "partido/$idPartido"
+
+fun rutaEditarPartido(
+    idPartido: String
+): String =
+    "partido/$idPartido/editar"
 
 // Decide a qué pantalla va cada usuario según su estado y su rol
 fun rutaInicioPara(perfil: PerfilUsuario): String =

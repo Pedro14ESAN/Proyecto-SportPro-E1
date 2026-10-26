@@ -34,6 +34,7 @@ import com.example.projectsportpro2026_2.datos.modelo.Academia
 fun PantallaAcademias(
     onVolver: () -> Unit,
     onAbrirEquipos: (idAcademia: String, nombre: String) -> Unit,
+    onAbrirPartidos: (idAcademia: String, nombre: String) -> Unit,
     viewModel: AcademiasViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -76,6 +77,12 @@ fun PantallaAcademias(
                     TarjetaAcademia(
                         academia = academia,
                         onEquipos = { onAbrirEquipos(academia.id, academia.nombre) },
+                        onPartidos = {
+                            onAbrirPartidos(
+                                academia.id,
+                                academia.nombre
+                            )
+                        },
                             onEditar = {
                             viewModel.limpiarError()
                             enEdicion = academia
@@ -107,6 +114,7 @@ fun PantallaAcademias(
 private fun TarjetaAcademia(
     academia: Academia,
     onEquipos: () -> Unit,
+    onPartidos: () -> Unit,
     onEditar: () -> Unit,
     onCambiarEstado: () -> Unit
 ) {
@@ -127,6 +135,7 @@ private fun TarjetaAcademia(
             if (academia.descripcion.isNotBlank()) Text(academia.descripcion)
             Row {
                 TextButton(onClick = onEquipos) { Text("Equipos") }
+                TextButton(onClick = onPartidos) { Text("Partidos") }
                 TextButton(onClick = onEditar) { Text("Editar") }
                 TextButton(onClick = onCambiarEstado) {
                     Text(if (academia.activa) "Inactivar" else "Activar")

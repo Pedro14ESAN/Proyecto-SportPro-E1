@@ -29,6 +29,10 @@ import com.example.projectsportpro2026_2.ui.inicio.PantallaCuentaPendiente
 import com.example.projectsportpro2026_2.ui.jugadores.PantallaJugadores
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
+import com.example.projectsportpro2026_2.ui.partidos.PantallaCrearPartido
+import com.example.projectsportpro2026_2.ui.partidos.PantallaDetallePartido
+import com.example.projectsportpro2026_2.ui.partidos.PantallaPartidos
+import com.example.projectsportpro2026_2.ui.partidos.PantallaEditarPartido
 
 @Composable
 fun NavegacionApp() {
@@ -104,7 +108,10 @@ fun NavegacionApp() {
         composable(Rutas.ACADEMIAS) {
             PantallaAcademias(
                 onVolver = { navController.popBackStack() },
-                onAbrirEquipos = { id, nombre -> navController.navigate(rutaEquipos(id, nombre)) }
+                onAbrirEquipos = { id, nombre -> navController.navigate(rutaEquipos(id, nombre)) },
+                onAbrirPartidos = { id, nombre ->
+                    navController.navigate(rutaPartidos(id, nombre)) }
+
             )
         }
         composable(
@@ -129,6 +136,142 @@ fun NavegacionApp() {
 
             )
         }
+        composable(
+            route = Rutas.PARTIDOS,
+            arguments = listOf(
+                navArgument("idAcademia") {
+                    type = NavType.StringType
+                },
+                navArgument("nombre") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entrada ->
+
+            val idAcademia =
+                entrada.arguments?.getString("idAcademia").orEmpty()
+
+            val nombreAcademia =
+                entrada.arguments?.getString("nombre").orEmpty()
+
+            PantallaPartidos(
+                idAcademia = idAcademia,
+                nombreAcademia = nombreAcademia,
+
+                onVolver = {
+                    navController.popBackStack()
+                },
+
+                onCrearPartido = {
+                    navController.navigate(
+                        rutaCrearPartido(
+                            idAcademia,
+                            nombreAcademia
+                        )
+                    )
+                },
+
+                onAbrirPartido = { idPartido ->
+                    navController.navigate(
+                        rutaDetallePartido(idPartido)
+                    )
+                }
+            )
+        }
+        composable(
+            route = Rutas.CREAR_PARTIDO,
+            arguments = listOf(
+                navArgument("idAcademia") {
+                    type = NavType.StringType
+                },
+                navArgument("nombre") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entrada ->
+
+            val idAcademia =
+                entrada.arguments?.getString("idAcademia").orEmpty()
+
+            PantallaCrearPartido(
+                idAcademia = idAcademia,
+
+                onVolver = {
+                    navController.popBackStack()
+                },
+
+                onPartidoCreado = { idPartido ->
+
+                    // Quitamos el formulario del historial.
+                    navController.popBackStack()
+
+                    // Abrimos el partido que acabamos de crear.
+                    navController.navigate(
+                        rutaDetallePartido(idPartido)
+                    )
+                }
+            )
+        }
+        composable(
+            route = Rutas.DETALLE_PARTIDO,
+            arguments = listOf(
+                navArgument("idPartido") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entrada ->
+
+            val idPartido =
+                entrada.arguments?.getString("idPartido").orEmpty()
+
+            PantallaDetallePartido(
+                idPartido = idPartido,
+
+                onVolver = {
+                    navController.popBackStack()
+                },
+
+                onEditar = { idPartido ->
+                    navController.navigate(
+                        rutaEditarPartido(idPartido)
+                    )
+                },
+
+                onGestionarConvocatoria = {
+                    // HU11
+                },
+
+                onVerAlineacion = {
+                    // HU12
+                }
+            )
+        }
+
+        composable(
+            route = Rutas.EDITAR_PARTIDO,
+            arguments = listOf(
+                navArgument("idPartido") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entrada ->
+
+            val idPartido =
+                entrada.arguments?.getString("idPartido").orEmpty()
+
+            PantallaEditarPartido(
+                idPartido = idPartido,
+
+                onVolver = {
+                    navController.popBackStack()
+                },
+
+                onPartidoEditado = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(
             route = Rutas.JUGADORES,
             arguments = listOf(
