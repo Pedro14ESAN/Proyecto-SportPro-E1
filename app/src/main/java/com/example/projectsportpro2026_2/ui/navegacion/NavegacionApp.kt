@@ -20,6 +20,7 @@ import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAutenticac
 import com.example.projectsportpro2026_2.ui.academias.PantallaAcademias
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaLogin
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRegistro
+import com.example.projectsportpro2026_2.ui.convocatoria.PantallaConvocatoria
 import com.example.projectsportpro2026_2.ui.equipos.PantallaEquipos
 import com.example.projectsportpro2026_2.ui.inicio.InicioAdministrador
 import com.example.projectsportpro2026_2.ui.inicio.InicioApoderado
@@ -33,6 +34,7 @@ import com.example.projectsportpro2026_2.ui.partidos.PantallaCrearPartido
 import com.example.projectsportpro2026_2.ui.partidos.PantallaDetallePartido
 import com.example.projectsportpro2026_2.ui.partidos.PantallaPartidos
 import com.example.projectsportpro2026_2.ui.partidos.PantallaEditarPartido
+import com.example.projectsportpro2026_2.ui.convocatoria.PantallaMisConvocatorias
 
 @Composable
 fun NavegacionApp() {
@@ -96,10 +98,30 @@ fun NavegacionApp() {
             )
         }
         composable(Rutas.INICIO_DT) { InicioEntrenador(abrirAcademias, cerrarSesion) }
-        composable(Rutas.INICIO_JUG) { InicioJugador(cerrarSesion) }
+        composable(Rutas.INICIO_JUG) {
+            InicioJugador(
+                onConvocatorias = {
+                    navController.navigate(
+                        Rutas.MIS_CONVOCATORIAS
+                    )
+                },
+                onCerrarSesion = cerrarSesion
+            )
+        }
         composable(Rutas.INICIO_PAD) {
             InicioApoderado(
-                onMisJugadores = { navController.navigate(Rutas.MIS_JUGADORES) },
+                onMisJugadores = {
+                    navController.navigate(
+                        Rutas.MIS_JUGADORES
+                    )
+                },
+
+                onConvocatorias = {
+                    navController.navigate(
+                        Rutas.MIS_CONVOCATORIAS
+                    )
+                },
+
                 onCerrarSesion = cerrarSesion
             )
         }
@@ -238,11 +260,35 @@ fun NavegacionApp() {
                 },
 
                 onGestionarConvocatoria = {
-                    // HU11
+                    navController.navigate(
+                        rutaConvocatoria(idPartido)
+                    )
                 },
 
                 onVerAlineacion = {
                     // HU12
+                }
+            )
+        }
+        composable(
+            route = Rutas.CONVOCATORIA,
+            arguments = listOf(
+                navArgument("idPartido") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entrada ->
+
+            val idPartido =
+                entrada.arguments
+                    ?.getString("idPartido")
+                    .orEmpty()
+
+            PantallaConvocatoria(
+                idPartido = idPartido,
+
+                onVolver = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -283,6 +329,15 @@ fun NavegacionApp() {
                 idEquipo = entrada.arguments?.getString("idEquipo").orEmpty(),
                 nombreEquipo = entrada.arguments?.getString("nombre").orEmpty(),
                 onVolver = { navController.popBackStack() }
+            )
+        }
+        composable(
+            Rutas.MIS_CONVOCATORIAS
+        ) {
+            PantallaMisConvocatorias(
+                onVolver = {
+                    navController.popBackStack()
+                }
             )
         }
         composable(Rutas.MIS_JUGADORES) {

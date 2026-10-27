@@ -25,6 +25,10 @@ object Rutas {
 
     const val EDITAR_PARTIDO = "partido/{idPartido}/editar"
 
+    const val CONVOCATORIA = "partido/{idPartido}/convocatoria"
+
+    const val MIS_CONVOCATORIAS = "mis_convocatorias"
+
     const val MIS_JUGADORES = "mis_jugadores"
     const val VINCULACIONES = "vinculaciones"
 }
@@ -51,6 +55,11 @@ fun rutaDetallePartido(
     idPartido: String
 ): String =
     "partido/$idPartido"
+
+fun rutaConvocatoria(
+    idPartido: String
+): String =
+    "partido/$idPartido/convocatoria"
 
 fun rutaEditarPartido(
     idPartido: String

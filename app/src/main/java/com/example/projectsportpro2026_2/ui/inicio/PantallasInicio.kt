@@ -65,19 +65,57 @@ fun InicioEntrenador(onGestionarAcademias: () -> Unit, onCerrarSesion: () -> Uni
     }
 
 @Composable
-fun InicioJugador(onCerrarSesion: () -> Unit) = PantallaBaseInicio(
-    "Panel del jugador", "Aquí irá tu información y tus convocatorias.", onCerrarSesion
-)
+fun InicioJugador(
+    onConvocatorias: () -> Unit,
+    onCerrarSesion: () -> Unit
+) =
+    PantallaBaseInicio(
+        "Panel del jugador",
+        "Consulta tus partidos y confirma tu disponibilidad.",
+        onCerrarSesion
+    ) {
+        Button(
+            onClick = onConvocatorias
+        ) {
+            Text("Mis convocatorias")
+        }
+
+        Spacer(
+            Modifier.height(12.dp)
+        )
+    }
 
 @Composable
-fun InicioApoderado(onMisJugadores: () -> Unit, onCerrarSesion: () -> Unit) =
+fun InicioApoderado(
+    onMisJugadores: () -> Unit,
+    onConvocatorias: () -> Unit,
+    onCerrarSesion: () -> Unit
+) =
     PantallaBaseInicio(
         "Panel del apoderado",
         "Consulta a los jugadores bajo tu responsabilidad.",
         onCerrarSesion
     ) {
-        Button(onClick = onMisJugadores) { Text("Mis jugadores") }
-        Spacer(Modifier.height(12.dp))
+
+        Button(
+            onClick = onMisJugadores
+        ) {
+            Text("Mis jugadores")
+        }
+
+        Spacer(
+            Modifier.height(12.dp)
+        )
+
+        Button(
+            onClick = onConvocatorias
+        ) {
+            Text("Convocatorias")
+        }
+
+        Spacer(
+            Modifier.height(12.dp)
+        )
     }
 
 @Composable
