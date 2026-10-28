@@ -36,6 +36,7 @@ import com.example.projectsportpro2026_2.ui.partidos.PantallaPartidos
 import com.example.projectsportpro2026_2.ui.partidos.PantallaEditarPartido
 import com.example.projectsportpro2026_2.ui.convocatoria.PantallaMisConvocatorias
 import com.example.projectsportpro2026_2.ui.alineacion.PantallaAlineacion
+import com.example.projectsportpro2026_2.ui.catalogoeventos.PantallaCatalogoEventos
 
 @Composable
 fun NavegacionApp() {
@@ -132,9 +133,8 @@ fun NavegacionApp() {
             PantallaAcademias(
                 onVolver = { navController.popBackStack() },
                 onAbrirEquipos = { id, nombre -> navController.navigate(rutaEquipos(id, nombre)) },
-                onAbrirPartidos = { id, nombre ->
-                    navController.navigate(rutaPartidos(id, nombre)) }
-
+                onAbrirPartidos = { id, nombre -> navController.navigate(rutaPartidos(id, nombre)) },
+                onAbrirCatalogo = { idAcademia -> navController.navigate(rutaCatalogoEventos(idAcademia))}
             )
         }
         composable(
@@ -369,6 +369,28 @@ fun NavegacionApp() {
         }
         composable(Rutas.VINCULACIONES) {
             PantallaVinculaciones(onVolver = { navController.popBackStack() })
+        }
+        composable(
+            route = Rutas.CATALOGO_EVENTOS,
+            arguments = listOf(
+                navArgument("idAcademia") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entrada ->
+
+            val idAcademia =
+                entrada.arguments
+                    ?.getString("idAcademia")
+                    .orEmpty()
+
+            PantallaCatalogoEventos(
+                idAcademia = idAcademia,
+
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

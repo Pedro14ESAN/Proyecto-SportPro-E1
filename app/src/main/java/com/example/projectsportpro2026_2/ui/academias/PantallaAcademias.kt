@@ -35,6 +35,7 @@ fun PantallaAcademias(
     onVolver: () -> Unit,
     onAbrirEquipos: (idAcademia: String, nombre: String) -> Unit,
     onAbrirPartidos: (idAcademia: String, nombre: String) -> Unit,
+    onAbrirCatalogo: (idAcademia: String) -> Unit,
     viewModel: AcademiasViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -83,6 +84,11 @@ fun PantallaAcademias(
                                 academia.nombre
                             )
                         },
+                        onCatalogo = {
+                            onAbrirCatalogo(
+                                academia.id
+                            )
+                        },
                             onEditar = {
                             viewModel.limpiarError()
                             enEdicion = academia
@@ -115,6 +121,7 @@ private fun TarjetaAcademia(
     academia: Academia,
     onEquipos: () -> Unit,
     onPartidos: () -> Unit,
+    onCatalogo: () -> Unit,
     onEditar: () -> Unit,
     onCambiarEstado: () -> Unit
 ) {
@@ -136,6 +143,7 @@ private fun TarjetaAcademia(
             Row {
                 TextButton(onClick = onEquipos) { Text("Equipos") }
                 TextButton(onClick = onPartidos) { Text("Partidos") }
+                TextButton(onClick = onCatalogo) { Text("Catálogo") }
                 TextButton(onClick = onEditar) { Text("Editar") }
                 TextButton(onClick = onCambiarEstado) {
                     Text(if (academia.activa) "Inactivar" else "Activar")

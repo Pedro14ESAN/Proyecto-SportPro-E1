@@ -32,6 +32,9 @@ object Rutas {
     const val ALINEACION = "partido/{idPartido}/alineacion"
     const val MIS_JUGADORES = "mis_jugadores"
     const val VINCULACIONES = "vinculaciones"
+
+    const val CATALOGO_EVENTOS =
+        "academias/{idAcademia}/catalogo_eventos"
 }
 
 fun rutaEquipos(idAcademia: String, nombre: String): String =
@@ -71,6 +74,11 @@ fun rutaAlineacion(
     idPartido: String
 ): String =
     "partido/$idPartido/alineacion"
+
+fun rutaCatalogoEventos(
+    idAcademia: String
+): String =
+    "academias/$idAcademia/catalogo_eventos"
 
 // Decide a qué pantalla va cada usuario según su estado y su rol
 fun rutaInicioPara(perfil: PerfilUsuario): String =
