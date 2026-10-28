@@ -37,6 +37,7 @@ import com.example.projectsportpro2026_2.ui.partidos.PantallaEditarPartido
 import com.example.projectsportpro2026_2.ui.convocatoria.PantallaMisConvocatorias
 import com.example.projectsportpro2026_2.ui.alineacion.PantallaAlineacion
 import com.example.projectsportpro2026_2.ui.catalogoeventos.PantallaCatalogoEventos
+import com.example.projectsportpro2026_2.ui.eventospartido.PantallaPartidoEnVivo
 
 @Composable
 fun NavegacionApp() {
@@ -269,6 +270,14 @@ fun NavegacionApp() {
                 onVerAlineacion = {
                     // HU12
                     navController.navigate(rutaAlineacion(idPartido))
+                },
+
+                onAbrirPartidoEnVivo = {
+                    navController.navigate(
+                        rutaPartidoEnVivo(
+                            idPartido
+                        )
+                    )
                 }
             )
         }
@@ -386,6 +395,28 @@ fun NavegacionApp() {
 
             PantallaCatalogoEventos(
                 idAcademia = idAcademia,
+
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(
+            route = Rutas.PARTIDO_EN_VIVO,
+            arguments = listOf(
+                navArgument("idPartido") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entrada ->
+
+            val idPartido =
+                entrada.arguments
+                    ?.getString("idPartido")
+                    .orEmpty()
+
+            PantallaPartidoEnVivo(
+                idPartido = idPartido,
 
                 onVolver = {
                     navController.popBackStack()

@@ -35,6 +35,9 @@ object Rutas {
 
     const val CATALOGO_EVENTOS =
         "academias/{idAcademia}/catalogo_eventos"
+
+    const val PARTIDO_EN_VIVO =
+        "partido/{idPartido}/en_vivo"
 }
 
 fun rutaEquipos(idAcademia: String, nombre: String): String =
@@ -79,6 +82,11 @@ fun rutaCatalogoEventos(
     idAcademia: String
 ): String =
     "academias/$idAcademia/catalogo_eventos"
+
+fun rutaPartidoEnVivo(
+    idPartido: String
+): String =
+    "partido/$idPartido/en_vivo"
 
 // Decide a qué pantalla va cada usuario según su estado y su rol
 fun rutaInicioPara(perfil: PerfilUsuario): String =

@@ -52,8 +52,9 @@ fun PantallaDetallePartido(
     onEditar: (String) -> Unit,
     onGestionarConvocatoria: (String) -> Unit,
     onVerAlineacion: (String) -> Unit,
+    onAbrirPartidoEnVivo: (String) -> Unit,
     viewModel: PartidosViewModel = viewModel()
-) {
+){
     val estado by viewModel.estado.collectAsState()
 
     var accionPendiente by remember {
@@ -264,6 +265,27 @@ fun PantallaDetallePartido(
                     style = MaterialTheme.typography.bodySmall,
                     color = SportProVerde,
                     fontWeight = FontWeight.Medium
+                )
+            }
+
+            Button(
+                onClick = {
+                    onAbrirPartidoEnVivo(
+                        partido.id
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = FormaBotonSportPro,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SportProVerde,
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = "⚽  Abrir partido en vivo",
+                    fontWeight = FontWeight.Bold
                 )
             }
 
