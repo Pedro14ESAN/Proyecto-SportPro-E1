@@ -70,11 +70,26 @@ data class EventoPartido(
      * la aplicación recibió el registro.
      */
     val creadoPor: String = "",
-    val fechaCaptura: Long = 0L
+    val fechaCaptura: Long = 0L,
+
+    val estado: EstadoEventoPartido =
+        EstadoEventoPartido.ACTIVO,
+
+    val version: Int = 1,
+
+    val modificadoPor: String = "",
+    val fechaModificacion: Long = 0L,
+
+    val anuladoPor: String = "",
+    val fechaAnulacion: Long = 0L
 )
 
 enum class EquipoEvento {
     NINGUNO,
     PROPIO,
     RIVAL
+}
+enum class EstadoEventoPartido {
+    ACTIVO,
+    ANULADO
 }

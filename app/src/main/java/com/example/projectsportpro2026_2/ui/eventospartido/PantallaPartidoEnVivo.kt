@@ -250,13 +250,17 @@ fun PantallaPartidoEnVivo(
                         fontWeight = FontWeight.Black
                     )
 
-                    Text(
-                        text =
-                            "${estado.eventos.size} eventos",
-                        color = SportProTextoSecundario,
-                        style =
-                            MaterialTheme.typography.labelMedium
-                    )
+                    TextButton(
+                        onClick = {
+                            viewModel.abrirAuditoriaGeneral()
+                        }
+                    ) {
+                        Text(
+                            text = "Auditoría",
+                            color = SportProVerde,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
@@ -289,7 +293,13 @@ fun PantallaPartidoEnVivo(
                         key = evento.id
                     ) {
                         TarjetaCronologiaEvento(
-                            evento = evento
+                            evento = evento,
+
+                            onClick = {
+                                viewModel.abrirDetalleEvento(
+                                    evento
+                                )
+                            }
                         )
                     }
                 }
@@ -343,6 +353,109 @@ fun PantallaPartidoEnVivo(
 
             onRegistrar = {
                 viewModel.registrarEvento()
+            }
+        )
+    }
+        estado.eventoSeleccionado?.let {
+                evento ->
+
+            if (contexto != null) {
+
+                ModalGestionEvento(
+                    evento =
+                        evento,
+
+                    accion =
+                        estado.accionEvento,
+
+                    formulario =
+                        estado.formulario,
+
+                    motivo =
+                        estado.motivoCambio,
+
+                    jugadores =
+                        contexto.jugadoresAlineados,
+
+                    nombreEquipo =
+                        contexto.equipo.nombre,
+
+                    nombreRival =
+                        contexto.partido.nombreRival,
+
+                    auditoria =
+                        estado.auditoriaEvento,
+
+                    cargandoAuditoria =
+                        estado.cargandoAuditoria,
+
+                    procesando =
+                        estado.procesandoCambio,
+
+                    error =
+                        estado.error,
+
+                    onCerrar =
+                        viewModel::cerrarDetalleEvento,
+
+                    onCorregir =
+                        viewModel::iniciarCorreccionEvento,
+
+                    onAnular =
+                        viewModel::iniciarAnulacionEvento,
+
+                    onCancelarAccion =
+                        viewModel::cancelarAccionEvento,
+
+                    onMotivo =
+                        viewModel::cambiarMotivoCambio,
+
+                    onMinuto =
+                        viewModel::cambiarMinuto,
+
+                    onEquipo =
+                        viewModel::cambiarEquipo,
+
+                    onJugador =
+                        viewModel::cambiarJugador,
+
+                    onJugadorRival =
+                        viewModel::cambiarNombreJugadorRival,
+
+                    onObservacion =
+                        viewModel::cambiarObservacion,
+
+                    onGuardarCorreccion =
+                        viewModel::guardarCorreccionEvento,
+
+                    onConfirmarAnulacion =
+                        viewModel::confirmarAnulacionEvento
+                )
+            }
+        }
+    if (
+        estado.mostrarAuditoriaGeneral &&
+        contexto != null
+    ) {
+
+        ModalAuditoriaGeneral(
+            eventos =
+                estado.eventosAuditoria,
+
+            cargando =
+                estado.cargandoAuditoriaGeneral,
+
+            onCerrar = {
+                viewModel.cerrarAuditoriaGeneral()
+            },
+
+            onAbrirEvento = { evento ->
+
+                viewModel.cerrarAuditoriaGeneral()
+
+                viewModel.abrirDetalleEvento(
+                    evento
+                )
             }
         )
     }
@@ -576,10 +689,14 @@ private fun BotonEventoRapido(
 
 @Composable
 private fun TarjetaCronologiaEvento(
-    evento: EventoPartido
+    evento: EventoPartido,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .clickable(
+            onClick = onClick
+        ),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = SportProSuperficie
@@ -697,6 +814,7 @@ private fun ModalRegistroEvento(
     onCambiarJugadorRival: (String) -> Unit,
     onCambiarObservacion: (String) -> Unit,
     onRegistrar: () -> Unit
+
 ) {
     val tipo =
         formulario.tipo

@@ -13,6 +13,10 @@ import com.example.projectsportpro2026_2.datos.modelo.evento.TipoEventoCatalogo
 import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.Partido
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.projectsportpro2026_2.datos.modelo.evento.AuditoriaEventoPartido
+import com.example.projectsportpro2026_2.datos.modelo.evento.DatosEventoAuditoria
+import com.example.projectsportpro2026_2.datos.modelo.evento.EstadoEventoPartido
+import com.example.projectsportpro2026_2.datos.modelo.evento.TipoCambioEvento
 import kotlinx.coroutines.tasks.await
 
 data class ContextoPartidoEnVivo(
@@ -210,15 +214,6 @@ class RepositorioEventosPartido(
                 uid = uid
             )
 
-            if (
-                partido.estado !=
-                EstadoPartido.EN_CURSO
-            ) {
-                throw IllegalStateException(
-                    "El partido debe estar en curso para registrar eventos"
-                )
-            }
-
             obtenerAlineacionConfirmada(
                 partido
             )
@@ -266,7 +261,9 @@ class RepositorioEventosPartido(
                         }
                     )
 
-            if (tiposEvento.isEmpty()) {
+            if (
+                tiposEvento.isEmpty() &&
+                partido.estado == EstadoPartido.EN_CURSO) {
                 throw IllegalStateException(
                     "La academia no tiene eventos activos en su catálogo"
                 )
@@ -656,6 +653,43 @@ class RepositorioEventosPartido(
         return texto
     }
 
+    private fun datosAuditoria(
+        evento: EventoPartido
+    ): DatosEventoAuditoria =
+        DatosEventoAuditoria(
+            idTipoEvento =
+                evento.idTipoEvento,
+
+            codigoTipoEvento =
+                evento.codigoTipoEvento,
+
+            nombreTipoEvento =
+                evento.nombreTipoEvento,
+
+            minuto =
+                evento.minuto,
+
+            equipoEvento =
+                evento.equipoEvento,
+
+            idJugador =
+                evento.idJugador,
+
+            nombreJugador =
+                evento.nombreJugador,
+
+            observacion =
+                evento.observacion,
+
+            afectaMarcador =
+                evento.afectaMarcador,
+
+            afectaEstadoPartido =
+                evento.afectaEstadoPartido,
+
+            estado =
+                evento.estado
+        )
     suspend fun listarEventos(
         idPartido: String,
         uid: String
@@ -688,6 +722,10 @@ class RepositorioEventosPartido(
                 .toObjects(
                     EventoPartido::class.java
                 )
+                .filter {
+                    it.estado ==
+                            EstadoEventoPartido.ACTIVO
+                }
                 .sortedWith(
                     compareBy<EventoPartido> {
                         it.minuto
@@ -697,6 +735,667 @@ class RepositorioEventosPartido(
                 )
         }
 
+    private suspend fun validarJugadorCorreccion(
+        partido: Partido,
+        tipo: TipoEventoCatalogo,
+        equipoEvento: EquipoEvento,
+        idJugador: String,
+        nombreJugadorRival: String
+    ): Pair<String, String> {
+
+        if (!tipo.requiereJugador) {
+            return "" to ""
+        }
+
+        if (
+            equipoEvento ==
+            EquipoEvento.RIVAL
+        ) {
+
+            val nombre =
+                nombreJugadorRival.trim()
+
+            if (nombre.isBlank()) {
+                throw IllegalArgumentException(
+                    "${tipo.nombre} requiere indicar el jugador rival"
+                )
+            }
+
+            return "" to nombre
+        }
+
+        if (idJugador.isBlank()) {
+            throw IllegalArgumentException(
+                "${tipo.nombre} requiere seleccionar un jugador"
+            )
+        }
+
+        val idsAlineados =
+            obtenerIdsAlineados(
+                partido.id
+            )
+
+        if (
+            idJugador !in
+            idsAlineados
+        ) {
+            throw IllegalArgumentException(
+                "El jugador seleccionado no pertenece a la alineación del partido"
+            )
+        }
+
+        val jugador =
+            jugadores.document(
+                idJugador
+            )
+                .get()
+                .await()
+                .toObject(
+                    Jugador::class.java
+                )
+                ?: throw IllegalStateException(
+                    "El jugador seleccionado ya no existe"
+                )
+
+        /*
+         * En HU15 NO comprobamos que actualmente
+         * siga activo o siga en el mismo equipo.
+         *
+         * La fuente histórica es la alineación del partido.
+         * Un jugador podría cambiar de equipo después.
+         */
+        return jugador.id to
+                jugador.nombreCompleto()
+    }
+    suspend fun corregirEvento(
+        idPartido: String,
+        idEvento: String,
+        versionEsperada: Int,
+
+        idTipoEvento: String,
+        minuto: Int,
+
+        equipoEvento: EquipoEvento,
+
+        idJugador: String,
+        nombreJugadorRival: String,
+
+        observacion: String,
+
+        motivo: String,
+
+        uid: String
+    ): Result<EventoPartido> =
+        intentar {
+
+            val partido =
+                obtenerPartido(
+                    idPartido
+                )
+
+            verificarOperador(
+                partido = partido,
+                uid = uid
+            )
+
+            if (idEvento.isBlank()) {
+                throw IllegalArgumentException(
+                    "El evento no es válido"
+                )
+            }
+
+            val motivoFinal =
+                motivo.trim()
+
+            if (motivoFinal.isBlank()) {
+                throw IllegalArgumentException(
+                    "El motivo de la corrección es obligatorio"
+                )
+            }
+
+            if (minuto < 0) {
+                throw IllegalArgumentException(
+                    "El minuto no puede ser negativo"
+                )
+            }
+
+            val referenciaEvento =
+                partidos.document(
+                    idPartido
+                )
+                    .collection(
+                        "eventos"
+                    )
+                    .document(
+                        idEvento
+                    )
+
+            /*
+             * Primero obtenemos el evento para poder validar
+             * el nuevo tipo y construir los nuevos datos.
+             *
+             * La transacción volverá a leerlo después para
+             * comprobar la versión.
+             */
+            val eventoPrevio =
+                referenciaEvento
+                    .get()
+                    .await()
+                    .toObject(
+                        EventoPartido::class.java
+                    )
+                    ?.copy(
+                        id = idEvento
+                    )
+                    ?: throw IllegalStateException(
+                        "El evento ya no existe"
+                    )
+
+            if (
+                eventoPrevio.estado ==
+                EstadoEventoPartido.ANULADO
+            ) {
+                throw IllegalStateException(
+                    "Un evento anulado no puede corregirse"
+                )
+            }
+
+            if (idTipoEvento.isBlank()) {
+                throw IllegalArgumentException(
+                    "Debes seleccionar un tipo de evento"
+                )
+            }
+
+            val referenciaTipo =
+                academias.document(
+                    partido.idAcademia
+                )
+                    .collection(
+                        "catalogoEventos"
+                    )
+                    .document(
+                        idTipoEvento
+                    )
+
+            val tipo =
+                referenciaTipo
+                    .get()
+                    .await()
+                    .toObject(
+                        TipoEventoCatalogo::class.java
+                    )
+                    ?.copy(
+                        id = idTipoEvento
+                    )
+                    ?: throw IllegalStateException(
+                        "El tipo de evento ya no existe"
+                    )
+
+            /*
+             * Un tipo desactivado puede seguir apareciendo
+             * históricamente.
+             *
+             * Permitimos conservarlo si el evento ya usaba
+             * exactamente ese tipo, pero no cambiar un evento
+             * hacia OTRO tipo que esté inactivo.
+             */
+            if (
+                !tipo.activo &&
+                tipo.id !=
+                eventoPrevio.idTipoEvento
+            ) {
+                throw IllegalStateException(
+                    "No puedes corregir el evento usando un tipo inactivo"
+                )
+            }
+
+            if (
+                tipo.codigo ==
+                "INICIO"
+            ) {
+                throw IllegalStateException(
+                    "Inicio no puede utilizarse como corrección de un evento del partido en vivo"
+                )
+            }
+
+            val equipoFinal =
+                validarEquipo(
+                    tipo = tipo,
+                    equipoEvento =
+                        equipoEvento
+                )
+
+            val jugadorFinal =
+                validarJugadorCorreccion(
+                    partido = partido,
+                    tipo = tipo,
+                    equipoEvento =
+                        equipoFinal,
+                    idJugador =
+                        idJugador,
+                    nombreJugadorRival =
+                        nombreJugadorRival
+                )
+
+            val observacionFinal =
+                validarObservacion(
+                    tipo = tipo,
+                    observacion =
+                        observacion
+                )
+
+            val ahora =
+                System.currentTimeMillis()
+
+            val referenciaAuditoria =
+                referenciaEvento
+                    .collection(
+                        "auditoria"
+                    )
+                    .document()
+
+            /*
+             * Transacción:
+             *
+             * 1. vuelve a leer el evento;
+             * 2. comprueba que nadie lo haya modificado;
+             * 3. incrementa versión;
+             * 4. actualiza el evento;
+             * 5. guarda auditoría.
+             *
+             * Todo ocurre junto.
+             */
+            bd.runTransaction {
+                    transaccion ->
+
+                val snapshot =
+                    transaccion.get(
+                        referenciaEvento
+                    )
+
+                val actual =
+                    snapshot
+                        .toObject(
+                            EventoPartido::class.java
+                        )
+                        ?.copy(
+                            id =
+                                snapshot.id
+                        )
+                        ?: throw IllegalStateException(
+                            "El evento ya no existe"
+                        )
+
+                if (
+                    actual.estado ==
+                    EstadoEventoPartido.ANULADO
+                ) {
+                    throw IllegalStateException(
+                        "El evento fue anulado y ya no puede corregirse"
+                    )
+                }
+
+                if (
+                    actual.version !=
+                    versionEsperada
+                ) {
+                    throw IllegalStateException(
+                        "El evento cambió desde que lo abriste. Actualiza la información antes de corregirlo."
+                    )
+                }
+
+                val nuevaVersion =
+                    actual.version + 1
+
+                val actualizado =
+                    actual.copy(
+                        idTipoEvento =
+                            tipo.id,
+
+                        codigoTipoEvento =
+                            tipo.codigo,
+
+                        nombreTipoEvento =
+                            tipo.nombre,
+
+                        minuto =
+                            minuto,
+
+                        equipoEvento =
+                            equipoFinal,
+
+                        idJugador =
+                            jugadorFinal.first,
+
+                        nombreJugador =
+                            jugadorFinal.second,
+
+                        observacion =
+                            observacionFinal,
+
+                        afectaMarcador =
+                            tipo.afectaMarcador,
+
+                        afectaEstadoPartido =
+                            tipo.afectaEstadoPartido,
+
+                        version =
+                            nuevaVersion,
+
+                        modificadoPor =
+                            uid,
+
+                        fechaModificacion =
+                            ahora
+                    )
+
+                val auditoria =
+                    AuditoriaEventoPartido(
+                        id =
+                            referenciaAuditoria.id,
+
+                        idEvento =
+                            actual.id,
+
+                        idPartido =
+                            idPartido,
+
+                        tipoCambio =
+                            TipoCambioEvento.CORRECCION,
+
+                        versionAnterior =
+                            actual.version,
+
+                        versionNueva =
+                            nuevaVersion,
+
+                        motivo =
+                            motivoFinal,
+
+                        autor =
+                            uid,
+
+                        fechaCambio =
+                            ahora,
+
+                        valoresAnteriores =
+                            datosAuditoria(
+                                actual
+                            ),
+
+                        valoresNuevos =
+                            datosAuditoria(
+                                actualizado
+                            )
+                    )
+
+                transaccion.set(
+                    referenciaEvento,
+                    actualizado
+                )
+
+                transaccion.set(
+                    referenciaAuditoria,
+                    auditoria
+                )
+
+                actualizado
+            }.await()
+        }
+
+    suspend fun anularEvento(
+        idPartido: String,
+        idEvento: String,
+        versionEsperada: Int,
+        motivo: String,
+        uid: String
+    ): Result<EventoPartido> =
+        intentar {
+
+            val partido =
+                obtenerPartido(
+                    idPartido
+                )
+
+            verificarOperador(
+                partido = partido,
+                uid = uid
+            )
+
+            if (idEvento.isBlank()) {
+                throw IllegalArgumentException(
+                    "El evento no es válido"
+                )
+            }
+
+            val motivoFinal =
+                motivo.trim()
+
+            if (motivoFinal.isBlank()) {
+                throw IllegalArgumentException(
+                    "El motivo de la anulación es obligatorio"
+                )
+            }
+
+            val referenciaEvento =
+                partidos.document(
+                    idPartido
+                )
+                    .collection(
+                        "eventos"
+                    )
+                    .document(
+                        idEvento
+                    )
+
+            val referenciaAuditoria =
+                referenciaEvento
+                    .collection(
+                        "auditoria"
+                    )
+                    .document()
+
+            val ahora =
+                System.currentTimeMillis()
+
+            bd.runTransaction {
+                    transaccion ->
+
+                val snapshot =
+                    transaccion.get(
+                        referenciaEvento
+                    )
+
+                val actual =
+                    snapshot
+                        .toObject(
+                            EventoPartido::class.java
+                        )
+                        ?.copy(
+                            id =
+                                snapshot.id
+                        )
+                        ?: throw IllegalStateException(
+                            "El evento ya no existe"
+                        )
+
+                if (
+                    actual.estado ==
+                    EstadoEventoPartido.ANULADO
+                ) {
+                    throw IllegalStateException(
+                        "El evento ya se encuentra anulado"
+                    )
+                }
+
+                if (
+                    actual.version !=
+                    versionEsperada
+                ) {
+                    throw IllegalStateException(
+                        "El evento cambió desde que lo abriste. Actualiza la información antes de anularlo."
+                    )
+                }
+
+                val nuevaVersion =
+                    actual.version + 1
+
+                /*
+                 * NO eliminamos el documento.
+                 */
+                val anulado =
+                    actual.copy(
+                        estado =
+                            EstadoEventoPartido.ANULADO,
+
+                        version =
+                            nuevaVersion,
+
+                        anuladoPor =
+                            uid,
+
+                        fechaAnulacion =
+                            ahora
+                    )
+
+                val auditoria =
+                    AuditoriaEventoPartido(
+                        id =
+                            referenciaAuditoria.id,
+
+                        idEvento =
+                            actual.id,
+
+                        idPartido =
+                            idPartido,
+
+                        tipoCambio =
+                            TipoCambioEvento.ANULACION,
+
+                        versionAnterior =
+                            actual.version,
+
+                        versionNueva =
+                            nuevaVersion,
+
+                        motivo =
+                            motivoFinal,
+
+                        autor =
+                            uid,
+
+                        fechaCambio =
+                            ahora,
+
+                        valoresAnteriores =
+                            datosAuditoria(
+                                actual
+                            ),
+
+                        valoresNuevos =
+                            datosAuditoria(
+                                anulado
+                            )
+                    )
+
+                transaccion.set(
+                    referenciaEvento,
+                    anulado
+                )
+
+                transaccion.set(
+                    referenciaAuditoria,
+                    auditoria
+                )
+
+                anulado
+            }.await()
+        }
+
+    suspend fun listarEventosAuditoria(
+        idPartido: String,
+        uid: String
+    ): Result<List<EventoPartido>> =
+        intentar {
+
+            val partido =
+                obtenerPartido(
+                    idPartido
+                )
+
+            verificarOperador(
+                partido = partido,
+                uid = uid
+            )
+
+            partidos.document(
+                idPartido
+            )
+                .collection(
+                    "eventos"
+                )
+                .get()
+                .await()
+                .toObjects(
+                    EventoPartido::class.java
+                )
+                .sortedWith(
+                    compareBy<EventoPartido> {
+                        it.minuto
+                    }.thenBy {
+                        it.fechaCaptura
+                    }
+                )
+        }
+
+    suspend fun listarAuditoriaEvento(
+        idPartido: String,
+        idEvento: String,
+        uid: String
+    ): Result<List<AuditoriaEventoPartido>> =
+        intentar {
+
+            val partido =
+                obtenerPartido(
+                    idPartido
+                )
+
+            verificarOperador(
+                partido = partido,
+                uid = uid
+            )
+
+            partidos.document(
+                idPartido
+            )
+                .collection(
+                    "eventos"
+                )
+                .document(
+                    idEvento
+                )
+                .collection(
+                    "auditoria"
+                )
+                .get()
+                .await()
+                .documents
+                .mapNotNull {
+                        documento ->
+
+                    documento
+                        .toObject(
+                            AuditoriaEventoPartido::class.java
+                        )
+                        ?.copy(
+                            id =
+                                documento.id
+                        )
+                }
+                .sortedBy {
+                    it.fechaCambio
+                }
+        }
     fun calcularMarcador(
         eventos: List<EventoPartido>
     ): MarcadorPartido {
@@ -710,14 +1409,17 @@ class RepositorioEventosPartido(
          */
         val propio =
             eventos.count {
-                it.afectaMarcador &&
+                it.estado ==
+                        EstadoEventoPartido.ACTIVO &&
+                        it.afectaMarcador &&
                         it.equipoEvento ==
                         EquipoEvento.PROPIO
             }
 
         val rival =
             eventos.count {
-                it.afectaMarcador &&
+                it.estado == EstadoEventoPartido.ACTIVO &&
+                        it.afectaMarcador &&
                         it.equipoEvento ==
                         EquipoEvento.RIVAL
             }

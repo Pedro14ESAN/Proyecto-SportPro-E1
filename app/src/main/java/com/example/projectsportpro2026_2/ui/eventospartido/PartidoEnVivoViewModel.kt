@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.projectsportpro2026_2.datos.modelo.evento.AuditoriaEventoPartido
 
 data class FormularioEventoPartido(
     val tipo: TipoEventoCatalogo? = null,
@@ -32,6 +33,12 @@ data class FormularioEventoPartido(
     val observacion: String = ""
 )
 
+
+enum class AccionEventoPartido {
+    CORREGIR,
+    ANULAR
+}
+
 data class EstadoPartidoEnVivo(
     val contexto:
     ContextoPartidoEnVivo? = null,
@@ -48,9 +55,28 @@ data class EstadoPartidoEnVivo(
 
     val mostrarFormulario: Boolean = false,
 
-    val formulario:
-    FormularioEventoPartido =
-        FormularioEventoPartido(),
+    val formulario: FormularioEventoPartido = FormularioEventoPartido(),
+
+    val eventoSeleccionado: EventoPartido? = null,
+
+    val accionEvento:
+    AccionEventoPartido? = null,
+
+    val motivoCambio: String = "",
+
+    val procesandoCambio: Boolean = false,
+
+    val auditoriaEvento:
+    List<AuditoriaEventoPartido> = emptyList(),
+
+    val cargandoAuditoria: Boolean = false,
+
+    val mostrarAuditoriaGeneral: Boolean = false,
+
+    val eventosAuditoria:
+    List<EventoPartido> = emptyList(),
+
+    val cargandoAuditoriaGeneral: Boolean = false,
 
     val error: String? = null,
 
@@ -186,6 +212,61 @@ class PartidoEnVivoViewModel(
         }
     }
 
+    private fun cargarAuditoriaEvento(
+        idEvento: String
+    ) {
+
+        if (
+            idPartidoActual.isBlank() ||
+            idEvento.isBlank()
+        ) {
+            return
+        }
+
+        viewModelScope.launch {
+
+            _estado.update {
+                it.copy(
+                    cargandoAuditoria = true
+                )
+            }
+
+            repositorio
+                .listarAuditoriaEvento(
+                    idPartido =
+                        idPartidoActual,
+
+                    idEvento =
+                        idEvento,
+
+                    uid =
+                        uidActual
+                )
+                .onSuccess { auditoria ->
+
+                    _estado.update {
+                        it.copy(
+                            auditoriaEvento =
+                                auditoria,
+
+                            cargandoAuditoria =
+                                false
+                        )
+                    }
+                }
+                .onFailure { e ->
+
+                    _estado.update {
+                        it.copy(
+                            cargandoAuditoria =
+                                false,
+                            error =
+                                mensajeError(e)
+                        )
+                    }
+                }
+        }
+    }
     fun abrirEvento(
         tipo: TipoEventoCatalogo
     ) {
@@ -263,6 +344,513 @@ class PartidoEnVivoViewModel(
         }
     }
 
+    fun iniciarCorreccionEvento() {
+
+        val actual =
+            _estado.value
+
+        val evento =
+            actual.eventoSeleccionado
+                ?: return
+
+        val contexto =
+            actual.contexto
+                ?: return
+
+        /*
+         * Primero intentamos utilizar la configuración
+         * actual de HU13.
+         */
+        val tipoActual =
+            contexto.tiposEvento
+                .firstOrNull {
+                    it.id ==
+                            evento.idTipoEvento
+                }
+            /*
+             * Si el tipo fue desactivado después de
+             * registrarse, construimos la información
+             * necesaria desde la fotografía histórica.
+             */
+                ?: TipoEventoCatalogo(
+                    id =
+                        evento.idTipoEvento,
+
+                    codigo =
+                        evento.codigoTipoEvento,
+
+                    nombre =
+                        evento.nombreTipoEvento,
+
+                    activo = false,
+
+                    requiereEquipo =
+                        evento.equipoEvento !=
+                                EquipoEvento.NINGUNO,
+
+                    requiereJugador =
+                        evento.idJugador.isNotBlank() ||
+                                evento.nombreJugador.isNotBlank(),
+
+                    requiereObservacion =
+                        evento.observacion.isNotBlank(),
+
+                    afectaMarcador =
+                        evento.afectaMarcador,
+
+                    afectaEstadoPartido =
+                        evento.afectaEstadoPartido
+                )
+
+        _estado.update {
+            it.copy(
+                accionEvento =
+                    AccionEventoPartido.CORREGIR,
+
+                motivoCambio = "",
+
+                formulario =
+                    FormularioEventoPartido(
+                        tipo =
+                            tipoActual,
+
+                        minuto =
+                            evento.minuto
+                                .toString(),
+
+                        equipoEvento =
+                            evento.equipoEvento,
+
+                        idJugador =
+                            evento.idJugador,
+
+                        nombreJugadorRival =
+                            if (
+                                evento.equipoEvento ==
+                                EquipoEvento.RIVAL
+                            ) {
+                                evento.nombreJugador
+                            } else {
+                                ""
+                            },
+
+                        observacion =
+                            evento.observacion
+                    ),
+
+                error = null
+            )
+        }
+    }
+    fun abrirAuditoriaGeneral() {
+
+        if (idPartidoActual.isBlank()) {
+            return
+        }
+
+        _estado.update {
+            it.copy(
+                mostrarAuditoriaGeneral = true,
+                cargandoAuditoriaGeneral = true,
+                error = null
+            )
+        }
+
+        viewModelScope.launch {
+
+            repositorio
+                .listarEventosAuditoria(
+                    idPartido =
+                        idPartidoActual,
+
+                    uid =
+                        uidActual
+                )
+                .onSuccess { eventos ->
+
+                    _estado.update {
+                        it.copy(
+                            eventosAuditoria =
+                                eventos,
+
+                            cargandoAuditoriaGeneral =
+                                false
+                        )
+                    }
+                }
+                .onFailure { e ->
+
+                    _estado.update {
+                        it.copy(
+                            cargandoAuditoriaGeneral =
+                                false,
+
+                            error =
+                                mensajeError(e)
+                        )
+                    }
+                }
+        }
+    }
+
+    fun cerrarAuditoriaGeneral() {
+
+        _estado.update {
+            it.copy(
+                mostrarAuditoriaGeneral =
+                    false
+            )
+        }
+    }
+
+    fun iniciarAnulacionEvento() {
+
+        if (
+            _estado.value.eventoSeleccionado ==
+            null
+        ) {
+            return
+        }
+
+        _estado.update {
+            it.copy(
+                accionEvento =
+                    AccionEventoPartido.ANULAR,
+
+                motivoCambio = "",
+
+                error = null
+            )
+        }
+    }
+
+    fun cambiarMotivoCambio(
+        valor: String
+    ) {
+
+        _estado.update {
+            it.copy(
+                motivoCambio =
+                    valor
+            )
+        }
+    }
+
+    fun cancelarAccionEvento() {
+
+        if (_estado.value.procesandoCambio) {
+            return
+        }
+
+        _estado.update {
+            it.copy(
+                accionEvento = null,
+                motivoCambio = "",
+                formulario =
+                    FormularioEventoPartido(),
+                error = null
+            )
+        }
+    }
+
+    fun guardarCorreccionEvento() {
+
+        val actual =
+            _estado.value
+
+        val evento =
+            actual.eventoSeleccionado
+                ?: return
+
+        val formulario =
+            actual.formulario
+
+        val tipo =
+            formulario.tipo
+                ?: return
+
+        val motivo =
+            actual.motivoCambio
+                .trim()
+
+        if (motivo.isBlank()) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "El motivo de la corrección es obligatorio"
+                )
+            }
+
+            return
+        }
+
+        val minuto =
+            formulario.minuto
+                .toIntOrNull()
+
+        if (minuto == null || minuto < 0) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "Debes indicar un minuto válido"
+                )
+            }
+
+            return
+        }
+
+        if (
+            tipo.requiereEquipo &&
+            formulario.equipoEvento ==
+            EquipoEvento.NINGUNO
+        ) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "Selecciona el equipo del evento"
+                )
+            }
+
+            return
+        }
+
+        if (
+            tipo.requiereJugador &&
+            formulario.equipoEvento !=
+            EquipoEvento.RIVAL &&
+            formulario.idJugador.isBlank()
+        ) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "Selecciona un jugador"
+                )
+            }
+
+            return
+        }
+
+        if (
+            tipo.requiereJugador &&
+            formulario.equipoEvento ==
+            EquipoEvento.RIVAL &&
+            formulario.nombreJugadorRival
+                .isBlank()
+        ) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "Indica el jugador rival"
+                )
+            }
+
+            return
+        }
+
+        if (
+            tipo.requiereObservacion &&
+            formulario.observacion
+                .isBlank()
+        ) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "Este evento requiere una observación"
+                )
+            }
+
+            return
+        }
+
+        viewModelScope.launch {
+
+            _estado.update {
+                it.copy(
+                    procesandoCambio = true,
+                    error = null,
+                    mensaje = null
+                )
+            }
+
+            repositorio
+                .corregirEvento(
+                    idPartido =
+                        idPartidoActual,
+
+                    idEvento =
+                        evento.id,
+
+                    versionEsperada =
+                        evento.version,
+
+                    /*
+                     * Conservamos el mismo tipo.
+                     */
+                    idTipoEvento =
+                        evento.idTipoEvento,
+
+                    minuto =
+                        minuto,
+
+                    equipoEvento =
+                        formulario.equipoEvento,
+
+                    idJugador =
+                        formulario.idJugador,
+
+                    nombreJugadorRival =
+                        formulario
+                            .nombreJugadorRival,
+
+                    observacion =
+                        formulario.observacion,
+
+                    motivo =
+                        motivo,
+
+                    uid =
+                        uidActual
+                )
+                .onSuccess { corregido ->
+
+                    refrescarDespuesCambio()
+
+                    _estado.update {
+                        it.copy(
+                            eventoSeleccionado =
+                                corregido,
+
+                            accionEvento = null,
+
+                            motivoCambio = "",
+
+                            formulario =
+                                FormularioEventoPartido(),
+
+                            procesandoCambio =
+                                false,
+
+                            mensaje =
+                                "Evento corregido correctamente"
+                        )
+                    }
+
+                    cargarAuditoriaEvento(
+                        corregido.id
+                    )
+                }
+                .onFailure { e ->
+
+                    _estado.update {
+                        it.copy(
+                            procesandoCambio =
+                                false,
+
+                            error =
+                                mensajeError(e)
+                        )
+                    }
+                }
+        }
+    }
+
+    fun confirmarAnulacionEvento() {
+
+        val actual =
+            _estado.value
+
+        val evento =
+            actual.eventoSeleccionado
+                ?: return
+
+        val motivo =
+            actual.motivoCambio
+                .trim()
+
+        if (motivo.isBlank()) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "El motivo de la anulación es obligatorio"
+                )
+            }
+
+            return
+        }
+
+        viewModelScope.launch {
+
+            _estado.update {
+                it.copy(
+                    procesandoCambio = true,
+                    error = null,
+                    mensaje = null
+                )
+            }
+
+            repositorio
+                .anularEvento(
+                    idPartido =
+                        idPartidoActual,
+
+                    idEvento =
+                        evento.id,
+
+                    versionEsperada =
+                        evento.version,
+
+                    motivo =
+                        motivo,
+
+                    uid =
+                        uidActual
+                )
+                .onSuccess {
+
+                    /*
+                     * listarEventos() ya excluye ANULADO.
+                     * Por eso desaparecerá automáticamente
+                     * de la cronología activa.
+                     */
+                    refrescarDespuesCambio()
+
+                    _estado.update {
+                        it.copy(
+                            eventoSeleccionado = null,
+                            accionEvento = null,
+                            motivoCambio = "",
+                            auditoriaEvento =
+                                emptyList(),
+
+                            procesandoCambio =
+                                false,
+
+                            mensaje =
+                                "Evento anulado correctamente"
+                        )
+                    }
+                }
+                .onFailure { e ->
+
+                    _estado.update {
+                        it.copy(
+                            procesandoCambio =
+                                false,
+
+                            error =
+                                mensajeError(e)
+                        )
+                    }
+                }
+        }
+    }
     fun cambiarMinuto(
         valor: String
     ) {
@@ -287,6 +875,33 @@ class PartidoEnVivoViewModel(
                     )
             )
         }
+    }
+
+    private suspend fun refrescarDespuesCambio() {
+
+        repositorio
+            .listarEventos(
+                idPartido =
+                    idPartidoActual,
+
+                uid =
+                    uidActual
+            )
+            .onSuccess { eventos ->
+
+                _estado.update {
+                    it.copy(
+                        eventos =
+                            eventos,
+
+                        marcador =
+                            repositorio
+                                .calcularMarcador(
+                                    eventos
+                                )
+                    )
+                }
+            }
     }
 
     fun cambiarEquipo(
@@ -619,6 +1234,41 @@ class PartidoEnVivoViewModel(
                         )
                     }
                 }
+        }
+    }
+    fun abrirDetalleEvento(
+        evento: EventoPartido
+    ) {
+
+        _estado.update {
+            it.copy(
+                eventoSeleccionado = evento,
+                accionEvento = null,
+                motivoCambio = "",
+                auditoriaEvento = emptyList(),
+                error = null,
+                mensaje = null
+            )
+        }
+
+        cargarAuditoriaEvento(
+            evento.id
+        )
+    }
+
+    fun cerrarDetalleEvento() {
+
+        if (_estado.value.procesandoCambio) {
+            return
+        }
+
+        _estado.update {
+            it.copy(
+                eventoSeleccionado = null,
+                accionEvento = null,
+                motivoCambio = "",
+                auditoriaEvento = emptyList()
+            )
         }
     }
 
