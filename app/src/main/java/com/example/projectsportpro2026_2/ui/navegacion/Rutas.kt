@@ -17,8 +17,27 @@ object Rutas {
     const val EQUIPOS = "equipos/{idAcademia}/{nombre}"
     const val JUGADORES = "jugadores/{idEquipo}/{nombre}"
 
+    const val PARTIDOS = "partidos/{idAcademia}/{nombre}"
+
+    const val CREAR_PARTIDO = "partidos/{idAcademia}/{nombre}/crear"
+
+    const val DETALLE_PARTIDO = "partido/{idPartido}"
+
+    const val EDITAR_PARTIDO = "partido/{idPartido}/editar"
+
+    const val CONVOCATORIA = "partido/{idPartido}/convocatoria"
+
+    const val MIS_CONVOCATORIAS = "mis_convocatorias"
+
+    const val ALINEACION = "partido/{idPartido}/alineacion"
     const val MIS_JUGADORES = "mis_jugadores"
     const val VINCULACIONES = "vinculaciones"
+
+    const val CATALOGO_EVENTOS =
+        "academias/{idAcademia}/catalogo_eventos"
+
+    const val PARTIDO_EN_VIVO =
+        "partido/{idPartido}/en_vivo"
 }
 
 fun rutaEquipos(idAcademia: String, nombre: String): String =
@@ -26,6 +45,48 @@ fun rutaEquipos(idAcademia: String, nombre: String): String =
 
 fun rutaJugadores(idEquipo: String, nombre: String): String =
     "jugadores/$idEquipo/${Uri.encode(nombre)}"
+
+fun rutaPartidos(
+    idAcademia: String,
+    nombre: String
+): String =
+    "partidos/$idAcademia/${Uri.encode(nombre)}"
+
+fun rutaCrearPartido(
+    idAcademia: String,
+    nombre: String
+): String =
+    "partidos/$idAcademia/${Uri.encode(nombre)}/crear"
+
+fun rutaDetallePartido(
+    idPartido: String
+): String =
+    "partido/$idPartido"
+
+fun rutaConvocatoria(
+    idPartido: String
+): String =
+    "partido/$idPartido/convocatoria"
+
+fun rutaEditarPartido(
+    idPartido: String
+): String =
+    "partido/$idPartido/editar"
+
+fun rutaAlineacion(
+    idPartido: String
+): String =
+    "partido/$idPartido/alineacion"
+
+fun rutaCatalogoEventos(
+    idAcademia: String
+): String =
+    "academias/$idAcademia/catalogo_eventos"
+
+fun rutaPartidoEnVivo(
+    idPartido: String
+): String =
+    "partido/$idPartido/en_vivo"
 
 // Decide a qué pantalla va cada usuario según su estado y su rol
 fun rutaInicioPara(perfil: PerfilUsuario): String =
