@@ -150,6 +150,24 @@ fun PantallaDetallePartido(
             color = SportProNavy,
             fontWeight = FontWeight.Black
         )
+        estado.marcadorSeleccionado?.let { marcador ->
+
+            if (
+                partido.estado == EstadoPartido.EN_CURSO ||
+                partido.estado == EstadoPartido.FINALIZADO
+            ) {
+
+                TarjetaMarcadorDetalle(
+                    nombreEquipo = nombreEquipo,
+                    nombreRival = partido.nombreRival,
+                    golesPropios = marcador.propio,
+                    golesRival = marcador.rival,
+                    finalizado =
+                        partido.estado ==
+                                EstadoPartido.FINALIZADO
+                )
+            }
+        }
 
         TarjetaInformacionPartido(
             partido = partido
@@ -346,6 +364,26 @@ fun PantallaDetallePartido(
                     color = SportProTextoSecundario
                 )
             }
+            Button(
+                onClick = {
+                    onAbrirPartidoEnVivo(
+                        partido.id
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = FormaBotonSportPro,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SportProNavy,
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = "Ver cronología del partido",
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         if (partido.estado == EstadoPartido.CANCELADO) {
@@ -391,6 +429,87 @@ fun PantallaDetallePartido(
     }
 }
 
+@Composable
+private fun TarjetaMarcadorDetalle(
+    nombreEquipo: String,
+    nombreRival: String,
+    golesPropios: Int,
+    golesRival: Int,
+    finalizado: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = FormaTarjetaSportPro,
+        colors = CardDefaults.cardColors(
+            containerColor = SportProNavy
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            horizontalAlignment =
+                Alignment.CenterHorizontally,
+            verticalArrangement =
+                Arrangement.spacedBy(10.dp)
+        ) {
+
+            Text(
+                text =
+                    if (finalizado) {
+                        "RESULTADO FINAL"
+                    } else {
+                        "MARCADOR ACTUAL"
+                    },
+                color = SportProVerdeClaro,
+                style =
+                    MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Row(
+                modifier =
+                    Modifier.fillMaxWidth(),
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = nombreEquipo,
+                    modifier =
+                        Modifier.weight(1f),
+                    color = Color.White,
+                    fontWeight =
+                        FontWeight.Bold
+                )
+
+                Text(
+                    text =
+                        "$golesPropios–$golesRival",
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 16.dp
+                        ),
+                    color = Color.White,
+                    style =
+                        MaterialTheme.typography.headlineLarge,
+                    fontWeight =
+                        FontWeight.Black
+                )
+
+                Text(
+                    text = nombreRival,
+                    modifier =
+                        Modifier.weight(1f),
+                    color = Color.White,
+                    fontWeight =
+                        FontWeight.Bold
+                )
+            }
+        }
+    }
+}
 @Composable
 private fun TarjetaInformacionPartido(
     partido: Partido

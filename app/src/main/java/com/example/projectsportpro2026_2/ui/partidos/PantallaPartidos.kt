@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.Equipo
 import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.Partido
+import com.example.projectsportpro2026_2.datos.repositorio.evento.MarcadorPartido
 
 @Composable
 fun PantallaPartidos(
@@ -137,6 +138,7 @@ fun PantallaPartidos(
                         titulo = "EN CURSO",
                         partidos = enCurso,
                         equipos = estado.equipos,
+                        marcadores = estado.marcadoresPorPartido,
                         onAbrirPartido = onAbrirPartido
                     )
                 }
@@ -145,6 +147,7 @@ fun PantallaPartidos(
                     titulo = "PRÓXIMOS",
                     partidos = proximos,
                     equipos = estado.equipos,
+                    marcadores = estado.marcadoresPorPartido,
                     onAbrirPartido = onAbrirPartido
                 )
 
@@ -152,6 +155,7 @@ fun PantallaPartidos(
                     titulo = "FINALIZADOS",
                     partidos = finalizados,
                     equipos = estado.equipos,
+                    marcadores = estado.marcadoresPorPartido,
                     onAbrirPartido = onAbrirPartido
                 )
 
@@ -159,6 +163,7 @@ fun PantallaPartidos(
                     titulo = "CANCELADOS",
                     partidos = cancelados,
                     equipos = estado.equipos,
+                    marcadores = estado.marcadoresPorPartido,
                     onAbrirPartido = onAbrirPartido
                 )
             }
@@ -224,6 +229,7 @@ private fun LazyListScope.seccionPartidos(
     titulo: String,
     partidos: List<Partido>,
     equipos: List<Equipo>,
+    marcadores: Map<String, MarcadorPartido>,
     onAbrirPartido: (String) -> Unit
 ) {
     item {
@@ -269,6 +275,7 @@ private fun LazyListScope.seccionPartidos(
             TarjetaPartidoSportPro(
                 partido = partido,
                 nombreEquipo = nombreEquipo,
+                marcador = marcadores[partido.id],
                 onAbrir = {
                     onAbrirPartido(partido.id)
                 }
@@ -281,6 +288,7 @@ private fun LazyListScope.seccionPartidos(
 private fun TarjetaPartidoSportPro(
     partido: Partido,
     nombreEquipo: String,
+    marcador: MarcadorPartido?,
     onAbrir: () -> Unit
 ) {
     val enCurso =
@@ -386,15 +394,33 @@ private fun TarjetaPartidoSportPro(
                     modifier = Modifier.weight(1f)
                 )
 
-                Text(
-                    text = "VS",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = SportProVerde,
-                    fontWeight = FontWeight.Black,
-                    modifier = Modifier.padding(
-                        horizontal = 12.dp
+                if (
+                    partido.estado == EstadoPartido.FINALIZADO &&
+                    marcador != null
+                ) {
+
+                    Text(
+                        text = "${marcador.propio}–${marcador.rival}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = SportProVerde,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(
+                            horizontal = 12.dp
+                        )
                     )
-                )
+
+                } else {
+
+                    Text(
+                        text = "VS",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = SportProVerde,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(
+                            horizontal = 12.dp
+                        )
+                    )
+                }
 
                 Text(
                     text = partido.nombreRival,

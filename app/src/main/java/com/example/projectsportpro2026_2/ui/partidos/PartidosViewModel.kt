@@ -13,11 +13,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.projectsportpro2026_2.datos.repositorio.evento.MarcadorPartido
+import com.example.projectsportpro2026_2.datos.repositorio.evento.RepositorioEventosPartido
 
 data class EstadoPartidos(
     val partidos: List<Partido> = emptyList(),
     val equipos: List<Equipo> = emptyList(),
     val partidoSeleccionado: Partido? = null,
+    val marcadorSeleccionado: MarcadorPartido? = null,
+    val marcadoresPorPartido: Map<String, MarcadorPartido> = emptyMap(),
     val cargando: Boolean = false,
     val error: String? = null
 )
@@ -25,7 +29,8 @@ data class EstadoPartidos(
 class PartidosViewModel(
     private val repositorio: RepositorioPartidos = RepositorioPartidos(),
     private val repositorioAcademias: RepositorioAcademias = RepositorioAcademias(),
-    private val autenticacion: RepositorioAutenticacion = RepositorioAutenticacion()
+    private val autenticacion: RepositorioAutenticacion = RepositorioAutenticacion(),
+    private val repositorioEventos: RepositorioEventosPartido = RepositorioEventosPartido()
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(EstadoPartidos())
@@ -64,10 +69,32 @@ class PartidosViewModel(
                     .listarPartidos(idAcademia, uid)
                     .getOrThrow()
 
+                val marcadores = mutableMapOf<String, MarcadorPartido>()
+
+                partidos
+                    .filter {
+                        it.estado == EstadoPartido.FINALIZADO
+                    }
+                    .forEach { partido ->
+
+                        val eventos =
+                            repositorioEventos
+                                .listarEventos(
+                                    idPartido = partido.id,
+                                    uid = uid
+                                )
+                                .getOrThrow()
+
+                        marcadores[partido.id] =
+                            repositorioEventos
+                                .calcularMarcador(eventos)
+                    }
+
                 _estado.update {
                     it.copy(
                         equipos = equipos,
                         partidos = partidos,
+                        marcadoresPorPartido = marcadores,
                         cargando = false
                     )
                 }
@@ -80,6 +107,7 @@ class PartidosViewModel(
                 }
             }
         }
+
     }
 
     fun crearPartido(
@@ -131,7 +159,8 @@ class PartidosViewModel(
             _estado.update {
                 it.copy(
                     cargando = true,
-                    error = null
+                    error = null,
+                    marcadorSeleccionado = null
                 )
             }
 
@@ -144,10 +173,32 @@ class PartidosViewModel(
                     .listarEquipos(partido.idAcademia)
                     .getOrThrow()
 
+                val marcador =
+                    if (
+                        partido.estado == EstadoPartido.EN_CURSO ||
+                        partido.estado == EstadoPartido.FINALIZADO
+                    ) {
+
+                        val eventos =
+                            repositorioEventos
+                                .listarEventos(
+                                    idPartido = partido.id,
+                                    uid = uid
+                                )
+                                .getOrThrow()
+
+                        repositorioEventos
+                            .calcularMarcador(eventos)
+
+                    } else {
+                        null
+                    }
+
                 _estado.update {
                     it.copy(
                         partidoSeleccionado = partido,
                         equipos = equipos,
+                        marcadorSeleccionado = marcador,
                         cargando = false
                     )
                 }
