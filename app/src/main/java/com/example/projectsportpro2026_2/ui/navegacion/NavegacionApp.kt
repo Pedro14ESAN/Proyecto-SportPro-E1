@@ -40,6 +40,8 @@ import com.example.projectsportpro2026_2.ui.partidos.PantallaCrearPartido
 import com.example.projectsportpro2026_2.ui.partidos.PantallaDetallePartido
 import com.example.projectsportpro2026_2.ui.partidos.PantallaEditarPartido
 import com.example.projectsportpro2026_2.ui.partidos.PantallaPartidos
+import com.example.projectsportpro2026_2.ui.seguimiento.PantallaMisPartidos
+import com.example.projectsportpro2026_2.ui.seguimiento.PantallaSeguimientoPartido
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
 
@@ -156,6 +158,13 @@ fun NavegacionApp() {
         )
     }
 
+    // HU17: partidos para seguir en tiempo real
+    val abrirPartidosEnVivo: () -> Unit = {
+        navController.navigate(
+            Rutas.MIS_PARTIDOS
+        )
+    }
+
     NavHost(
         navController =
             navController,
@@ -221,6 +230,9 @@ fun NavegacionApp() {
                     abrirEjercicios,
                 onAsistencias =
                     abrirAsistencias,
+                onPartidosEnVivo =
+                    abrirPartidosEnVivo,
+
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -239,6 +251,9 @@ fun NavegacionApp() {
                     abrirEntrenamientos,
                 onAsistencias =
                     abrirAsistencias,
+                onPartidosEnVivo =
+                    abrirPartidosEnVivo,
+
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -260,6 +275,9 @@ fun NavegacionApp() {
                         Rutas.MIS_CONVOCATORIAS
                     )
                 },
+                onPartidosEnVivo =
+                    abrirPartidosEnVivo,
+
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -286,6 +304,9 @@ fun NavegacionApp() {
                         Rutas.MIS_CONVOCATORIAS
                     )
                 },
+                onPartidosEnVivo =
+                    abrirPartidosEnVivo,
+
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -795,6 +816,40 @@ fun NavegacionApp() {
             PantallaCatalogoEventos(
                 idAcademia =
                     idAcademia,
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // HU17: lista de partidos y seguimiento en tiempo real
+        composable(
+            Rutas.MIS_PARTIDOS
+        ) {
+            PantallaMisPartidos(
+                onVolver = {
+                    navController.popBackStack()
+                },
+                onAbrirPartido = { idPartido ->
+                    navController.navigate(
+                        rutaSeguimientoPartido(idPartido)
+                    )
+                }
+            )
+        }
+
+        composable(
+            route = Rutas.SEGUIMIENTO_PARTIDO,
+            arguments = listOf(
+                navArgument("idPartido") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entrada ->
+            PantallaSeguimientoPartido(
+                idPartido = entrada.arguments
+                    ?.getString("idPartido")
+                    .orEmpty(),
                 onVolver = {
                     navController.popBackStack()
                 }
