@@ -8,30 +8,33 @@ import com.example.projectsportpro2026_2.datos.modelo.Rol
 object Rutas {
     const val LOGIN = "login"
     const val REGISTRO = "registro"
+
     const val INICIO_ADM = "inicio_adm"
     const val INICIO_DT = "inicio_dt"
     const val INICIO_JUG = "inicio_jug"
     const val INICIO_PAD = "inicio_pad"
+
     const val CUENTA_PENDIENTE = "cuenta_pendiente"
+
     const val ACADEMIAS = "academias"
     const val EQUIPOS = "equipos/{idAcademia}/{nombre}"
     const val JUGADORES = "jugadores/{idEquipo}/{nombre}"
 
     const val PARTIDOS = "partidos/{idAcademia}/{nombre}"
-
     const val CREAR_PARTIDO = "partidos/{idAcademia}/{nombre}/crear"
-
     const val DETALLE_PARTIDO = "partido/{idPartido}"
-
     const val EDITAR_PARTIDO = "partido/{idPartido}/editar"
-
     const val CONVOCATORIA = "partido/{idPartido}/convocatoria"
-
     const val MIS_CONVOCATORIAS = "mis_convocatorias"
-
     const val ALINEACION = "partido/{idPartido}/alineacion"
+
     const val MIS_JUGADORES = "mis_jugadores"
     const val VINCULACIONES = "vinculaciones"
+
+    const val MENSUALIDADES = "mensualidades"
+    const val EJERCICIOS = "ejercicios"
+    const val ENTRENAMIENTOS = "entrenamientos"
+    const val ASISTENCIAS = "asistencias"
 
     const val CATALOGO_EVENTOS =
         "academias/{idAcademia}/catalogo_eventos"
@@ -40,10 +43,16 @@ object Rutas {
         "partido/{idPartido}/en_vivo"
 }
 
-fun rutaEquipos(idAcademia: String, nombre: String): String =
+fun rutaEquipos(
+    idAcademia: String,
+    nombre: String
+): String =
     "equipos/$idAcademia/${Uri.encode(nombre)}"
 
-fun rutaJugadores(idEquipo: String, nombre: String): String =
+fun rutaJugadores(
+    idEquipo: String,
+    nombre: String
+): String =
     "jugadores/$idEquipo/${Uri.encode(nombre)}"
 
 fun rutaPartidos(
@@ -88,9 +97,13 @@ fun rutaPartidoEnVivo(
 ): String =
     "partido/$idPartido/en_vivo"
 
-// Decide a qué pantalla va cada usuario según su estado y su rol
-fun rutaInicioPara(perfil: PerfilUsuario): String =
-    if (perfil.estado == EstadoCuenta.PENDIENTE) {
+fun rutaInicioPara(
+    perfil: PerfilUsuario
+): String =
+    if (
+        perfil.estado ==
+        EstadoCuenta.PENDIENTE
+    ) {
         Rutas.CUENTA_PENDIENTE
     } else {
         when (perfil.rol) {

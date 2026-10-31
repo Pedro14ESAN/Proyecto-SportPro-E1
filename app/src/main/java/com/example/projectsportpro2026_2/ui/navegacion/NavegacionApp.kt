@@ -18,138 +18,371 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAutenticacion
 import com.example.projectsportpro2026_2.ui.academias.PantallaAcademias
+import com.example.projectsportpro2026_2.ui.alineacion.PantallaAlineacion
+import com.example.projectsportpro2026_2.ui.asistencias.PantallaAsistencias
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaLogin
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRegistro
+import com.example.projectsportpro2026_2.ui.catalogoeventos.PantallaCatalogoEventos
 import com.example.projectsportpro2026_2.ui.convocatoria.PantallaConvocatoria
+import com.example.projectsportpro2026_2.ui.convocatoria.PantallaMisConvocatorias
+import com.example.projectsportpro2026_2.ui.ejercicios.PantallaEjercicios
+import com.example.projectsportpro2026_2.ui.entrenamientos.PantallaEntrenamientos
 import com.example.projectsportpro2026_2.ui.equipos.PantallaEquipos
+import com.example.projectsportpro2026_2.ui.eventospartido.PantallaPartidoEnVivo
 import com.example.projectsportpro2026_2.ui.inicio.InicioAdministrador
 import com.example.projectsportpro2026_2.ui.inicio.InicioApoderado
 import com.example.projectsportpro2026_2.ui.inicio.InicioEntrenador
 import com.example.projectsportpro2026_2.ui.inicio.InicioJugador
 import com.example.projectsportpro2026_2.ui.inicio.PantallaCuentaPendiente
 import com.example.projectsportpro2026_2.ui.jugadores.PantallaJugadores
-import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
-import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
+import com.example.projectsportpro2026_2.ui.mensualidades.PantallaMensualidades
 import com.example.projectsportpro2026_2.ui.partidos.PantallaCrearPartido
 import com.example.projectsportpro2026_2.ui.partidos.PantallaDetallePartido
-import com.example.projectsportpro2026_2.ui.partidos.PantallaPartidos
 import com.example.projectsportpro2026_2.ui.partidos.PantallaEditarPartido
-import com.example.projectsportpro2026_2.ui.convocatoria.PantallaMisConvocatorias
-import com.example.projectsportpro2026_2.ui.alineacion.PantallaAlineacion
-import com.example.projectsportpro2026_2.ui.catalogoeventos.PantallaCatalogoEventos
-import com.example.projectsportpro2026_2.ui.eventospartido.PantallaPartidoEnVivo
+import com.example.projectsportpro2026_2.ui.partidos.PantallaPartidos
+import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
+import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
 
 @Composable
 fun NavegacionApp() {
-    val repositorio = remember { RepositorioAutenticacion() }
-    val navController = rememberNavController()
-    var destinoInicial by remember { mutableStateOf<String?>(null) }
 
-    // Al abrir la app: si ya hay sesión guardada, va directo a su pantalla de inicio
-    LaunchedEffect(Unit) {
-        val uid = repositorio.uidActual()
-        destinoInicial = if (uid == null) {
-            Rutas.LOGIN
-        } else {
-            val perfil = try {
-                repositorio.obtenerPerfil(uid)
-            } catch (e: Exception) {
-                null
-            }
-            if (perfil != null) rutaInicioPara(perfil) else Rutas.LOGIN
+    val repositorio =
+        remember {
+            RepositorioAutenticacion()
         }
+
+    val navController =
+        rememberNavController()
+
+    var destinoInicial by
+    remember {
+        mutableStateOf<String?>(
+            null
+        )
     }
 
-    val inicio = destinoInicial
+    LaunchedEffect(Unit) {
+
+        val uid =
+            repositorio.uidActual()
+
+        destinoInicial =
+            if (uid == null) {
+
+                Rutas.LOGIN
+
+            } else {
+
+                val perfil =
+                    try {
+                        repositorio.obtenerPerfil(uid)
+                    } catch (e: Exception) {
+                        null
+                    }
+
+                if (perfil != null) {
+                    rutaInicioPara(perfil)
+                } else {
+                    Rutas.LOGIN
+                }
+            }
+    }
+
+    val inicio =
+        destinoInicial
+
     if (inicio == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+
+        Box(
+            modifier =
+                Modifier.fillMaxSize(),
+            contentAlignment =
+                Alignment.Center
+        ) {
+
             CircularProgressIndicator()
         }
+
         return
     }
 
-    // Va a una ruta y limpia el historial, para que "atrás" no regrese al login
     val irA: (String) -> Unit = { ruta ->
-        navController.navigate(ruta) {
-            popUpTo(navController.graph.id) { inclusive = true }
-        }
-    }
-    val cerrarSesion: () -> Unit = {
-        repositorio.cerrarSesion()
-        irA(Rutas.LOGIN)
-    }
-    val abrirAcademias: () -> Unit = { navController.navigate(Rutas.ACADEMIAS) }
 
-    NavHost(navController = navController, startDestination = inicio) {
-        composable(Rutas.LOGIN) {
+        navController.navigate(ruta) {
+            popUpTo(
+                navController.graph.id
+            ) {
+                inclusive = true
+            }
+        }
+    }
+
+    val cerrarSesion: () -> Unit = {
+
+        repositorio.cerrarSesion()
+
+        irA(
+            Rutas.LOGIN
+        )
+    }
+
+    val abrirAcademias: () -> Unit = {
+        navController.navigate(
+            Rutas.ACADEMIAS
+        )
+    }
+
+    val abrirMensualidades: () -> Unit = {
+        navController.navigate(
+            Rutas.MENSUALIDADES
+        )
+    }
+
+    val abrirEjercicios: () -> Unit = {
+        navController.navigate(
+            Rutas.EJERCICIOS
+        )
+    }
+
+    val abrirEntrenamientos: () -> Unit = {
+        navController.navigate(
+            Rutas.ENTRENAMIENTOS
+        )
+    }
+
+    val abrirAsistencias: () -> Unit = {
+        navController.navigate(
+            Rutas.ASISTENCIAS
+        )
+    }
+
+    NavHost(
+        navController =
+            navController,
+        startDestination =
+            inicio
+    ) {
+
+        composable(
+            Rutas.LOGIN
+        ) {
+
             PantallaLogin(
-                onSesionIniciada = { perfil -> irA(rutaInicioPara(perfil)) },
-                onIrARegistro = { navController.navigate(Rutas.REGISTRO) }
+                onSesionIniciada = { perfil ->
+
+                    irA(
+                        rutaInicioPara(
+                            perfil
+                        )
+                    )
+                },
+                onIrARegistro = {
+                    navController.navigate(
+                        Rutas.REGISTRO
+                    )
+                }
             )
         }
-        composable(Rutas.REGISTRO) {
+
+        composable(
+            Rutas.REGISTRO
+        ) {
+
             PantallaRegistro(
-                onRegistrado = { perfil -> irA(rutaInicioPara(perfil)) },
-                onIrALogin = { navController.popBackStack() }
+                onRegistrado = { perfil ->
+
+                    irA(
+                        rutaInicioPara(
+                            perfil
+                        )
+                    )
+                },
+                onIrALogin = {
+                    navController.popBackStack()
+                }
             )
         }
-        composable(Rutas.INICIO_ADM) {
+
+        composable(
+            Rutas.INICIO_ADM
+        ) {
+
             InicioAdministrador(
-                onGestionarAcademias = abrirAcademias,
-                onVinculaciones = { navController.navigate(Rutas.VINCULACIONES) },
-                onCerrarSesion = cerrarSesion
+                onGestionarAcademias =
+                    abrirAcademias,
+                onVinculaciones = {
+                    navController.navigate(
+                        Rutas.VINCULACIONES
+                    )
+                },
+                onMensualidades =
+                    abrirMensualidades,
+                onEjercicios =
+                    abrirEjercicios,
+                onAsistencias =
+                    abrirAsistencias,
+                onCerrarSesion =
+                    cerrarSesion
             )
         }
-        composable(Rutas.INICIO_DT) { InicioEntrenador(abrirAcademias, cerrarSesion) }
-        composable(Rutas.INICIO_JUG) {
+
+        composable(
+            Rutas.INICIO_DT
+        ) {
+
+            InicioEntrenador(
+                onGestionarAcademias =
+                    abrirAcademias,
+                onEjercicios =
+                    abrirEjercicios,
+                onEntrenamientos =
+                    abrirEntrenamientos,
+                onAsistencias =
+                    abrirAsistencias,
+                onCerrarSesion =
+                    cerrarSesion
+            )
+        }
+
+        composable(
+            Rutas.INICIO_JUG
+        ) {
+
             InicioJugador(
+                onMensualidades =
+                    abrirMensualidades,
+                onEntrenamientos =
+                    abrirEntrenamientos,
+                onAsistencias =
+                    abrirAsistencias,
                 onConvocatorias = {
                     navController.navigate(
                         Rutas.MIS_CONVOCATORIAS
                     )
                 },
-                onCerrarSesion = cerrarSesion
+                onCerrarSesion =
+                    cerrarSesion
             )
         }
-        composable(Rutas.INICIO_PAD) {
+
+        composable(
+            Rutas.INICIO_PAD
+        ) {
+
             InicioApoderado(
                 onMisJugadores = {
                     navController.navigate(
                         Rutas.MIS_JUGADORES
                     )
                 },
-
+                onMensualidades =
+                    abrirMensualidades,
+                onEntrenamientos =
+                    abrirEntrenamientos,
+                onAsistencias =
+                    abrirAsistencias,
                 onConvocatorias = {
                     navController.navigate(
                         Rutas.MIS_CONVOCATORIAS
                     )
                 },
-
-                onCerrarSesion = cerrarSesion
+                onCerrarSesion =
+                    cerrarSesion
             )
         }
-        composable(Rutas.CUENTA_PENDIENTE) { PantallaCuentaPendiente(cerrarSesion) }
 
-        composable(Rutas.ACADEMIAS) {
-            PantallaAcademias(
-                onVolver = { navController.popBackStack() },
-                onAbrirEquipos = { id, nombre -> navController.navigate(rutaEquipos(id, nombre)) },
-                onAbrirPartidos = { id, nombre -> navController.navigate(rutaPartidos(id, nombre)) },
-                onAbrirCatalogo = { idAcademia -> navController.navigate(rutaCatalogoEventos(idAcademia))}
-            )
-        }
         composable(
-            route = Rutas.EQUIPOS,
-            arguments = listOf(
-                navArgument("idAcademia") { type = NavType.StringType },
-                navArgument("nombre") { type = NavType.StringType }
+            Rutas.CUENTA_PENDIENTE
+        ) {
+
+            PantallaCuentaPendiente(
+                onCerrarSesion =
+                    cerrarSesion
             )
+        }
+
+        composable(
+            Rutas.ACADEMIAS
+        ) {
+
+            PantallaAcademias(
+                onVolver = {
+                    navController.popBackStack()
+                },
+                onAbrirEquipos = {
+                        id,
+                        nombre ->
+
+                    navController.navigate(
+                        rutaEquipos(
+                            id,
+                            nombre
+                        )
+                    )
+                },
+                onAbrirPartidos = {
+                        id,
+                        nombre ->
+
+                    navController.navigate(
+                        rutaPartidos(
+                            id,
+                            nombre
+                        )
+                    )
+                },
+                onAbrirCatalogo = {
+                        idAcademia ->
+
+                    navController.navigate(
+                        rutaCatalogoEventos(
+                            idAcademia
+                        )
+                    )
+                }
+            )
+        }
+
+        composable(
+            route =
+                Rutas.EQUIPOS,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idAcademia"
+                    ) {
+                        type =
+                            NavType.StringType
+                    },
+                    navArgument(
+                        "nombre"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
         ) { entrada ->
+
             PantallaEquipos(
-                idAcademia = entrada.arguments?.getString("idAcademia").orEmpty(),
-                nombreAcademia = entrada.arguments?.getString("nombre").orEmpty(),
-                onVolver = { navController.popBackStack() },
-                onAbrirJugadores = { id, nombre ->
+                idAcademia =
+                    entrada.arguments
+                        ?.getString(
+                            "idAcademia"
+                        )
+                        .orEmpty(),
+                nombreAcademia =
+                    entrada.arguments
+                        ?.getString(
+                            "nombre"
+                        )
+                        .orEmpty(),
+                onVolver = {
+                    navController.popBackStack()
+                },
+                onAbrirJugadores = {
+                        id,
+                        nombre ->
+
                     navController.navigate(
                         rutaJugadores(
                             id,
@@ -157,35 +390,51 @@ fun NavegacionApp() {
                         )
                     )
                 }
-
             )
         }
+
         composable(
-            route = Rutas.PARTIDOS,
-            arguments = listOf(
-                navArgument("idAcademia") {
-                    type = NavType.StringType
-                },
-                navArgument("nombre") {
-                    type = NavType.StringType
-                }
-            )
+            route =
+                Rutas.PARTIDOS,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idAcademia"
+                    ) {
+                        type =
+                            NavType.StringType
+                    },
+                    navArgument(
+                        "nombre"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
         ) { entrada ->
 
             val idAcademia =
-                entrada.arguments?.getString("idAcademia").orEmpty()
+                entrada.arguments
+                    ?.getString(
+                        "idAcademia"
+                    )
+                    .orEmpty()
 
             val nombreAcademia =
-                entrada.arguments?.getString("nombre").orEmpty()
+                entrada.arguments
+                    ?.getString(
+                        "nombre"
+                    )
+                    .orEmpty()
 
             PantallaPartidos(
-                idAcademia = idAcademia,
-                nombreAcademia = nombreAcademia,
-
+                idAcademia =
+                    idAcademia,
+                nombreAcademia =
+                    nombreAcademia,
                 onVolver = {
                     navController.popBackStack()
                 },
-
                 onCrearPartido = {
                     navController.navigate(
                         rutaCrearPartido(
@@ -194,84 +443,115 @@ fun NavegacionApp() {
                         )
                     )
                 },
+                onAbrirPartido = {
+                        idPartido ->
 
-                onAbrirPartido = { idPartido ->
                     navController.navigate(
-                        rutaDetallePartido(idPartido)
+                        rutaDetallePartido(
+                            idPartido
+                        )
                     )
                 }
             )
         }
+
         composable(
-            route = Rutas.CREAR_PARTIDO,
-            arguments = listOf(
-                navArgument("idAcademia") {
-                    type = NavType.StringType
-                },
-                navArgument("nombre") {
-                    type = NavType.StringType
-                }
-            )
+            route =
+                Rutas.CREAR_PARTIDO,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idAcademia"
+                    ) {
+                        type =
+                            NavType.StringType
+                    },
+                    navArgument(
+                        "nombre"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
         ) { entrada ->
 
             val idAcademia =
-                entrada.arguments?.getString("idAcademia").orEmpty()
+                entrada.arguments
+                    ?.getString(
+                        "idAcademia"
+                    )
+                    .orEmpty()
 
             PantallaCrearPartido(
-                idAcademia = idAcademia,
-
+                idAcademia =
+                    idAcademia,
                 onVolver = {
                     navController.popBackStack()
                 },
+                onPartidoCreado = {
+                        idPartido ->
 
-                onPartidoCreado = { idPartido ->
-
-                    // Quitamos el formulario del historial.
                     navController.popBackStack()
 
-                    // Abrimos el partido que acabamos de crear.
                     navController.navigate(
-                        rutaDetallePartido(idPartido)
+                        rutaDetallePartido(
+                            idPartido
+                        )
                     )
                 }
             )
         }
+
         composable(
-            route = Rutas.DETALLE_PARTIDO,
-            arguments = listOf(
-                navArgument("idPartido") {
-                    type = NavType.StringType
-                }
-            )
+            route =
+                Rutas.DETALLE_PARTIDO,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idPartido"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
         ) { entrada ->
 
             val idPartido =
-                entrada.arguments?.getString("idPartido").orEmpty()
+                entrada.arguments
+                    ?.getString(
+                        "idPartido"
+                    )
+                    .orEmpty()
 
             PantallaDetallePartido(
-                idPartido = idPartido,
-
+                idPartido =
+                    idPartido,
                 onVolver = {
                     navController.popBackStack()
                 },
+                onEditar = {
+                        partidoId ->
 
-                onEditar = { idPartido ->
                     navController.navigate(
-                        rutaEditarPartido(idPartido)
+                        rutaEditarPartido(
+                            partidoId
+                        )
                     )
                 },
-
                 onGestionarConvocatoria = {
                     navController.navigate(
-                        rutaConvocatoria(idPartido)
+                        rutaConvocatoria(
+                            idPartido
+                        )
                     )
                 },
-
                 onVerAlineacion = {
-                    // HU12
-                    navController.navigate(rutaAlineacion(idPartido))
+                    navController.navigate(
+                        rutaAlineacion(
+                            idPartido
+                        )
+                    )
                 },
-
                 onAbrirPartidoEnVivo = {
                     navController.navigate(
                         rutaPartidoEnVivo(
@@ -281,23 +561,31 @@ fun NavegacionApp() {
                 }
             )
         }
+
         composable(
-            route = Rutas.CONVOCATORIA,
-            arguments = listOf(
-                navArgument("idPartido") {
-                    type = NavType.StringType
-                }
-            )
+            route =
+                Rutas.CONVOCATORIA,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idPartido"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
         ) { entrada ->
 
             val idPartido =
                 entrada.arguments
-                    ?.getString("idPartido")
+                    ?.getString(
+                        "idPartido"
+                    )
                     .orEmpty()
 
             PantallaConvocatoria(
-                idPartido = idPartido,
-
+                idPartido =
+                    idPartido,
                 onVolver = {
                     navController.popBackStack()
                 }
@@ -305,46 +593,62 @@ fun NavegacionApp() {
         }
 
         composable(
-            route = Rutas.ALINEACION,
-            arguments = listOf(
-                navArgument("idPartido") {
-                    type = NavType.StringType
-                }
-            )
+            route =
+                Rutas.ALINEACION,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idPartido"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
         ) { entrada ->
 
             val idPartido =
                 entrada.arguments
-                    ?.getString("idPartido")
+                    ?.getString(
+                        "idPartido"
+                    )
                     .orEmpty()
 
             PantallaAlineacion(
-                idPartido = idPartido,
-
+                idPartido =
+                    idPartido,
                 onVolver = {
                     navController.popBackStack()
                 }
             )
         }
+
         composable(
-            route = Rutas.EDITAR_PARTIDO,
-            arguments = listOf(
-                navArgument("idPartido") {
-                    type = NavType.StringType
-                }
-            )
+            route =
+                Rutas.EDITAR_PARTIDO,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idPartido"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
         ) { entrada ->
 
             val idPartido =
-                entrada.arguments?.getString("idPartido").orEmpty()
+                entrada.arguments
+                    ?.getString(
+                        "idPartido"
+                    )
+                    .orEmpty()
 
             PantallaEditarPartido(
-                idPartido = idPartido,
-
+                idPartido =
+                    idPartido,
                 onVolver = {
                     navController.popBackStack()
                 },
-
                 onPartidoEditado = {
                     navController.popBackStack()
                 }
@@ -352,72 +656,175 @@ fun NavegacionApp() {
         }
 
         composable(
-            route = Rutas.JUGADORES,
-            arguments = listOf(
-                navArgument("idEquipo") { type = NavType.StringType },
-                navArgument("nombre") { type = NavType.StringType }
-            )
+            route =
+                Rutas.JUGADORES,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idEquipo"
+                    ) {
+                        type =
+                            NavType.StringType
+                    },
+                    navArgument(
+                        "nombre"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
         ) { entrada ->
+
             PantallaJugadores(
-                idEquipo = entrada.arguments?.getString("idEquipo").orEmpty(),
-                nombreEquipo = entrada.arguments?.getString("nombre").orEmpty(),
-                onVolver = { navController.popBackStack() }
+                idEquipo =
+                    entrada.arguments
+                        ?.getString(
+                            "idEquipo"
+                        )
+                        .orEmpty(),
+                nombreEquipo =
+                    entrada.arguments
+                        ?.getString(
+                            "nombre"
+                        )
+                        .orEmpty(),
+                onVolver = {
+                    navController.popBackStack()
+                }
             )
         }
+
         composable(
             Rutas.MIS_CONVOCATORIAS
         ) {
+
             PantallaMisConvocatorias(
                 onVolver = {
                     navController.popBackStack()
                 }
             )
         }
-        composable(Rutas.MIS_JUGADORES) {
-            PantallaMisJugadores(onVolver = { navController.popBackStack() })
-        }
-        composable(Rutas.VINCULACIONES) {
-            PantallaVinculaciones(onVolver = { navController.popBackStack() })
-        }
+
         composable(
-            route = Rutas.CATALOGO_EVENTOS,
-            arguments = listOf(
-                navArgument("idAcademia") {
-                    type = NavType.StringType
-                }
-            )
-        ) { entrada ->
+            Rutas.MIS_JUGADORES
+        ) {
 
-            val idAcademia =
-                entrada.arguments
-                    ?.getString("idAcademia")
-                    .orEmpty()
-
-            PantallaCatalogoEventos(
-                idAcademia = idAcademia,
-
+            PantallaMisJugadores(
                 onVolver = {
                     navController.popBackStack()
                 }
             )
         }
+
         composable(
-            route = Rutas.PARTIDO_EN_VIVO,
-            arguments = listOf(
-                navArgument("idPartido") {
-                    type = NavType.StringType
+            Rutas.VINCULACIONES
+        ) {
+
+            PantallaVinculaciones(
+                onVolver = {
+                    navController.popBackStack()
                 }
             )
+        }
+
+        composable(
+            Rutas.MENSUALIDADES
+        ) {
+
+            PantallaMensualidades(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            Rutas.EJERCICIOS
+        ) {
+
+            PantallaEjercicios(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            Rutas.ENTRENAMIENTOS
+        ) {
+
+            PantallaEntrenamientos(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            Rutas.ASISTENCIAS
+        ) {
+
+            PantallaAsistencias(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route =
+                Rutas.CATALOGO_EVENTOS,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idAcademia"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
+        ) { entrada ->
+
+            val idAcademia =
+                entrada.arguments
+                    ?.getString(
+                        "idAcademia"
+                    )
+                    .orEmpty()
+
+            PantallaCatalogoEventos(
+                idAcademia =
+                    idAcademia,
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route =
+                Rutas.PARTIDO_EN_VIVO,
+            arguments =
+                listOf(
+                    navArgument(
+                        "idPartido"
+                    ) {
+                        type =
+                            NavType.StringType
+                    }
+                )
         ) { entrada ->
 
             val idPartido =
                 entrada.arguments
-                    ?.getString("idPartido")
+                    ?.getString(
+                        "idPartido"
+                    )
                     .orEmpty()
 
             PantallaPartidoEnVivo(
-                idPartido = idPartido,
-
+                idPartido =
+                    idPartido,
                 onVolver = {
                     navController.popBackStack()
                 }
