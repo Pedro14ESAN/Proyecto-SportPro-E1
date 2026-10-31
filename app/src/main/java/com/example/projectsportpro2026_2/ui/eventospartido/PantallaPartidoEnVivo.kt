@@ -53,7 +53,20 @@ import com.example.projectsportpro2026_2.datos.modelo.evento.EquipoEvento
 import com.example.projectsportpro2026_2.datos.modelo.evento.EventoPartido
 import com.example.projectsportpro2026_2.datos.modelo.evento.TipoEventoCatalogo
 import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
+import com.example.projectsportpro2026_2.datos.modelo.sincronizacion.EstadoConexionPartido
+import com.example.projectsportpro2026_2.datos.modelo.sincronizacion.EstadoSincronizacionEvento
 import com.example.projectsportpro2026_2.ui.partidos.FormaBotonSportPro
+import com.example.projectsportpro2026_2.ui.sincronizacion.AvisoRegistroOfflineNoDisponible
+import com.example.projectsportpro2026_2.ui.sincronizacion.BannerSincronizacion
+import com.example.projectsportpro2026_2.ui.sincronizacion.ContadoresSincronizacion
+import com.example.projectsportpro2026_2.ui.sincronizacion.IndicadorNubeSincronizacion
+import com.example.projectsportpro2026_2.ui.sincronizacion.MensajeSincronizacion
+import com.example.projectsportpro2026_2.ui.sincronizacion.ModalConflictoSincronizacion
+import com.example.projectsportpro2026_2.ui.sincronizacion.SincronizacionViewModel
+import com.example.projectsportpro2026_2.ui.sincronizacion.SyncNaranja
+import com.example.projectsportpro2026_2.ui.sincronizacion.TarjetaEventoRechazado
+import com.example.projectsportpro2026_2.ui.sincronizacion.TarjetaEventoSincronizado
+import com.example.projectsportpro2026_2.ui.sincronizacion.textoAvisoMarcador
 import com.example.projectsportpro2026_2.ui.partidos.FormaTarjetaSportPro
 import com.example.projectsportpro2026_2.ui.partidos.SportProBorde
 import com.example.projectsportpro2026_2.ui.partidos.SportProFondo
@@ -71,15 +84,35 @@ import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
 fun PantallaPartidoEnVivo(
     idPartido: String,
     onVolver: () -> Unit,
-    viewModel: PartidoEnVivoViewModel = viewModel()
+    viewModel: PartidoEnVivoViewModel = viewModel(),
+    // HU16: sincronización y registro sin conexión
+    sincronizacion: SincronizacionViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
+    val sync by sincronizacion.estado.collectAsState()
 
     LaunchedEffect(idPartido) {
         viewModel.iniciar(idPartido)
+        sincronizacion.iniciar(idPartido)
     }
 
     val contexto = estado.contexto
+
+    /*
+     * HU16: el estado del partido llega en tiempo real
+     * (otro dispositivo pudo finalizarlo).
+     */
+    val estadoPartidoActual =
+        sync.partido?.estado
+            ?: contexto?.partido?.estado
+
+    /*
+     * HU16: sin conexión y sin datos locales no se permite
+     * un registro offline que no sea confiable.
+     */
+    val registroBloqueado =
+        sync.sinConexion &&
+                !sync.registroOfflineDisponible
 
     Scaffold(
         containerColor = SportProFondo
@@ -100,7 +133,9 @@ fun PantallaPartidoEnVivo(
         ) {
 
             item {
-                CabeceraPartidoEnVivo()
+                CabeceraPartidoEnVivo(
+                    estadoSincronizacion = sync.estadoGeneral
+                )
             }
 
             item {
@@ -112,6 +147,43 @@ fun PantallaPartidoEnVivo(
                         text = "← Partidos",
                         color = SportProVerde,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // HU16: banner de sincronización
+            item {
+                BannerSincronizacion(
+                    estado = sync,
+                    onSimularConexion =
+                        sincronizacion::alternarConexionSimulada,
+                    onReintentar =
+                        sincronizacion::reintentarSincronizacion
+                )
+            }
+
+            if (registroBloqueado) {
+                item {
+                    AvisoRegistroOfflineNoDisponible()
+                }
+            }
+
+            sync.error?.let { mensaje ->
+                item {
+                    MensajeSincronizacion(
+                        mensaje = mensaje,
+                        error = true,
+                        onCerrar = sincronizacion::limpiarError
+                    )
+                }
+            }
+
+            sync.mensaje?.let { mensaje ->
+                item {
+                    MensajeSincronizacion(
+                        mensaje = mensaje,
+                        error = false,
+                        onCerrar = sincronizacion::limpiarMensaje
                     )
                 }
             }
@@ -157,7 +229,12 @@ fun PantallaPartidoEnVivo(
             if (contexto == null) {
                 item {
                     Text(
-                        text = "No se pudo cargar el partido en vivo.",
+                        text = if (sync.sinConexion) {
+                            "No se pudo abrir el partido sin conexión: " +
+                                    "este dispositivo nunca lo había cargado."
+                        } else {
+                            "No se pudo cargar el partido en vivo."
+                        },
                         color = SportProTextoSecundario
                     )
                 }
@@ -173,20 +250,34 @@ fun PantallaPartidoEnVivo(
                     nombreRival =
                         contexto.partido.nombreRival,
 
+                    // HU16: marcador desde el listener en tiempo real
                     golesPropios =
-                        estado.marcador.propio,
+                        if (sync.cargado) {
+                            sync.marcador.propio
+                        } else {
+                            estado.marcador.propio
+                        },
 
                     golesRival =
-                        estado.marcador.rival,
+                        if (sync.cargado) {
+                            sync.marcador.rival
+                        } else {
+                            estado.marcador.rival
+                        },
 
                     estadoPartido =
-                        contexto.partido.estado
+                        estadoPartidoActual
+                            ?: contexto.partido.estado,
+
+                    avisoRevision =
+                        textoAvisoMarcador(sync)
                 )
             }
 
             if (
-                contexto.partido.estado ==
-                EstadoPartido.EN_CURSO
+                estadoPartidoActual ==
+                EstadoPartido.EN_CURSO &&
+                !registroBloqueado
             ) {
 
                 item {
@@ -264,7 +355,59 @@ fun PantallaPartidoEnVivo(
                 }
             }
 
-            if (estado.eventos.isEmpty()) {
+            // HU16: contadores de pendientes / conflictos
+            if (sync.pendientes > 0 || sync.conflictos > 0) {
+                item {
+                    ContadoresSincronizacion(
+                        pendientes = sync.pendientes,
+                        conflictos = sync.conflictos
+                    )
+                }
+            }
+
+            // HU16: eventos rechazados por el servidor
+            sync.rechazados.forEach { rechazado ->
+                item(
+                    key = "rechazado-${rechazado.evento.id}"
+                ) {
+                    TarjetaEventoRechazado(
+                        rechazado = rechazado,
+                        onReintentar = {
+                            sincronizacion.reintentarRechazado(rechazado)
+                        },
+                        onDescartar = {
+                            sincronizacion.descartarRechazado(rechazado)
+                        }
+                    )
+                }
+            }
+
+            if (sync.cargado && sync.eventos.isNotEmpty()) {
+
+                // HU16: cronología en tiempo real con estado de sync
+                sync.eventos.forEach { eventoSync ->
+                    item(
+                        key = eventoSync.evento.id
+                    ) {
+                        TarjetaEventoSincronizado(
+                            item = eventoSync,
+                            onClick = {
+                                if (
+                                    eventoSync.estado ==
+                                    EstadoSincronizacionEvento.CONFLICTO
+                                ) {
+                                    sincronizacion.abrirConflicto(eventoSync)
+                                } else {
+                                    viewModel.abrirDetalleEvento(
+                                        eventoSync.evento
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
+
+            } else if (estado.eventos.isEmpty()) {
 
                 item {
                     Surface(
@@ -356,83 +499,83 @@ fun PantallaPartidoEnVivo(
             }
         )
     }
-        estado.eventoSeleccionado?.let {
-                evento ->
+    estado.eventoSeleccionado?.let {
+            evento ->
 
-            if (contexto != null) {
+        if (contexto != null) {
 
-                ModalGestionEvento(
-                    evento =
-                        evento,
+            ModalGestionEvento(
+                evento =
+                    evento,
 
-                    accion =
-                        estado.accionEvento,
+                accion =
+                    estado.accionEvento,
 
-                    formulario =
-                        estado.formulario,
+                formulario =
+                    estado.formulario,
 
-                    motivo =
-                        estado.motivoCambio,
+                motivo =
+                    estado.motivoCambio,
 
-                    jugadores =
-                        contexto.jugadoresAlineados,
+                jugadores =
+                    contexto.jugadoresAlineados,
 
-                    nombreEquipo =
-                        contexto.equipo.nombre,
+                nombreEquipo =
+                    contexto.equipo.nombre,
 
-                    nombreRival =
-                        contexto.partido.nombreRival,
+                nombreRival =
+                    contexto.partido.nombreRival,
 
-                    auditoria =
-                        estado.auditoriaEvento,
+                auditoria =
+                    estado.auditoriaEvento,
 
-                    cargandoAuditoria =
-                        estado.cargandoAuditoria,
+                cargandoAuditoria =
+                    estado.cargandoAuditoria,
 
-                    procesando =
-                        estado.procesandoCambio,
+                procesando =
+                    estado.procesandoCambio,
 
-                    error =
-                        estado.error,
+                error =
+                    estado.error,
 
-                    onCerrar =
-                        viewModel::cerrarDetalleEvento,
+                onCerrar =
+                    viewModel::cerrarDetalleEvento,
 
-                    onCorregir =
-                        viewModel::iniciarCorreccionEvento,
+                onCorregir =
+                    viewModel::iniciarCorreccionEvento,
 
-                    onAnular =
-                        viewModel::iniciarAnulacionEvento,
+                onAnular =
+                    viewModel::iniciarAnulacionEvento,
 
-                    onCancelarAccion =
-                        viewModel::cancelarAccionEvento,
+                onCancelarAccion =
+                    viewModel::cancelarAccionEvento,
 
-                    onMotivo =
-                        viewModel::cambiarMotivoCambio,
+                onMotivo =
+                    viewModel::cambiarMotivoCambio,
 
-                    onMinuto =
-                        viewModel::cambiarMinuto,
+                onMinuto =
+                    viewModel::cambiarMinuto,
 
-                    onEquipo =
-                        viewModel::cambiarEquipo,
+                onEquipo =
+                    viewModel::cambiarEquipo,
 
-                    onJugador =
-                        viewModel::cambiarJugador,
+                onJugador =
+                    viewModel::cambiarJugador,
 
-                    onJugadorRival =
-                        viewModel::cambiarNombreJugadorRival,
+                onJugadorRival =
+                    viewModel::cambiarNombreJugadorRival,
 
-                    onObservacion =
-                        viewModel::cambiarObservacion,
+                onObservacion =
+                    viewModel::cambiarObservacion,
 
-                    onGuardarCorreccion =
-                        viewModel::guardarCorreccionEvento,
+                onGuardarCorreccion =
+                    viewModel::guardarCorreccionEvento,
 
-                    onConfirmarAnulacion =
-                        viewModel::confirmarAnulacionEvento
-                )
-            }
+                onConfirmarAnulacion =
+                    viewModel::confirmarAnulacionEvento
+            )
         }
+    }
     if (
         estado.mostrarAuditoriaGeneral &&
         contexto != null
@@ -459,6 +602,22 @@ fun PantallaPartidoEnVivo(
             }
         )
     }
+
+    // HU16: resolución de conflictos de sincronización
+    sync.eventoConflicto?.let { conflicto ->
+        ModalConflictoSincronizacion(
+            item = conflicto,
+            procesando = sync.resolviendoConflicto,
+            sinConexion = sync.sinConexion,
+            onCerrar = sincronizacion::cerrarConflicto,
+            onConservar = sincronizacion::conservarEventoEnConflicto,
+            onAnular = {
+                sincronizacion.cerrarConflicto()
+                viewModel.abrirDetalleEvento(conflicto.evento)
+                viewModel.iniciarAnulacionEvento()
+            }
+        )
+    }
 }
 
 @Composable
@@ -467,7 +626,9 @@ private fun TarjetaMarcador(
     nombreRival: String,
     golesPropios: Int,
     golesRival: Int,
-    estadoPartido: EstadoPartido
+    estadoPartido: EstadoPartido,
+    // HU16: advertencia de información no sincronizada
+    avisoRevision: String? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -556,6 +717,16 @@ private fun TarjetaMarcador(
                     text = "EN CURSO",
                     color = SportProVerdeClaro,
                     style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // HU16: el marcador no es definitivo
+            avisoRevision?.let { aviso ->
+                Text(
+                    text = aviso,
+                    color = SyncNaranja,
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -695,8 +866,8 @@ private fun TarjetaCronologiaEvento(
     Card(
         modifier = Modifier.fillMaxWidth()
             .clickable(
-            onClick = onClick
-        ),
+                onClick = onClick
+            ),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = SportProSuperficie
@@ -1368,7 +1539,9 @@ private fun MensajePartidoEnVivo(
 }
 
 @Composable
-private fun CabeceraPartidoEnVivo() {
+private fun CabeceraPartidoEnVivo(
+    estadoSincronizacion: EstadoConexionPartido
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement =
@@ -1418,18 +1591,10 @@ private fun CabeceraPartidoEnVivo() {
             }
         }
 
-        Surface(
-            modifier = Modifier.size(38.dp),
-            shape = CircleShape,
-            color = SportProVerdeClaro
-        ) {
-            Box(
-                contentAlignment =
-                    Alignment.Center
-            ) {
-                Text("⚽")
-            }
-        }
+        // HU16: indicador de sincronización
+        IndicadorNubeSincronizacion(
+            estado = estadoSincronizacion
+        )
     }
 }
 
