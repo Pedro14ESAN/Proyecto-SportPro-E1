@@ -28,13 +28,9 @@ private fun PantallaBaseInicio(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(
-                    24.dp
-                ),
-
+                .padding(24.dp),
         verticalArrangement =
             Arrangement.Center,
-
         horizontalAlignment =
             Alignment.CenterHorizontally
     ) {
@@ -42,34 +38,27 @@ private fun PantallaBaseInicio(
         Text(
             text =
                 titulo,
-
             style =
                 MaterialTheme
                     .typography
                     .headlineMedium,
-
             textAlign =
                 TextAlign.Center
         )
 
         Spacer(
-            Modifier.height(
-                8.dp
-            )
+            Modifier.height(8.dp)
         )
 
         Text(
             text =
                 descripcion,
-
             textAlign =
                 TextAlign.Center
         )
 
         Spacer(
-            Modifier.height(
-                24.dp
-            )
+            Modifier.height(24.dp)
         )
 
         acciones()
@@ -78,7 +67,6 @@ private fun PantallaBaseInicio(
             onClick =
                 onCerrarSesion
         ) {
-
             Text(
                 "Cerrar sesión"
             )
@@ -117,9 +105,7 @@ fun InicioAdministrador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -132,9 +118,7 @@ fun InicioAdministrador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -147,9 +131,7 @@ fun InicioAdministrador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -162,9 +144,7 @@ fun InicioAdministrador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -177,9 +157,7 @@ fun InicioAdministrador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 }
 
@@ -213,9 +191,7 @@ fun InicioEntrenador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -228,9 +204,7 @@ fun InicioEntrenador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -243,9 +217,7 @@ fun InicioEntrenador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -258,9 +230,7 @@ fun InicioEntrenador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 }
 
@@ -269,6 +239,7 @@ fun InicioJugador(
     onMensualidades: () -> Unit,
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
+    onConvocatorias: () -> Unit,
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -293,9 +264,7 @@ fun InicioJugador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -308,9 +277,7 @@ fun InicioJugador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -323,9 +290,20 @@ fun InicioJugador(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
+        Modifier.height(12.dp)
+    )
+
+    Button(
+        onClick =
+            onConvocatorias
+    ) {
+        Text(
+            "Mis convocatorias"
         )
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
     )
 }
 
@@ -335,6 +313,7 @@ fun InicioApoderado(
     onMensualidades: () -> Unit,
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
+    onConvocatorias: () -> Unit,
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -359,9 +338,7 @@ fun InicioApoderado(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -374,9 +351,7 @@ fun InicioApoderado(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -389,9 +364,7 @@ fun InicioApoderado(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
-        )
+        Modifier.height(12.dp)
     )
 
     Button(
@@ -404,9 +377,20 @@ fun InicioApoderado(
     }
 
     Spacer(
-        Modifier.height(
-            12.dp
+        Modifier.height(12.dp)
+    )
+
+    Button(
+        onClick =
+            onConvocatorias
+    ) {
+        Text(
+            "Convocatorias"
         )
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
     )
 }
 
