@@ -4,41 +4,29 @@ import com.example.projectsportpro2026_2.datos.modelo.Academia
 import com.example.projectsportpro2026_2.datos.modelo.Anuncio
 import com.example.projectsportpro2026_2.datos.modelo.Equipo
 import com.example.projectsportpro2026_2.datos.modelo.EstadoAnuncio
-import com.example.projectsportpro2026_2.datos.modelo.EstadoVinculacion
-import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.PerfilUsuario
 import com.example.projectsportpro2026_2.datos.modelo.Rol
 import com.example.projectsportpro2026_2.datos.modelo.TipoAudiencia
-import com.example.projectsportpro2026_2.datos.modelo.Vinculacion
-import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
+// Lo que un autor puede elegir al publicar un anuncio en una academia
 data class OpcionesPublicacion(
     val academia: Academia,
     val puedePublicarATodos: Boolean,   // ADM o autorizado: toda la academia o por rol
     val equipos: List<Equipo>           // equipos a los que puede dirigir un anuncio
 )
 
-// A qué academias y equipos pertenece el usuario (para saber qué puede leer)
-private data class Pertenencia(
-    val idsAcademias: Set<String>,
-    val idsEquipos: Set<String>,
-    val idsAcademiasGestionadas: Set<String>
-)
-
 class RepositorioAnuncios(
-    private val bd: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val bd: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val resolutor: ResolutorPertenencia = ResolutorPertenencia(bd)
 ) {
 
     private val anuncios = bd.collection("anuncios")
     private val academias = bd.collection("academias")
     private val equipos = bd.collection("equipos")
-    private val jugadores = bd.collection("jugadores")
     private val usuarios = bd.collection("usuarios")
-    private val vinculaciones = bd.collection("vinculaciones")
 
     // ---------- Utilidades ----------
 
@@ -56,66 +44,7 @@ class RepositorioAnuncios(
 
     private fun convertirAcademia(d: DocumentSnapshot) = d.toObject(Academia::class.java)?.copy(id = d.id)
     private fun convertirEquipo(d: DocumentSnapshot) = d.toObject(Equipo::class.java)?.copy(id = d.id)
-    private fun convertirJugador(d: DocumentSnapshot) = d.toObject(Jugador::class.java)?.copy(id = d.id)
     private fun convertirAnuncio(d: DocumentSnapshot) = d.toObject(Anuncio::class.java)?.copy(id = d.id)
-
-    // Firestore solo acepta hasta 10 valores en whereIn, por eso se parte en grupos
-    private suspend fun buscarPorIds(
-        coleccion: CollectionReference,
-        ids: List<String>
-    ): List<DocumentSnapshot> =
-        ids.filter { it.isNotBlank() }.distinct().chunked(10).flatMap { grupo ->
-            coleccion.whereIn(FieldPath.documentId(), grupo).get().await().documents
-        }
-
-    // ---------- ¿A qué pertenece el usuario? ----------
-
-    // Academias donde el usuario es administrador o está autorizado
-    private suspend fun academiasQueGestiona(uid: String): List<Academia> {
-        val comoAdmin = academias.whereEqualTo("idAdministrador", uid).get().await().documents
-        val comoAutorizado = academias.whereArrayContains("idsAutorizados", uid).get().await().documents
-        return (comoAdmin + comoAutorizado)
-            .mapNotNull { convertirAcademia(it) }
-            .distinctBy { it.id }
-            .filter { it.activa }
-    }
-
-    private suspend fun equiposDelDt(uid: String): List<Equipo> =
-        equipos.whereEqualTo("idEntrenador", uid).get().await().documents
-            .mapNotNull { convertirEquipo(it) }
-            .filter { it.activo }
-
-    private suspend fun pertenencia(uid: String, rol: Rol): Pertenencia {
-
-        // Fichas de jugador: la propia (JUG) o las de sus hijos vinculados (PAD)
-        val fichas: List<Jugador> = when (rol) {
-            Rol.JUG -> jugadores.whereEqualTo("idUsuario", uid).get().await().documents
-                .mapNotNull { convertirJugador(it) }
-
-            Rol.PAD -> {
-                val idsJugadores = vinculaciones.whereEqualTo("idApoderado", uid).get().await()
-                    .toObjects(Vinculacion::class.java)
-                    .filter { it.estado == EstadoVinculacion.ACTIVA }
-                    .map { it.idJugador }
-                buscarPorIds(jugadores, idsJugadores).mapNotNull { convertirJugador(it) }
-            }
-
-            else -> emptyList()
-        }
-
-        val equiposDt = if (rol == Rol.DT) equiposDelDt(uid) else emptyList()
-        val gestionadas = academiasQueGestiona(uid)
-
-        return Pertenencia(
-            idsAcademias = (fichas.map { it.idAcademia } +
-                    equiposDt.map { it.idAcademia } +
-                    gestionadas.map { it.id })
-                .filter { it.isNotBlank() }.toSet(),
-            idsEquipos = (fichas.map { it.idEquipo } + equiposDt.map { it.id })
-                .filter { it.isNotBlank() }.toSet(),
-            idsAcademiasGestionadas = gestionadas.map { it.id }.toSet()
-        )
-    }
 
     // Regla central de visibilidad (criterio HU19: nadie ve anuncios de grupos ajenos)
     private fun puedeVer(anuncio: Anuncio, uid: String, rol: Rol, p: Pertenencia): Boolean {
@@ -135,7 +64,7 @@ class RepositorioAnuncios(
 
     suspend fun listarParaUsuario(uid: String): Result<List<Anuncio>> = intentar {
         val perfil = obtenerPerfil(uid)
-        val p = pertenencia(uid, perfil.rol)
+        val p = resolutor.obtener(uid, perfil.rol)
 
         p.idsAcademias.toList().chunked(10)
             .flatMap { grupo ->
@@ -155,7 +84,7 @@ class RepositorioAnuncios(
         }
 
         // Academias que gestiona: puede publicar a toda la academia, por rol o a cualquier equipo
-        val gestionadas = academiasQueGestiona(uid)
+        val gestionadas = resolutor.academiasQueGestiona(uid)
         val deGestion = gestionadas.map { academia ->
             val equiposAcademia = equipos.whereEqualTo("idAcademia", academia.id).get().await()
                 .documents.mapNotNull { convertirEquipo(it) }.filter { it.activo }
@@ -165,7 +94,7 @@ class RepositorioAnuncios(
         // DT sin permisos de gestión: solo puede publicar para sus propios equipos
         val idsGestionadas = gestionadas.map { it.id }.toSet()
         val deDt = if (perfil.rol == Rol.DT) {
-            equiposDelDt(uid)
+            resolutor.equiposDelDt(uid)
                 .filter { it.idAcademia !in idsGestionadas }
                 .groupBy { it.idAcademia }
                 .mapNotNull { (idAcademia, suyos) ->
@@ -243,7 +172,7 @@ class RepositorioAnuncios(
         val anuncio = convertirAnuncio(anuncios.document(idAnuncio).get().await())
             ?: throw IllegalStateException("El anuncio no existe")
 
-        val esGestor = academiasQueGestiona(uid).any { it.id == anuncio.idAcademia }
+        val esGestor = resolutor.academiasQueGestiona(uid).any { it.id == anuncio.idAcademia }
         if (anuncio.idAutor != uid && !esGestor) {
             throw IllegalStateException("Solo el autor o un administrador puede modificar este anuncio")
         }
@@ -282,7 +211,7 @@ class RepositorioAnuncios(
 
         anuncios.document(idAnuncio).update(
             mapOf(
-                "estado" to estado.name,   // los enum se guardan como texto: "ACTIVO" / "ARCHIVADO"
+                "estado" to estado.name,
                 "actualizadoPor" to uid,
                 "fechaActualizacion" to System.currentTimeMillis()
             )
