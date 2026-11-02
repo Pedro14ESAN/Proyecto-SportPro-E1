@@ -81,7 +81,29 @@ data class EventoPartido(
     val fechaModificacion: Long = 0L,
 
     val anuladoPor: String = "",
-    val fechaAnulacion: Long = 0L
+    val fechaAnulacion: Long = 0L,
+
+    /*
+     * HU17: copia del motivo de anulación dentro del propio
+     * evento para que el apoderado/jugador pueda ver por qué
+     * se anuló sin tener acceso a la auditoría.
+     */
+    val motivoAnulacion: String = "",
+
+    /*
+     * HU16: dispositivo que capturó el evento.
+     * Permite distinguir dos registros hechos por
+     * dispositivos distintos (posible duplicado).
+     */
+    val idDispositivo: String = "",
+
+    /*
+     * HU16: el operador revisó el conflicto de
+     * sincronización y decidió conservar el evento.
+     */
+    val conflictoRevisado: Boolean = false,
+    val revisadoPor: String = "",
+    val fechaRevision: Long = 0L
 )
 
 enum class EquipoEvento {

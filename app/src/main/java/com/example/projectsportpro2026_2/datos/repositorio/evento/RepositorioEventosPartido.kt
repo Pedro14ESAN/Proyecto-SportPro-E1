@@ -17,6 +17,9 @@ import com.example.projectsportpro2026_2.datos.modelo.evento.AuditoriaEventoPart
 import com.example.projectsportpro2026_2.datos.modelo.evento.DatosEventoAuditoria
 import com.example.projectsportpro2026_2.datos.modelo.evento.EstadoEventoPartido
 import com.example.projectsportpro2026_2.datos.modelo.evento.TipoCambioEvento
+import com.example.projectsportpro2026_2.datos.sincronizacion.IdentificadorDispositivo
+import com.example.projectsportpro2026_2.datos.sincronizacion.RegistroRechazos
+import com.example.projectsportpro2026_2.datos.sincronizacion.confirmarOEncolar
 import kotlinx.coroutines.tasks.await
 
 data class ContextoPartidoEnVivo(
@@ -473,7 +476,11 @@ class RepositorioEventosPartido(
                         tipo.afectaEstadoPartido,
 
                     creadoPor = uid,
-                    fechaCaptura = ahora
+                    fechaCaptura = ahora,
+
+                    // HU16: dispositivo que capturó el evento
+                    idDispositivo =
+                        IdentificadorDispositivo.id
                 )
 
             /*
@@ -513,7 +520,25 @@ class RepositorioEventosPartido(
                 )
             }
 
-            lote.commit().await()
+            /*
+             * HU16: Firestore aplica el lote en la caché local
+             * al instante y lo envía al servidor cuando hay
+             * conexión. Si el dispositivo está sin conexión,
+             * commit() no termina hasta reconectar, por eso
+             * no bloqueamos la pantalla: esperamos la
+             * confirmación un momento y, si no llega, el
+             * evento queda "Pendiente de sync".
+             */
+            confirmarOEncolar(
+                tarea = lote.commit(),
+                alFallarDespues = { e ->
+                    RegistroRechazos.agregar(
+                        evento = evento,
+                        motivo = e.message
+                            ?: "El servidor rechazó el evento"
+                    )
+                }
+            )
 
             evento
         }
@@ -1255,7 +1280,11 @@ class RepositorioEventosPartido(
                             uid,
 
                         fechaAnulacion =
-                            ahora
+                            ahora,
+
+                        // HU17: motivo visible en el seguimiento
+                        motivoAnulacion =
+                            motivoFinal
                     )
 
                 val auditoria =

@@ -41,6 +41,13 @@ object Rutas {
 
     const val PARTIDO_EN_VIVO =
         "partido/{idPartido}/en_vivo"
+
+    // HU17: seguimiento en tiempo real (solo lectura)
+    const val MIS_PARTIDOS =
+        "mis_partidos"
+
+    const val SEGUIMIENTO_PARTIDO =
+        "partido/{idPartido}/seguimiento"
 }
 
 fun rutaEquipos(
@@ -91,6 +98,11 @@ fun rutaCatalogoEventos(
     idAcademia: String
 ): String =
     "academias/$idAcademia/catalogo_eventos"
+
+fun rutaSeguimientoPartido(
+    idPartido: String
+): String =
+    "partido/$idPartido/seguimiento"
 
 fun rutaPartidoEnVivo(
     idPartido: String

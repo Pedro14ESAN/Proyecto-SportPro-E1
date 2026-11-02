@@ -81,6 +81,7 @@ fun InicioAdministrador(
     onMensualidades: () -> Unit,
     onEjercicios: () -> Unit,
     onAsistencias: () -> Unit,
+    onPartidosEnVivo: () -> Unit = {},
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -94,6 +95,21 @@ fun InicioAdministrador(
         onCerrarSesion
 
 ) {
+
+    // HU17: seguimiento de partidos en tiempo real
+    Button(
+        onClick =
+            onPartidosEnVivo
+    ) {
+        Text(
+            "Partidos en vivo"
+        )
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
+
 
     Button(
         onClick =
@@ -167,6 +183,7 @@ fun InicioEntrenador(
     onEjercicios: () -> Unit,
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
+    onPartidosEnVivo: () -> Unit = {},
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -180,6 +197,21 @@ fun InicioEntrenador(
         onCerrarSesion
 
 ) {
+
+    // HU17: seguimiento de partidos en tiempo real
+    Button(
+        onClick =
+            onPartidosEnVivo
+    ) {
+        Text(
+            "Partidos en vivo"
+        )
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
+
 
     Button(
         onClick =
@@ -240,6 +272,7 @@ fun InicioJugador(
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
     onConvocatorias: () -> Unit,
+    onPartidosEnVivo: () -> Unit = {},
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -253,6 +286,21 @@ fun InicioJugador(
         onCerrarSesion
 
 ) {
+
+    // HU17: seguimiento de partidos en tiempo real
+    Button(
+        onClick =
+            onPartidosEnVivo
+    ) {
+        Text(
+            "Partidos en vivo"
+        )
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
+
 
     Button(
         onClick =
@@ -314,6 +362,7 @@ fun InicioApoderado(
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
     onConvocatorias: () -> Unit,
+    onPartidosEnVivo: () -> Unit = {},
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -327,6 +376,21 @@ fun InicioApoderado(
         onCerrarSesion
 
 ) {
+
+    // HU17: seguimiento de partidos en tiempo real
+    Button(
+        onClick =
+            onPartidosEnVivo
+    ) {
+        Text(
+            "Partidos en vivo"
+        )
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
+
 
     Button(
         onClick =
