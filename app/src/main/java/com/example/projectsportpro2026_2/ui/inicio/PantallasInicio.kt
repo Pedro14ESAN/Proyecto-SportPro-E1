@@ -82,6 +82,7 @@ fun InicioAdministrador(
     onEjercicios: () -> Unit,
     onAsistencias: () -> Unit,
     onPartidosEnVivo: () -> Unit = {},
+    onAnuncios: () -> Unit = {},
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -175,6 +176,16 @@ fun InicioAdministrador(
     Spacer(
         Modifier.height(12.dp)
     )
+    Button(
+        onClick = onAnuncios
+    ) {
+        Text("Anuncios del club")
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
+
 }
 
 @Composable
@@ -184,6 +195,7 @@ fun InicioEntrenador(
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
     onPartidosEnVivo: () -> Unit = {},
+    onAnuncios: () -> Unit = {},
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -264,6 +276,15 @@ fun InicioEntrenador(
     Spacer(
         Modifier.height(12.dp)
     )
+    Button(
+        onClick = onAnuncios
+    ) {
+        Text("Anuncios del club")
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
 }
 
 @Composable
@@ -273,6 +294,7 @@ fun InicioJugador(
     onAsistencias: () -> Unit,
     onConvocatorias: () -> Unit,
     onPartidosEnVivo: () -> Unit = {},
+    onAnuncios: () -> Unit = {},
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -353,6 +375,15 @@ fun InicioJugador(
     Spacer(
         Modifier.height(12.dp)
     )
+    Button(
+        onClick = onAnuncios
+    ) {
+        Text("Anuncios del club")
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
 }
 
 @Composable
@@ -363,6 +394,7 @@ fun InicioApoderado(
     onAsistencias: () -> Unit,
     onConvocatorias: () -> Unit,
     onPartidosEnVivo: () -> Unit = {},
+    onAnuncios: () -> Unit = {},
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -456,6 +488,16 @@ fun InicioApoderado(
     Spacer(
         Modifier.height(12.dp)
     )
+    Button(
+        onClick = onAnuncios
+    ) {
+        Text("Anuncios del club")
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
+
 }
 
 @Composable

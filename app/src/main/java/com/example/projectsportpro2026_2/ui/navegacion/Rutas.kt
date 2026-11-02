@@ -48,6 +48,9 @@ object Rutas {
 
     const val SEGUIMIENTO_PARTIDO =
         "partido/{idPartido}/seguimiento"
+
+    const val ANUNCIOS =
+        "anuncios"
 }
 
 fun rutaEquipos(

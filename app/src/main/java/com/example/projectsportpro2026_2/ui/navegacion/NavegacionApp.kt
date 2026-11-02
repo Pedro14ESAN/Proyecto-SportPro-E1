@@ -44,6 +44,7 @@ import com.example.projectsportpro2026_2.ui.seguimiento.PantallaMisPartidos
 import com.example.projectsportpro2026_2.ui.seguimiento.PantallaSeguimientoPartido
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
+import com.example.projectsportpro2026_2.ui.anuncios.PantallaAnuncios
 
 @Composable
 fun NavegacionApp() {
@@ -164,6 +165,11 @@ fun NavegacionApp() {
             Rutas.MIS_PARTIDOS
         )
     }
+    val abrirAnuncios: () -> Unit = {
+        navController.navigate(
+            Rutas.ANUNCIOS
+        )
+    }
 
     NavHost(
         navController =
@@ -232,7 +238,8 @@ fun NavegacionApp() {
                     abrirAsistencias,
                 onPartidosEnVivo =
                     abrirPartidosEnVivo,
-
+                onAnuncios =
+                    abrirAnuncios,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -253,7 +260,8 @@ fun NavegacionApp() {
                     abrirAsistencias,
                 onPartidosEnVivo =
                     abrirPartidosEnVivo,
-
+                onAnuncios =
+                    abrirAnuncios,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -277,7 +285,8 @@ fun NavegacionApp() {
                 },
                 onPartidosEnVivo =
                     abrirPartidosEnVivo,
-
+                onAnuncios =
+                    abrirAnuncios,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -306,7 +315,8 @@ fun NavegacionApp() {
                 },
                 onPartidosEnVivo =
                     abrirPartidosEnVivo,
-
+                onAnuncios =
+                    abrirAnuncios,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -880,6 +890,16 @@ fun NavegacionApp() {
             PantallaPartidoEnVivo(
                 idPartido =
                     idPartido,
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        // HU19: anuncios internos
+        composable(
+            Rutas.ANUNCIOS
+        ) {
+            PantallaAnuncios(
                 onVolver = {
                     navController.popBackStack()
                 }
