@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.Publicacion
+import com.example.projectsportpro2026_2.datos.modelo.TipoReaccion
 import com.example.projectsportpro2026_2.datos.modelo.VisibilidadPublicacion
 import com.example.projectsportpro2026_2.ui.comun.*
 import com.example.projectsportpro2026_2.ui.partidos.FormaBotonSportPro
@@ -45,10 +46,9 @@ fun PantallaComunidad(
 
     LaunchedEffect(Unit) { viewModel.iniciar() }
 
-    // Barra oscura inferior del Figma: "✓ Publicación compartida con..."
     LaunchedEffect(estado.mensaje) {
         estado.mensaje?.let { texto ->
-            avisos.showSnackbar("✓ $texto")   // espera hasta que la barra desaparece
+            avisos.showSnackbar("✓ $texto")
             viewModel.limpiarMensajes()
         }
     }
@@ -85,7 +85,6 @@ fun PantallaComunidad(
                 )
             }
 
-            // Título + "+ Publicar"
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -112,7 +111,6 @@ fun PantallaComunidad(
                 }
             }
 
-            // Pestañas
             item {
                 FilaDeChipsSportPro {
                     ChipSportPro("Para ti", estado.pestana == PestanaComunidad.PARA_TI) {
@@ -132,7 +130,6 @@ fun PantallaComunidad(
             }
 
             when {
-                // HU23 llenará esta pestaña con los avisos de pruebas abiertas
                 estado.pestana == PestanaComunidad.PRUEBAS -> item {
                     Text(
                         text = "Aún no hay pruebas abiertas publicadas.",
@@ -163,7 +160,10 @@ fun PantallaComunidad(
                 else -> items(estado.publicacionesVisibles, key = { it.id }) { publicacion ->
                     TarjetaPublicacion(
                         publicacion = publicacion,
+                        miReaccion = publicacion.reaccionDe(estado.uid),
                         puedeModificar = estado.puedeModificar(publicacion),
+                        onReaccionar = { tipo -> viewModel.reaccionar(publicacion, tipo) },
+                        onComentarios = { viewModel.abrirComentarios(publicacion) },
                         onEditar = {
                             enEdicion = publicacion
                             viewModel.limpiarMensajes()
@@ -176,7 +176,6 @@ fun PantallaComunidad(
         }
     }
 
-    // Formulario de crear/editar
     if (formularioAbierto) {
         FormularioPublicacion(
             publicacionEnEdicion = enEdicion,
@@ -200,7 +199,22 @@ fun PantallaComunidad(
         )
     }
 
-    // Confirmación antes de eliminar
+    // Hoja de comentarios (HU22): se abre cuando el ViewModel tiene una publicación seleccionada
+    estado.publicacionComentarios?.let { publicacion ->
+        HojaComentarios(
+            publicacion = publicacion,
+            comentarios = estado.comentarios,
+            uid = estado.uid,
+            nombreUsuario = estado.nombre,
+            cargando = estado.cargandoComentarios,
+            enviando = estado.enviandoComentario,
+            error = estado.errorComentarios,
+            onCerrar = { viewModel.cerrarComentarios() },
+            onComentar = { texto, alTerminar -> viewModel.comentar(texto, alTerminar) },
+            onEliminar = { comentario -> viewModel.eliminarComentario(comentario) }
+        )
+    }
+
     porEliminar?.let { publicacion ->
         AlertDialog(
             onDismissRequest = { porEliminar = null },
@@ -239,7 +253,10 @@ private fun estiloVisibilidad(p: Publicacion): EstiloVisibilidad = when (p.visib
 @Composable
 private fun TarjetaPublicacion(
     publicacion: Publicacion,
+    miReaccion: TipoReaccion?,
     puedeModificar: Boolean,
+    onReaccionar: (TipoReaccion) -> Unit,
+    onComentarios: () -> Unit,
     onEditar: () -> Unit,
     onEliminar: () -> Unit
 ) {
@@ -257,7 +274,6 @@ private fun TarjetaPublicacion(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
-            // Encabezado: avatar, autor, rol, tiempo y visibilidad
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AvatarIniciales(publicacion.nombreAutor)
                 Spacer(Modifier.width(10.dp))
@@ -291,7 +307,6 @@ private fun TarjetaPublicacion(
                     }
                 }
 
-                // Menú "•••" solo para el autor (HU24 agregará "Reportar" para los demás)
                 if (puedeModificar) {
                     Box {
                         Text(
@@ -332,10 +347,85 @@ private fun TarjetaPublicacion(
 
             HorizontalDivider(color = SportProBorde)
 
-            // Contadores (HU22 los hará interactivos)
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("♡ ${publicacion.totalReacciones()}", color = SportProTextoSecundario, fontSize = 13.sp)
-                Text("💬 ${publicacion.cantidadComentarios} comentarios", color = SportProTextoSecundario, fontSize = 13.sp)
+            // Interacciones (HU22)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                BotonReaccion(publicacion, miReaccion, onReaccionar)
+
+                val n = publicacion.cantidadComentarios
+                Text(
+                    text = "💬 $n ${if (n == 1) "comentario" else "comentarios"}",
+                    color = SportProTextoSecundario,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .clickable { onComentarios() }
+                        .padding(vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+// Botón "♡ 14" que abre el selector ❤️ 👏 💪
+@Composable
+private fun BotonReaccion(
+    publicacion: Publicacion,
+    miReaccion: TipoReaccion?,
+    onReaccionar: (TipoReaccion) -> Unit
+) {
+    var selectorAbierto by remember { mutableStateOf(false) }
+
+    Box {
+        Text(
+            text = "${miReaccion?.emoji ?: "♡"} ${publicacion.totalReacciones()}",
+            color = if (miReaccion != null) SportProVerde else SportProTextoSecundario,
+            fontWeight = if (miReaccion != null) FontWeight.Bold else FontWeight.Normal,
+            fontSize = 13.sp,
+            modifier = Modifier
+                .clickable { selectorAbierto = true }
+                .padding(vertical = 4.dp)
+        )
+
+        DropdownMenu(
+            expanded = selectorAbierto,
+            onDismissRequest = { selectorAbierto = false }
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                TipoReaccion.entries.forEach { tipo ->
+                    Surface(
+                        onClick = {
+                            selectorAbierto = false
+                            onReaccionar(tipo)
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (tipo == miReaccion) SportProVerdeClaro else Color.Transparent
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(tipo.emoji, fontSize = 22.sp)
+                            Text(
+                                text = "${publicacion.conteoDe(tipo)}",
+                                color = SportProTextoSecundario,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+            }
+            if (miReaccion != null) {
+                Text(
+                    text = "Toca tu reacción otra vez para quitarla",
+                    color = SportProTextoSecundario,
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                )
             }
         }
     }
