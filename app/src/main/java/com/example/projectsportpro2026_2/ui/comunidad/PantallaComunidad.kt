@@ -37,21 +37,20 @@ import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
 @Composable
 fun PantallaComunidad(
     onVolver: () -> Unit,
+    onAbrirModeracion: () -> Unit = {},
     viewModel: ComunidadViewModel = viewModel(),
     avisosViewModel: AvisosPruebaViewModel = viewModel(),
     accionesViewModel: AccionesModeracionViewModel = viewModel()
 ) {
-    // Estados de los 3 ViewModels: comunidad (HU21-22), avisos (HU23) y moderación (HU24)
     val estado by viewModel.estado.collectAsState()
     val estadoAvisos by avisosViewModel.estado.collectAsState()
     val estadoAcciones by accionesViewModel.estado.collectAsState()
 
-    // "avisos" es la barra inferior de mensajes (Snackbar)
     val avisos = remember { SnackbarHostState() }
 
-    // Estado visual de la pantalla
     var formularioAbierto by remember { mutableStateOf(false) }
     var formularioAvisoAbierto by remember { mutableStateOf(false) }
+    var bloqueadosAbiertos by remember { mutableStateOf(false) }
     var enEdicion by remember { mutableStateOf<Publicacion?>(null) }
     var porEliminar by remember { mutableStateOf<Publicacion?>(null) }
     var seleccionado by remember { mutableStateOf<ContenidoSeleccionado?>(null) }
@@ -60,9 +59,11 @@ fun PantallaComunidad(
         viewModel.iniciar()
         avisosViewModel.iniciar()
         accionesViewModel.iniciar()
+        // Al volver del panel de moderación, recarga lo que pudo cambiar
+        viewModel.recargar()
+        avisosViewModel.recargar()
     }
 
-    // Cada ViewModel limpia SUS propios mensajes después de mostrarlos
     LaunchedEffect(estado.mensaje) {
         estado.mensaje?.let { texto ->
             avisos.showSnackbar("✓ $texto")
@@ -107,13 +108,42 @@ fun PantallaComunidad(
 
             item { CabeceraSportPro() }
 
+            // "← Inicio" + Bloqueados + Moderar (solo ADM)
             item {
-                Text(
-                    text = "← Inicio",
-                    color = SportProVerde,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onVolver() }
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "← Inicio",
+                        color = SportProVerde,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable { onVolver() }
+                    )
+                    Spacer(Modifier.weight(1f))
+                    TextButton(onClick = {
+                        accionesViewModel.limpiarMensajes()
+                        accionesViewModel.cargarBloqueados()
+                        bloqueadosAbiertos = true
+                    }) {
+                        Text("🚫 Bloqueados", color = SportProTextoSecundario, fontSize = 12.sp)
+                    }
+                    if (estadoAcciones.puedeModerar) {
+                        Surface(
+                            onClick = onAbrirModeracion,
+                            shape = RoundedCornerShape(10.dp),
+                            color = EtiquetaNaranjaFondo
+                        ) {
+                            Text(
+                                text = "🛡 Moderar",
+                                color = EtiquetaNaranja,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             item {
@@ -131,7 +161,6 @@ fun PantallaComunidad(
 
                     val enPruebas = estado.pestana == PestanaComunidad.PRUEBAS
 
-                    // En "Pruebas" el botón publica avisos, y solo lo ven DT/ADM (RC-05)
                     if (!enPruebas || estadoAvisos.puedePublicar) {
                         Button(
                             onClick = {
@@ -172,7 +201,6 @@ fun PantallaComunidad(
             }
 
             when {
-                // Pestaña "Pruebas" (HU23)
                 estado.pestana == PestanaComunidad.PRUEBAS -> seccionPruebas(
                     estado = estadoAvisos,
                     onActualizarFiltros = avisosViewModel::actualizarFiltros,
@@ -234,7 +262,6 @@ fun PantallaComunidad(
 
     // ---------- Hojas y diálogos ----------
 
-    // Formulario de publicación (HU21)
     if (formularioAbierto) {
         FormularioPublicacion(
             publicacionEnEdicion = enEdicion,
@@ -258,7 +285,6 @@ fun PantallaComunidad(
         )
     }
 
-    // Formulario de aviso de prueba (HU23)
     if (formularioAvisoAbierto) {
         FormularioAvisoPrueba(
             academias = estadoAvisos.academiasParaPublicar,
@@ -276,7 +302,6 @@ fun PantallaComunidad(
         )
     }
 
-    // Hoja de comentarios (HU22)
     estado.publicacionComentarios?.let { publicacion ->
         HojaComentarios(
             publicacion = publicacion,
@@ -298,7 +323,6 @@ fun PantallaComunidad(
         )
     }
 
-    // Hoja de acciones sobre contenido ajeno: reportar, bloquear, moderar (HU24)
     seleccionado?.let { sel ->
         HojaAccionesContenido(
             seleccionado = sel,
@@ -328,7 +352,22 @@ fun PantallaComunidad(
         )
     }
 
-    // Confirmación antes de eliminar una publicación propia (HU21)
+    if (bloqueadosAbiertos) {
+        HojaUsuariosBloqueados(
+            bloqueados = estadoAcciones.bloqueados,
+            cargando = estadoAcciones.cargandoBloqueados,
+            procesando = estadoAcciones.procesando,
+            error = estadoAcciones.error,
+            onCerrar = {
+                bloqueadosAbiertos = false
+                accionesViewModel.limpiarMensajes()
+            },
+            onDesbloquear = { bloqueo ->
+                accionesViewModel.desbloquear(bloqueo) { viewModel.refrescarTodo() }
+            }
+        )
+    }
+
     porEliminar?.let { publicacion ->
         AlertDialog(
             onDismissRequest = { porEliminar = null },
@@ -389,7 +428,6 @@ private fun TarjetaPublicacion(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
-            // Encabezado: avatar, autor, tiempo, visibilidad y menú "•••"
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AvatarIniciales(publicacion.nombreAutor)
                 Spacer(Modifier.width(10.dp))
@@ -424,7 +462,6 @@ private fun TarjetaPublicacion(
                 }
 
                 if (puedeModificar) {
-                    // Publicación propia: editar o eliminar (HU21)
                     Box {
                         Text(
                             text = "•••",
@@ -454,7 +491,6 @@ private fun TarjetaPublicacion(
                         }
                     }
                 } else {
-                    // Publicación de otra persona: reportar, bloquear o moderar (HU24)
                     Text(
                         text = "•••",
                         color = SportProTextoSecundario,
@@ -473,7 +509,6 @@ private fun TarjetaPublicacion(
 
             HorizontalDivider(color = SportProBorde)
 
-            // Interacciones (HU22)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -494,7 +529,6 @@ private fun TarjetaPublicacion(
     }
 }
 
-// Botón "♡ 14" que abre el selector ❤️ 👏 💪 (HU22)
 @Composable
 private fun BotonReaccion(
     publicacion: Publicacion,

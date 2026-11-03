@@ -46,6 +46,7 @@ import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
 import com.example.projectsportpro2026_2.ui.anuncios.PantallaAnuncios
 import com.example.projectsportpro2026_2.ui.comunidad.PantallaComunidad
+import com.example.projectsportpro2026_2.ui.moderacion.PantallaPanelModeracion
 @Composable
 fun NavegacionApp() {
 
@@ -919,10 +920,25 @@ fun NavegacionApp() {
             )
         }
         // HU21: comunidad
+        // HU21: comunidad
         composable(
             Rutas.COMUNIDAD
         ) {
             PantallaComunidad(
+                onVolver = {
+                    navController.popBackStack()
+                },
+                onAbrirModeracion = {
+                    navController.navigate(Rutas.MODERACION)
+                }
+            )
+        }
+
+        // HU24: panel de moderación (solo ADM)
+        composable(
+            Rutas.MODERACION
+        ) {
+            PantallaPanelModeracion(
                 onVolver = {
                     navController.popBackStack()
                 }

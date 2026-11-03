@@ -2,6 +2,7 @@ package com.example.projectsportpro2026_2.ui.comunidad
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projectsportpro2026_2.datos.modelo.Bloqueo
 import com.example.projectsportpro2026_2.datos.modelo.DecisionModeracion
 import com.example.projectsportpro2026_2.datos.modelo.MotivoReporte
 import com.example.projectsportpro2026_2.datos.modelo.ObjetivoReporte
@@ -14,7 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// El contenido sobre el que el usuario tocó "•••" (publicación, comentario o aviso)
 data class ContenidoSeleccionado(
     val objetivo: ObjetivoReporte,
     val idAutor: String,
@@ -27,10 +27,11 @@ data class EstadoAccionesModeracion(
     val puedeModerar: Boolean = false,
     val procesando: Boolean = false,
     val error: String? = null,
-    val mensaje: String? = null
+    val mensaje: String? = null,
+    val bloqueados: List<Bloqueo> = emptyList(),
+    val cargandoBloqueados: Boolean = false
 )
 
-// Acciones sobre contenido ajeno: reportar, bloquear y moderar directamente (HU24)
 class AccionesModeracionViewModel(
     private val moderacion: RepositorioModeracion = RepositorioModeracion(),
     private val bloqueos: RepositorioBloqueos = RepositorioBloqueos(),
@@ -81,12 +82,42 @@ class AccionesModeracionViewModel(
         moderacion.moderar(seleccionado.objetivo, decision, motivo, _estado.value.uid)
     }
 
+    // ---------- Usuarios bloqueados ----------
+
+    fun cargarBloqueados() {
+        val uid = _estado.value.uid
+        if (uid.isBlank()) return
+
+        viewModelScope.launch {
+            _estado.update { it.copy(cargandoBloqueados = true, error = null) }
+
+            bloqueos.listarBloqueados(uid)
+                .onSuccess { lista ->
+                    _estado.update { it.copy(bloqueados = lista, cargandoBloqueados = false) }
+                }
+                .onFailure { e ->
+                    _estado.update {
+                        it.copy(cargandoBloqueados = false, error = e.message ?: "No se pudo cargar la lista")
+                    }
+                }
+        }
+    }
+
+    fun desbloquear(bloqueo: Bloqueo, alTerminar: () -> Unit = {}) =
+        ejecutar(
+            "Desbloqueaste a ${bloqueo.nombreBloqueado}",
+            {
+                cargarBloqueados()
+                alTerminar()
+            }
+        ) {
+            bloqueos.desbloquear(_estado.value.uid, bloqueo.idBloqueado)
+        }
+
     fun limpiarMensajes() {
         _estado.update { it.copy(error = null, mensaje = null) }
     }
 
-    // Las 3 acciones hacen lo mismo: marcar "procesando", ejecutar, y mostrar éxito o error.
-    // En vez de repetirlo 3 veces, se escribe una vez y se le pasa la acción.
     private fun ejecutar(
         textoExito: String,
         alTerminar: () -> Unit,

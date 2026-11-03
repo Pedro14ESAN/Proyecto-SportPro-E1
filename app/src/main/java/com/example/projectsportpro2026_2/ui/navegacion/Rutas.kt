@@ -55,6 +55,9 @@ object Rutas {
     // HU21: comunidad
     const val COMUNIDAD = "comunidad"
 
+    // HU24: panel de moderación
+    const val MODERACION = "moderacion"
+
 }
 
 fun rutaEquipos(
