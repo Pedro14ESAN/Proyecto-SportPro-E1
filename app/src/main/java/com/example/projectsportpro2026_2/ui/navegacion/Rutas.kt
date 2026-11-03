@@ -48,9 +48,13 @@ object Rutas {
 
     const val SEGUIMIENTO_PARTIDO =
         "partido/{idPartido}/seguimiento"
-
+    // HU19: anuncios internos
     const val ANUNCIOS =
         "anuncios"
+
+    // HU21: comunidad
+    const val COMUNIDAD = "comunidad"
+
 }
 
 fun rutaEquipos(

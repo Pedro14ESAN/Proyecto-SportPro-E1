@@ -45,7 +45,7 @@ import com.example.projectsportpro2026_2.ui.seguimiento.PantallaSeguimientoParti
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
 import com.example.projectsportpro2026_2.ui.anuncios.PantallaAnuncios
-
+import com.example.projectsportpro2026_2.ui.comunidad.PantallaComunidad
 @Composable
 fun NavegacionApp() {
 
@@ -170,6 +170,11 @@ fun NavegacionApp() {
             Rutas.ANUNCIOS
         )
     }
+    val abrirComunidad: () -> Unit = {
+        navController.navigate(
+            Rutas.COMUNIDAD
+        )
+    }
 
     NavHost(
         navController =
@@ -240,6 +245,8 @@ fun NavegacionApp() {
                     abrirPartidosEnVivo,
                 onAnuncios =
                     abrirAnuncios,
+                onComunidad =
+                    abrirComunidad,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -262,6 +269,8 @@ fun NavegacionApp() {
                     abrirPartidosEnVivo,
                 onAnuncios =
                     abrirAnuncios,
+                onComunidad =
+                    abrirComunidad,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -287,6 +296,8 @@ fun NavegacionApp() {
                     abrirPartidosEnVivo,
                 onAnuncios =
                     abrirAnuncios,
+                onComunidad =
+                    abrirComunidad,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -317,6 +328,8 @@ fun NavegacionApp() {
                     abrirPartidosEnVivo,
                 onAnuncios =
                     abrirAnuncios,
+                onComunidad =
+                    abrirComunidad,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -900,6 +913,16 @@ fun NavegacionApp() {
             Rutas.ANUNCIOS
         ) {
             PantallaAnuncios(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        // HU21: comunidad
+        composable(
+            Rutas.COMUNIDAD
+        ) {
+            PantallaComunidad(
                 onVolver = {
                     navController.popBackStack()
                 }

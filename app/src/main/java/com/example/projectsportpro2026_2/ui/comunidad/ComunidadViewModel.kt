@@ -21,6 +21,7 @@ enum class PestanaComunidad { PARA_TI, ACADEMIAS, PRUEBAS }
 data class EstadoComunidad(
     val uid: String = "",
     val rol: Rol? = null,
+    val nombre: String="",
     val publicaciones: List<Publicacion> = emptyList(),
     val pestana: PestanaComunidad = PestanaComunidad.PARA_TI,
     val opciones: OpcionesComunidad = OpcionesComunidad(),
@@ -72,7 +73,7 @@ class ComunidadViewModel(
             } catch (e: Exception) {
                 null
             }
-            _estado.update { it.copy(uid = uid, rol = perfil?.rol) }
+            _estado.update { it.copy(uid = uid, rol = perfil?.rol, nombre = perfil?.nombre.orEmpty()) }
 
             // Todos los roles pueden publicar; aquí se cargan sus academias y equipos.
             // Si falla, igual puede publicar en Comunidad SportPro.
