@@ -64,7 +64,7 @@ class RepositorioAutenticacion(
             val perfil = PerfilUsuario(
                 uid = usuario.uid,
                 nombre = nombre.trim(),
-                correo = correo.trim(),
+                correo = correo.trim().lowercase(),
                 rol = rol,
                 fechaNacimiento = if (rol == Rol.JUG) fechaNacimiento else "",
                 estado = estado

@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.Categorias
+import com.example.projectsportpro2026_2.datos.modelo.EntrenadorAcademia
 import com.example.projectsportpro2026_2.datos.modelo.Equipo
 
 @Composable
@@ -46,6 +47,7 @@ fun PantallaEquipos(
 ) {
     val estado by viewModel.estado.collectAsState()
     var mostrarFormulario by remember { mutableStateOf(false) }
+    var mostrarEntrenadores by remember { mutableStateOf(false) }
     var enEdicion by remember { mutableStateOf<Equipo?>(null) }
 
     LaunchedEffect(idAcademia) { viewModel.iniciar(idAcademia) }
@@ -71,7 +73,12 @@ fun PantallaEquipos(
                 Text("Equipos · $nombreAcademia", style = MaterialTheme.typography.titleLarge)
             }
 
-            if (!mostrarFormulario) {
+            TextButton(onClick = {
+                viewModel.limpiarError()
+                mostrarEntrenadores = true
+            }) { Text("Directores técnicos de la academia") }
+
+            if (!mostrarFormulario && !mostrarEntrenadores) {
                 estado.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
 
@@ -85,6 +92,8 @@ fun PantallaEquipos(
                 items(estado.equipos, key = { it.id }) { equipo ->
                     TarjetaEquipo(
                         equipo = equipo,
+                        nombreEntrenador = estado.entrenadores
+                            .firstOrNull { it.uid == equipo.idEntrenador }?.nombre,
                         onJugadores = { onAbrirJugadores(equipo.id, equipo.nombre) },
                         onEditar = {
                             viewModel.limpiarError()
@@ -101,12 +110,25 @@ fun PantallaEquipos(
     if (mostrarFormulario) {
         FormularioEquipo(
             inicial = enEdicion,
+            entrenadores = estado.entrenadores,
             cargando = estado.cargando,
             error = estado.error,
-            onGuardar = { nombre, categoria ->
-                viewModel.guardar(enEdicion, nombre, categoria) { mostrarFormulario = false }
+            onGuardar = { nombre, categoria, idEntrenador ->
+                viewModel.guardar(enEdicion, nombre, categoria, idEntrenador) {
+                    mostrarFormulario = false
+                }
             },
             onCancelar = { mostrarFormulario = false }
+        )
+    }
+
+    if (mostrarEntrenadores) {
+        DialogoEntrenadores(
+            entrenadores = estado.entrenadores,
+            cargando = estado.cargando,
+            error = estado.error,
+            onAgregar = { correo, alTerminar -> viewModel.agregarEntrenador(correo, alTerminar) },
+            onCerrar = { mostrarEntrenadores = false }
         )
     }
 }
@@ -114,6 +136,7 @@ fun PantallaEquipos(
 @Composable
 private fun TarjetaEquipo(
     equipo: Equipo,
+    nombreEntrenador: String?,
     onJugadores: () -> Unit,
     onEditar: () -> Unit,
     onCambiarEstado: () -> Unit
@@ -132,6 +155,7 @@ private fun TarjetaEquipo(
                 )
             }
             Text("Categoría: ${equipo.categoria}")
+            Text("Director técnico: ${nombreEntrenador ?: "Sin asignar"}")
             Row {
                 TextButton(onClick = onJugadores) { Text("Jugadores") }
                 TextButton(onClick = onEditar) { Text("Editar") }
@@ -146,13 +170,15 @@ private fun TarjetaEquipo(
 @Composable
 private fun FormularioEquipo(
     inicial: Equipo?,
+    entrenadores: List<EntrenadorAcademia>,
     cargando: Boolean,
     error: String?,
-    onGuardar: (nombre: String, categoria: String) -> Unit,
+    onGuardar: (nombre: String, categoria: String, idEntrenador: String) -> Unit,
     onCancelar: () -> Unit
 ) {
     var nombre by remember { mutableStateOf(inicial?.nombre.orEmpty()) }
     var categoria by remember { mutableStateOf(inicial?.categoria.orEmpty()) }
+    var idEntrenador by remember { mutableStateOf(inicial?.idEntrenador.orEmpty()) }
 
     AlertDialog(
         onDismissRequest = onCancelar,
@@ -166,11 +192,16 @@ private fun FormularioEquipo(
                     singleLine = true
                 )
                 SelectorCategoria(seleccionada = categoria, onElegir = { categoria = it })
+                SelectorEntrenador(
+                    seleccionado = idEntrenador,
+                    entrenadores = entrenadores,
+                    onElegir = { idEntrenador = it }
+                )
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         },
         confirmButton = {
-            Button(onClick = { onGuardar(nombre, categoria) }, enabled = !cargando) {
+            Button(onClick = { onGuardar(nombre, categoria, idEntrenador) }, enabled = !cargando) {
                 Text("Guardar")
             }
         },
@@ -197,4 +228,74 @@ private fun SelectorCategoria(seleccionada: String, onElegir: (String) -> Unit) 
             }
         }
     }
+}
+
+@Composable
+private fun SelectorEntrenador(
+    seleccionado: String,
+    entrenadores: List<EntrenadorAcademia>,
+    onElegir: (String) -> Unit
+) {
+    var abierto by remember { mutableStateOf(false) }
+    val nombre = entrenadores.firstOrNull { it.uid == seleccionado }?.nombre
+    Box {
+        OutlinedButton(onClick = { abierto = true }, modifier = Modifier.fillMaxWidth()) {
+            Text(if (nombre == null) "Director técnico (opcional)" else "Director técnico: $nombre")
+        }
+        DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {
+            DropdownMenuItem(
+                text = { Text("(Sin asignar)") },
+                onClick = {
+                    onElegir("")
+                    abierto = false
+                }
+            )
+            entrenadores.forEach { entrenador ->
+                DropdownMenuItem(
+                    text = { Text(entrenador.nombre) },
+                    onClick = {
+                        onElegir(entrenador.uid)
+                        abierto = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DialogoEntrenadores(
+    entrenadores: List<EntrenadorAcademia>,
+    cargando: Boolean,
+    error: String?,
+    onAgregar: (correo: String, alTerminar: () -> Unit) -> Unit,
+    onCerrar: () -> Unit
+) {
+    var correo by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onCerrar,
+        title = { Text("Directores técnicos") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (entrenadores.isEmpty()) {
+                    Text("Aún no hay directores técnicos en esta academia.")
+                }
+                entrenadores.forEach { Text("• ${it.nombre} (${it.correo})") }
+                OutlinedTextField(
+                    value = correo,
+                    onValueChange = { correo = it },
+                    label = { Text("Correo del director técnico") },
+                    singleLine = true
+                )
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onAgregar(correo) { correo = "" } }, enabled = !cargando) {
+                Text("Agregar")
+            }
+        },
+        dismissButton = { TextButton(onClick = onCerrar) { Text("Cerrar") } }
+    )
 }
