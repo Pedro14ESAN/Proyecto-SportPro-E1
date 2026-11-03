@@ -35,16 +35,31 @@ import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
 @Composable
 fun PantallaComunidad(
     onVolver: () -> Unit,
-    viewModel: ComunidadViewModel = viewModel()
+    viewModel: ComunidadViewModel = viewModel(),
+    avisosViewModel: AvisosPruebaViewModel = viewModel()
+
 ) {
     val estado by viewModel.estado.collectAsState()
+    val estadoAvisos by avisosViewModel.estado.collectAsState()
+    var formularioAvisoAbierto by remember { mutableStateOf(false) }
     val avisos = remember { SnackbarHostState() }
 
     var formularioAbierto by remember { mutableStateOf(false) }
     var enEdicion by remember { mutableStateOf<Publicacion?>(null) }
     var porEliminar by remember { mutableStateOf<Publicacion?>(null) }
 
-    LaunchedEffect(Unit) { viewModel.iniciar() }
+    LaunchedEffect(Unit) {
+        viewModel.iniciar()
+        avisosViewModel.iniciar()
+    }
+
+    // Mensajes de éxito de los avisos (en la misma barra inferior)
+    LaunchedEffect(estadoAvisos.mensaje) {
+        estadoAvisos.mensaje?.let { texto ->
+            avisos.showSnackbar("✓ $texto")    // "avisos" es el SnackbarHostState de la pantalla
+            avisosViewModel.limpiarMensajes()
+        }
+    }
 
     LaunchedEffect(estado.mensaje) {
         estado.mensaje?.let { texto ->
@@ -97,16 +112,26 @@ fun PantallaComunidad(
                         fontWeight = FontWeight.Black,
                         style = MaterialTheme.typography.headlineMedium
                     )
-                    Button(
-                        onClick = {
-                            enEdicion = null
-                            viewModel.limpiarMensajes()
-                            formularioAbierto = true
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = SportProVerde),
-                        shape = FormaBotonSportPro
-                    ) {
-                        Text("+ Publicar", fontWeight = FontWeight.Bold)
+                    val enPruebas = estado.pestana == PestanaComunidad.PRUEBAS
+
+                    // En "Pruebas" el botón publica avisos, y solo lo ven DT/ADM (RC-05)
+                    if (!enPruebas || estadoAvisos.puedePublicar) {
+                        Button(
+                            onClick = {
+                                if (enPruebas) {
+                                    avisosViewModel.limpiarMensajes()
+                                    formularioAvisoAbierto = true
+                                } else {
+                                    enEdicion = null
+                                    viewModel.limpiarMensajes()
+                                    formularioAbierto = true
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = SportProVerde),
+                            shape = FormaBotonSportPro
+                        ) {
+                            Text(if (enPruebas) "+ Aviso" else "+ Publicar", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
@@ -125,18 +150,19 @@ fun PantallaComunidad(
                 }
             }
 
-            estado.error?.takeIf { !formularioAbierto }?.let { texto ->
+            estado.error?.takeIf { !formularioAbierto && estado.pestana != PestanaComunidad.PRUEBAS }?.let { texto ->
                 item { MensajeErrorSportPro(texto) { viewModel.recargar() } }
             }
 
             when {
-                estado.pestana == PestanaComunidad.PRUEBAS -> item {
-                    Text(
-                        text = "Aún no hay pruebas abiertas publicadas.",
-                        color = SportProTextoSecundario,
-                        modifier = Modifier.padding(vertical = 24.dp)
-                    )
-                }
+                estado.pestana == PestanaComunidad.PRUEBAS -> seccionPruebas(
+                    estado = estadoAvisos,
+                    onActualizarFiltros = avisosViewModel::actualizarFiltros,
+                    onLimpiarFiltros = avisosViewModel::limpiarFiltros,
+                    onReintentar = avisosViewModel::recargar,
+                    onCerrar = avisosViewModel::cerrar,
+                    onReabrir = avisosViewModel::reabrir
+                )
 
                 estado.cargando && estado.publicaciones.isEmpty() -> item {
                     Box(
@@ -195,6 +221,23 @@ fun PantallaComunidad(
                 enEdicion?.let {
                     viewModel.editar(it.id, texto, alTerminar = { formularioAbierto = false })
                 }
+            }
+        )
+    }
+    // Formulario de aviso de prueba (HU23)
+    if (formularioAvisoAbierto) {
+        FormularioAvisoPrueba(
+            academias = estadoAvisos.academiasParaPublicar,
+            nombreAutor = estado.nombre,
+            rolAutor = estado.rol,
+            guardando = estadoAvisos.guardando,
+            error = estadoAvisos.error,
+            onCerrar = { formularioAvisoAbierto = false },
+            onPublicar = { idAcademia, categoria, posiciones, fecha, ubicacion, descripcion ->
+                avisosViewModel.publicar(
+                    idAcademia, categoria, posiciones, fecha, ubicacion, descripcion,
+                    alTerminar = { formularioAvisoAbierto = false }
+                )
             }
         )
     }
