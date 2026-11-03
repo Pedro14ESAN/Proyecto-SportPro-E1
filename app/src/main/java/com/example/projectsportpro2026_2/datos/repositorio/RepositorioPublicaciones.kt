@@ -15,7 +15,20 @@ data class OpcionesComunidad(
     val academias: List<Academia> = emptyList(),
     val equipos: List<Equipo> = emptyList()
 )
+// Regla de visibilidad de una publicación (HU21 / RC-03).
+// La usan el feed (HU21) y las interacciones (HU22).
+fun puedeVerPublicacion(publicacion: Publicacion, p: Pertenencia): Boolean {
+    // Eliminadas por el autor u ocultas por moderación no son accesibles
+    if (publicacion.estado != EstadoPublicacion.VISIBLE) return false
 
+    return when (publicacion.visibilidad) {
+        VisibilidadPublicacion.COMUNIDAD -> true
+        VisibilidadPublicacion.ACADEMIA -> publicacion.idAcademia in p.idsAcademias
+        VisibilidadPublicacion.EQUIPO ->
+            publicacion.idEquipo in p.idsEquipos ||
+                    publicacion.idAcademia in p.idsAcademiasGestionadas
+    }
+}
 class RepositorioPublicaciones(
     private val bd: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val resolutor: ResolutorPertenencia = ResolutorPertenencia(bd)
@@ -76,7 +89,7 @@ class RepositorioPublicaciones(
 
         (deComunidad + internas)
             .distinctBy { it.id }                  // una pública de mi academia aparece en ambas listas
-            .filter { puedeVer(it, p) }
+            .filter { puedeVerPublicacion(it, p) }
             .sortedByDescending { it.fechaCreacion }
     }
 

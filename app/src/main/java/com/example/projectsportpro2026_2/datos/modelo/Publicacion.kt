@@ -7,6 +7,12 @@ enum class VisibilidadPublicacion { EQUIPO, ACADEMIA, COMUNIDAD }
 // ELIMINADA: el autor la borró (eliminación lógica, HU21)
 // OCULTA: un moderador la ocultó (HU24)
 enum class EstadoPublicacion { VISIBLE, ELIMINADA, OCULTA }
+// Reacciones disponibles (HU22). Cada usuario puede tener solo una, y cambiarla.
+enum class TipoReaccion(val emoji: String) {
+    ME_GUSTA("❤️"),
+    APLAUSO("👏"),
+    FUERZA("💪")
+}
 
 // Documento de Firestore: publicaciones/{id}
 data class Publicacion(
@@ -26,8 +32,8 @@ data class Publicacion(
     val nombreAutor: String = "",
     val rolAutor: Rol = Rol.JUG,
 
-    // Contadores (los actualizará HU22)
-    val cantidadReacciones: Int = 0,
+    // Interacciones (HU22)
+    val reacciones: Map<String, String> = emptyMap(),   // uid → tipo de reacción (una por usuario)
     val cantidadComentarios: Int = 0,
 
     // Estado y trazabilidad
@@ -35,4 +41,12 @@ data class Publicacion(
     val editada: Boolean = false,
     val fechaCreacion: Long = 0L,
     val fechaActualizacion: Long = 0L
-)
+) {
+    // La reacción que dejó este usuario (null si no reaccionó)
+    fun reaccionDe(uid: String): TipoReaccion? =
+        reacciones[uid]?.let { valor -> TipoReaccion.entries.find { it.name == valor } }
+
+    fun totalReacciones(): Int = reacciones.size
+
+    fun conteoDe(tipo: TipoReaccion): Int = reacciones.values.count { it == tipo.name }
+}

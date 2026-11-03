@@ -334,7 +334,7 @@ private fun TarjetaPublicacion(
 
             // Contadores (HU22 los hará interactivos)
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("♡ ${publicacion.cantidadReacciones}", color = SportProTextoSecundario, fontSize = 13.sp)
+                Text("♡ ${publicacion.totalReacciones()}", color = SportProTextoSecundario, fontSize = 13.sp)
                 Text("💬 ${publicacion.cantidadComentarios} comentarios", color = SportProTextoSecundario, fontSize = 13.sp)
             }
         }
