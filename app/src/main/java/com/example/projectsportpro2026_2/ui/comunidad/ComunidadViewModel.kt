@@ -94,6 +94,11 @@ class ComunidadViewModel(
     fun recargar() {
         viewModelScope.launch { cargar() }
     }
+    // Tras bloquear o moderar: recarga el feed y, si está abierta, la hoja de comentarios
+    fun refrescarTodo() {
+        recargar()
+        _estado.value.publicacionComentarios?.let { cargarComentarios(it.id) }
+    }
 
     private suspend fun cargar() {
         val uid = _estado.value.uid

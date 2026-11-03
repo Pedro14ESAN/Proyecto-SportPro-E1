@@ -33,15 +33,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// Contenido de la pestaña "Pruebas" (HU23).
-// Es una extensión de LazyListScope: agrega sus elementos a la lista de PantallaComunidad.
 fun LazyListScope.seccionPruebas(
     estado: EstadoAvisos,
     onActualizarFiltros: ((FiltrosAvisos) -> FiltrosAvisos) -> Unit,
     onLimpiarFiltros: () -> Unit,
     onReintentar: () -> Unit,
     onCerrar: (AvisoPrueba) -> Unit,
-    onReabrir: (AvisoPrueba) -> Unit
+    onReabrir: (AvisoPrueba) -> Unit,
+    onMasAviso: (AvisoPrueba) -> Unit = {}
 ) {
     item { FiltrosPruebas(estado, onActualizarFiltros, onLimpiarFiltros) }
 
@@ -77,13 +76,12 @@ fun LazyListScope.seccionPruebas(
                 aviso = aviso,
                 puedeGestionar = estado.puedeGestionar(aviso),
                 onCerrar = { onCerrar(aviso) },
-                onReabrir = { onReabrir(aviso) }
+                onReabrir = { onReabrir(aviso) },
+                onMas = { onMasAviso(aviso) }
             )
         }
     }
 }
-
-// ---------- Filtros ----------
 
 @Composable
 private fun FiltrosPruebas(
@@ -120,7 +118,7 @@ private fun FiltrosPruebas(
 
             Desplegable(
                 etiqueta = "Fecha",
-                opciones = FiltroFecha.entries.drop(1).map { it.texto },   // sin "Cualquier fecha"
+                opciones = FiltroFecha.entries.drop(1).map { it.texto },
                 seleccionado = f.fecha.takeIf { it != FiltroFecha.TODAS }?.texto,
                 textoNinguno = FiltroFecha.TODAS.texto,
                 modifier = Modifier.weight(1f)
@@ -153,8 +151,6 @@ private fun FiltrosPruebas(
     }
 }
 
-// Botón con menú desplegable "Categoría ▾". También lo usa FormularioAvisoPrueba.
-// textoNinguno = null obliga a elegir una opción (no se puede dejar vacío).
 @Composable
 internal fun Desplegable(
     etiqueta: String,
@@ -225,8 +221,6 @@ internal fun Desplegable(
     }
 }
 
-// ---------- Tarjeta de aviso ----------
-
 private fun formatearFechaPrueba(millis: Long): String =
     SimpleDateFormat("EEE, dd MMM yyyy · HH:mm", Locale.forLanguageTag("es-PE")).format(Date(millis))
 
@@ -235,7 +229,8 @@ private fun TarjetaAvisoPrueba(
     aviso: AvisoPrueba,
     puedeGestionar: Boolean,
     onCerrar: () -> Unit,
-    onReabrir: () -> Unit
+    onReabrir: () -> Unit,
+    onMas: () -> Unit
 ) {
     val estadoVisible = aviso.estadoEfectivo()
     val vigente = estadoVisible == EstadoAviso.ABIERTO
@@ -256,7 +251,6 @@ private fun TarjetaAvisoPrueba(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
-            // Encabezado: academia + badge oficial
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     modifier = Modifier.size(36.dp),
@@ -319,15 +313,22 @@ private fun TarjetaAvisoPrueba(
                             }
                         }
                     }
+                } else if (!puedeGestionar) {
+                    Text(
+                        text = "•••",
+                        color = SportProTextoSecundario,
+                        modifier = Modifier
+                            .clickable { onMas() }
+                            .padding(8.dp)
+                    )
                 }
             }
 
-            // Estado: PRUEBA ABIERTA / CERRADA / VENCIDA
             when (estadoVisible) {
                 EstadoAviso.ABIERTO -> EtiquetaSportPro("● PRUEBA ABIERTA", SportProVerde, SportProVerdeClaro)
                 EstadoAviso.CERRADO -> EtiquetaSportPro("CERRADA", EtiquetaGris, EtiquetaGrisFondo)
                 EstadoAviso.VENCIDO -> EtiquetaSportPro("VENCIDA", EtiquetaNaranja, EtiquetaNaranjaFondo)
-                EstadoAviso.OCULTO -> Unit   // no llegan aquí: el repositorio los filtra
+                EstadoAviso.OCULTO -> Unit
             }
 
             Text(

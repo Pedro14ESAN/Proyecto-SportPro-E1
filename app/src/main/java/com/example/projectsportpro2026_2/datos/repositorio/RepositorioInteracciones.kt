@@ -15,7 +15,8 @@ import kotlinx.coroutines.tasks.await
 // Comentarios y reacciones sobre publicaciones de la comunidad (HU22)
 class RepositorioInteracciones(
     private val bd: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val resolutor: ResolutorPertenencia = ResolutorPertenencia(bd)
+    private val resolutor: ResolutorPertenencia = ResolutorPertenencia(bd),
+    private val bloqueos: RepositorioBloqueos = RepositorioBloqueos(bd)      // ← nuevo (HU24)
 ) {
 
     private val publicaciones = bd.collection("publicaciones")
@@ -53,6 +54,10 @@ class RepositorioInteracciones(
         val p = resolutor.obtener(uid, perfil.rol)
         if (!puedeVerPublicacion(publicacion, p)) {
             throw IllegalStateException("Esta publicación ya no está disponible")
+        }
+        // HU24: si hay un bloqueo con el autor, no se puede interactuar
+        if (publicacion.idAutor in bloqueos.usuariosBloqueadosCon(uid)) {
+            throw IllegalStateException("No puedes interactuar con esta publicación")
         }
         return perfil
     }
@@ -95,11 +100,13 @@ class RepositorioInteracciones(
         uid: String
     ): Result<List<Comentario>> = intentar {
         verificarAcceso(idPublicacion, uid)
+        val bloqueados = bloqueos.usuariosBloqueadosCon(uid)
 
         comentariosDe(idPublicacion).get().await().documents
             .mapNotNull { convertirComentario(it) }
             .filter { it.estado == EstadoComentario.VISIBLE }
-            .sortedBy { it.fechaCreacion }        // los más antiguos arriba, como un chat
+            .filter { it.idAutor !in bloqueados }          // HU24: caso alterno de HU22
+            .sortedBy { it.fechaCreacion }
     }
 
     suspend fun comentar(

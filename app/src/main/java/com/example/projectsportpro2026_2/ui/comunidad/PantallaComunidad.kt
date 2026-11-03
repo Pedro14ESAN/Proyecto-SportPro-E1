@@ -16,7 +16,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projectsportpro2026_2.datos.modelo.ObjetivoReporte
 import com.example.projectsportpro2026_2.datos.modelo.Publicacion
+import com.example.projectsportpro2026_2.datos.modelo.TipoContenido
 import com.example.projectsportpro2026_2.datos.modelo.TipoReaccion
 import com.example.projectsportpro2026_2.datos.modelo.VisibilidadPublicacion
 import com.example.projectsportpro2026_2.ui.comun.*
@@ -36,35 +38,49 @@ import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
 fun PantallaComunidad(
     onVolver: () -> Unit,
     viewModel: ComunidadViewModel = viewModel(),
-    avisosViewModel: AvisosPruebaViewModel = viewModel()
-
+    avisosViewModel: AvisosPruebaViewModel = viewModel(),
+    accionesViewModel: AccionesModeracionViewModel = viewModel()
 ) {
+    // Estados de los 3 ViewModels: comunidad (HU21-22), avisos (HU23) y moderación (HU24)
     val estado by viewModel.estado.collectAsState()
     val estadoAvisos by avisosViewModel.estado.collectAsState()
-    var formularioAvisoAbierto by remember { mutableStateOf(false) }
+    val estadoAcciones by accionesViewModel.estado.collectAsState()
+
+    // "avisos" es la barra inferior de mensajes (Snackbar)
     val avisos = remember { SnackbarHostState() }
 
+    // Estado visual de la pantalla
     var formularioAbierto by remember { mutableStateOf(false) }
+    var formularioAvisoAbierto by remember { mutableStateOf(false) }
     var enEdicion by remember { mutableStateOf<Publicacion?>(null) }
     var porEliminar by remember { mutableStateOf<Publicacion?>(null) }
+    var seleccionado by remember { mutableStateOf<ContenidoSeleccionado?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.iniciar()
         avisosViewModel.iniciar()
+        accionesViewModel.iniciar()
     }
 
-    // Mensajes de éxito de los avisos (en la misma barra inferior)
-    LaunchedEffect(estadoAvisos.mensaje) {
-        estadoAvisos.mensaje?.let { texto ->
-            avisos.showSnackbar("✓ $texto")    // "avisos" es el SnackbarHostState de la pantalla
-            avisosViewModel.limpiarMensajes()
-        }
-    }
-
+    // Cada ViewModel limpia SUS propios mensajes después de mostrarlos
     LaunchedEffect(estado.mensaje) {
         estado.mensaje?.let { texto ->
             avisos.showSnackbar("✓ $texto")
             viewModel.limpiarMensajes()
+        }
+    }
+
+    LaunchedEffect(estadoAvisos.mensaje) {
+        estadoAvisos.mensaje?.let { texto ->
+            avisos.showSnackbar("✓ $texto")
+            avisosViewModel.limpiarMensajes()
+        }
+    }
+
+    LaunchedEffect(estadoAcciones.mensaje) {
+        estadoAcciones.mensaje?.let { texto ->
+            avisos.showSnackbar("✓ $texto")
+            accionesViewModel.limpiarMensajes()
         }
     }
 
@@ -112,6 +128,7 @@ fun PantallaComunidad(
                         fontWeight = FontWeight.Black,
                         style = MaterialTheme.typography.headlineMedium
                     )
+
                     val enPruebas = estado.pestana == PestanaComunidad.PRUEBAS
 
                     // En "Pruebas" el botón publica avisos, y solo lo ven DT/ADM (RC-05)
@@ -155,13 +172,20 @@ fun PantallaComunidad(
             }
 
             when {
+                // Pestaña "Pruebas" (HU23)
                 estado.pestana == PestanaComunidad.PRUEBAS -> seccionPruebas(
                     estado = estadoAvisos,
                     onActualizarFiltros = avisosViewModel::actualizarFiltros,
                     onLimpiarFiltros = avisosViewModel::limpiarFiltros,
                     onReintentar = avisosViewModel::recargar,
                     onCerrar = avisosViewModel::cerrar,
-                    onReabrir = avisosViewModel::reabrir
+                    onReabrir = avisosViewModel::reabrir,
+                    onMasAviso = { aviso ->
+                        seleccionado = ContenidoSeleccionado(
+                            ObjetivoReporte(TipoContenido.AVISO, aviso.id),
+                            aviso.idAutor, aviso.nombreAutor, aviso.titulo()
+                        )
+                    }
                 )
 
                 estado.cargando && estado.publicaciones.isEmpty() -> item {
@@ -195,13 +219,22 @@ fun PantallaComunidad(
                             viewModel.limpiarMensajes()
                             formularioAbierto = true
                         },
-                        onEliminar = { porEliminar = publicacion }
+                        onEliminar = { porEliminar = publicacion },
+                        onMas = {
+                            seleccionado = ContenidoSeleccionado(
+                                ObjetivoReporte(TipoContenido.PUBLICACION, publicacion.id),
+                                publicacion.idAutor, publicacion.nombreAutor, publicacion.texto
+                            )
+                        }
                     )
                 }
             }
         }
     }
 
+    // ---------- Hojas y diálogos ----------
+
+    // Formulario de publicación (HU21)
     if (formularioAbierto) {
         FormularioPublicacion(
             publicacionEnEdicion = enEdicion,
@@ -224,6 +257,7 @@ fun PantallaComunidad(
             }
         )
     }
+
     // Formulario de aviso de prueba (HU23)
     if (formularioAvisoAbierto) {
         FormularioAvisoPrueba(
@@ -242,7 +276,7 @@ fun PantallaComunidad(
         )
     }
 
-    // Hoja de comentarios (HU22): se abre cuando el ViewModel tiene una publicación seleccionada
+    // Hoja de comentarios (HU22)
     estado.publicacionComentarios?.let { publicacion ->
         HojaComentarios(
             publicacion = publicacion,
@@ -254,10 +288,47 @@ fun PantallaComunidad(
             error = estado.errorComentarios,
             onCerrar = { viewModel.cerrarComentarios() },
             onComentar = { texto, alTerminar -> viewModel.comentar(texto, alTerminar) },
-            onEliminar = { comentario -> viewModel.eliminarComentario(comentario) }
+            onEliminar = { comentario -> viewModel.eliminarComentario(comentario) },
+            onMasComentario = { c ->
+                seleccionado = ContenidoSeleccionado(
+                    ObjetivoReporte(TipoContenido.COMENTARIO, c.id, c.idPublicacion),
+                    c.idAutor, c.nombreAutor, c.texto
+                )
+            }
         )
     }
 
+    // Hoja de acciones sobre contenido ajeno: reportar, bloquear, moderar (HU24)
+    seleccionado?.let { sel ->
+        HojaAccionesContenido(
+            seleccionado = sel,
+            puedeModerar = estadoAcciones.puedeModerar,
+            procesando = estadoAcciones.procesando,
+            error = estadoAcciones.error,
+            onCerrar = {
+                seleccionado = null
+                accionesViewModel.limpiarMensajes()
+            },
+            onReportar = { motivo, detalle ->
+                accionesViewModel.reportar(sel, motivo, detalle) { seleccionado = null }
+            },
+            onBloquear = {
+                accionesViewModel.bloquear(sel) {
+                    seleccionado = null
+                    viewModel.refrescarTodo()
+                }
+            },
+            onModerar = { decision, motivo ->
+                accionesViewModel.moderar(sel, decision, motivo) {
+                    seleccionado = null
+                    viewModel.refrescarTodo()
+                    avisosViewModel.recargar()
+                }
+            }
+        )
+    }
+
+    // Confirmación antes de eliminar una publicación propia (HU21)
     porEliminar?.let { publicacion ->
         AlertDialog(
             onDismissRequest = { porEliminar = null },
@@ -301,7 +372,8 @@ private fun TarjetaPublicacion(
     onReaccionar: (TipoReaccion) -> Unit,
     onComentarios: () -> Unit,
     onEditar: () -> Unit,
-    onEliminar: () -> Unit
+    onEliminar: () -> Unit,
+    onMas: () -> Unit
 ) {
     var menuAbierto by remember { mutableStateOf(false) }
     val visibilidad = estiloVisibilidad(publicacion)
@@ -317,6 +389,7 @@ private fun TarjetaPublicacion(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
+            // Encabezado: avatar, autor, tiempo, visibilidad y menú "•••"
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AvatarIniciales(publicacion.nombreAutor)
                 Spacer(Modifier.width(10.dp))
@@ -351,6 +424,7 @@ private fun TarjetaPublicacion(
                 }
 
                 if (puedeModificar) {
+                    // Publicación propia: editar o eliminar (HU21)
                     Box {
                         Text(
                             text = "•••",
@@ -379,6 +453,15 @@ private fun TarjetaPublicacion(
                             )
                         }
                     }
+                } else {
+                    // Publicación de otra persona: reportar, bloquear o moderar (HU24)
+                    Text(
+                        text = "•••",
+                        color = SportProTextoSecundario,
+                        modifier = Modifier
+                            .clickable { onMas() }
+                            .padding(8.dp)
+                    )
                 }
             }
 
@@ -411,7 +494,7 @@ private fun TarjetaPublicacion(
     }
 }
 
-// Botón "♡ 14" que abre el selector ❤️ 👏 💪
+// Botón "♡ 14" que abre el selector ❤️ 👏 💪 (HU22)
 @Composable
 private fun BotonReaccion(
     publicacion: Publicacion,

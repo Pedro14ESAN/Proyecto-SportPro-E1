@@ -40,7 +40,8 @@ fun HojaComentarios(
     error: String?,
     onCerrar: () -> Unit,
     onComentar: (texto: String, alTerminar: () -> Unit) -> Unit,
-    onEliminar: (Comentario) -> Unit
+    onEliminar: (Comentario) -> Unit,
+    onMasComentario: (Comentario) -> Unit = {}
 ) {
     val estadoHoja = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var texto by remember { mutableStateOf("") }
@@ -55,7 +56,7 @@ fun HojaComentarios(
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 16.dp)
-                .imePadding(),                     // sube el campo cuando aparece el teclado
+                .imePadding(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
@@ -68,7 +69,6 @@ fun HojaComentarios(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Resumen de la publicación original
             Surface(
                 color = SportProVerdeClaro,
                 shape = FormaCampoSportPro,
@@ -102,7 +102,6 @@ fun HojaComentarios(
                 }
             }
 
-            // Lista de comentarios
             when {
                 cargando && comentarios.isEmpty() -> Box(
                     modifier = Modifier
@@ -134,20 +133,19 @@ fun HojaComentarios(
                         FilaComentario(
                             comentario = comentario,
                             esMio = comentario.idAutor == uid,
-                            onEliminar = { onEliminar(comentario) }
+                            onEliminar = { onEliminar(comentario) },
+                            onMas = { onMasComentario(comentario) }
                         )
                     }
                 }
             }
 
-            // Error al enviar o eliminar (cuando ya hay comentarios en pantalla)
             if (error != null && comentarios.isNotEmpty()) {
                 Text(error, color = SportProRojo, fontSize = 12.sp)
             }
 
             HorizontalDivider(color = SportProBorde)
 
-            // Escribir comentario
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -164,7 +162,7 @@ fun HojaComentarios(
                 )
 
                 TextButton(
-                    onClick = { onComentar(texto) { texto = "" } },   // limpia el campo solo si se guardó
+                    onClick = { onComentar(texto) { texto = "" } },
                     enabled = texto.isNotBlank() && !enviando
                 ) {
                     if (enviando) {
@@ -190,7 +188,8 @@ fun HojaComentarios(
 private fun FilaComentario(
     comentario: Comentario,
     esMio: Boolean,
-    onEliminar: () -> Unit
+    onEliminar: () -> Unit,
+    onMas: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -222,12 +221,19 @@ private fun FilaComentario(
             )
         }
 
-        // Solo el autor ve el botón de eliminar su comentario
         if (esMio) {
             Text(
                 text = "🗑",
                 modifier = Modifier
                     .clickable { onEliminar() }
+                    .padding(4.dp)
+            )
+        } else {
+            Text(
+                text = "•••",
+                color = SportProTextoSecundario,
+                modifier = Modifier
+                    .clickable { onMas() }
                     .padding(4.dp)
             )
         }

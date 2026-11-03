@@ -31,7 +31,8 @@ fun puedeVerPublicacion(publicacion: Publicacion, p: Pertenencia): Boolean {
 }
 class RepositorioPublicaciones(
     private val bd: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val resolutor: ResolutorPertenencia = ResolutorPertenencia(bd)
+    private val resolutor: ResolutorPertenencia = ResolutorPertenencia(bd),
+    private val bloqueos: RepositorioBloqueos = RepositorioBloqueos(bd)
 ) {
 
     private val publicaciones = bd.collection("publicaciones")
@@ -73,6 +74,7 @@ class RepositorioPublicaciones(
     suspend fun listarFeed(uid: String): Result<List<Publicacion>> = intentar {
         val perfil = obtenerPerfil(uid)
         val p = resolutor.obtener(uid, perfil.rol)
+        val bloqueados = bloqueos.usuariosBloqueadosCon(uid)   // HU24: en ambos sentidos
 
         // 1) Publicaciones abiertas a toda la Comunidad SportPro (de cualquier academia)
         val deComunidad = publicaciones
@@ -90,6 +92,7 @@ class RepositorioPublicaciones(
         (deComunidad + internas)
             .distinctBy { it.id }                  // una pública de mi academia aparece en ambas listas
             .filter { puedeVerPublicacion(it, p) }
+            .filter { it.idAutor !in bloqueados }                // HU24: ocultar usuarios bloqueados
             .sortedByDescending { it.fechaCreacion }
     }
 
