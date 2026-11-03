@@ -44,6 +44,7 @@ import com.example.projectsportpro2026_2.ui.seguimiento.PantallaMisPartidos
 import com.example.projectsportpro2026_2.ui.seguimiento.PantallaSeguimientoPartido
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
+import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRecuperar
 
 @Composable
 fun NavegacionApp() {
@@ -188,6 +189,11 @@ fun NavegacionApp() {
                 onIrARegistro = {
                     navController.navigate(
                         Rutas.REGISTRO
+                    )
+                },
+                onIrARecuperar = {
+                    navController.navigate(
+                        Rutas.RECUPERAR
                     )
                 }
             )
@@ -768,6 +774,10 @@ fun NavegacionApp() {
                     navController.popBackStack()
                 }
             )
+        }
+
+        composable(Rutas.RECUPERAR) {
+            PantallaRecuperar(onVolver = { navController.popBackStack() })
         }
 
         composable(
