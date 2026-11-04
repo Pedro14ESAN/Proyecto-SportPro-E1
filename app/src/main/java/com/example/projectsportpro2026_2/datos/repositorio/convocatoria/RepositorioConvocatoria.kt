@@ -11,9 +11,11 @@ import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.Partido
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-
+import com.example.projectsportpro2026_2.datos.repositorio.RepositorioNotificaciones
 class RepositorioConvocatorias(
-    private val bd: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val bd: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    // HU20 (Cielo): notificaciones de convocatoria
+    private val notificaciones: RepositorioNotificaciones = RepositorioNotificaciones(bd)
 ) {
     private val convocatorias = bd.collection("convocatorias")
     private val partidos = bd.collection("partidos")
@@ -281,7 +283,14 @@ class RepositorioConvocatorias(
             }
 
         lote.commit().await()
-
+        // HU20 (Cielo) / HU11: avisar a los convocados nuevos y a los retirados
+        notificaciones.notificarConvocatoria(
+            idPartido = idPartido,
+            nombreRival = partido.nombreRival,
+            idsFichasNuevas = idsUnicos.filter { !anterioresPorId.containsKey(it) },
+            idsFichasRetiradas = convocadosAnteriores.map { it.idJugador }.filter { it !in idsUnicos },
+            idEmisor = uid
+        )
         convocatoria
     }
 
