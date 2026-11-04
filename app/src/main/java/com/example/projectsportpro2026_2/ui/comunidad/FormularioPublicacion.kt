@@ -190,6 +190,18 @@ fun FormularioPublicacion(
                         modifier = Modifier.weight(1f)
                     ) { visibilidad = VisibilidadPublicacion.COMUNIDAD }
                 }
+                // Muestra a dónde se publicará (útil cuando hay una sola opción y no aparecen chips)
+                val destinoTexto = when (visibilidad) {
+                    VisibilidadPublicacion.EQUIPO ->
+                        opciones.equipos.find { it.id == idEquipo }?.let { "Se publicará solo para ${it.nombre}" }
+                    VisibilidadPublicacion.ACADEMIA ->
+                        opciones.academias.find { it.id == idAcademia }?.let { "Se publicará para todo ${it.nombre}" }
+                    VisibilidadPublicacion.COMUNIDAD ->
+                        "Se publicará para toda la Comunidad SportPro"
+                }
+                destinoTexto?.let {
+                    Text(it, color = SportProTextoSecundario, fontSize = 12.sp)
+                }
 
                 // Si pertenece a varios equipos o academias, elige a cuál
                 if (visibilidad == VisibilidadPublicacion.EQUIPO && opciones.equipos.size > 1) {
