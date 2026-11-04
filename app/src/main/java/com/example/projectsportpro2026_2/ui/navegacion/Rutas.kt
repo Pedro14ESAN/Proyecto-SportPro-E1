@@ -58,6 +58,8 @@ object Rutas {
     // HU24: panel de moderación
     const val MODERACION = "moderacion"
 
+    // HU20: notificaciones
+    const val NOTIFICACIONES = "notificaciones"
 }
 
 fun rutaEquipos(

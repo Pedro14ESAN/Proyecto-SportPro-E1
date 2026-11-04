@@ -47,6 +47,9 @@ import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
 import com.example.projectsportpro2026_2.ui.anuncios.PantallaAnuncios
 import com.example.projectsportpro2026_2.ui.comunidad.PantallaComunidad
 import com.example.projectsportpro2026_2.ui.moderacion.PantallaPanelModeracion
+import androidx.compose.ui.platform.LocalContext
+import com.example.projectsportpro2026_2.ui.notificaciones.MonitorNotificaciones
+import com.example.projectsportpro2026_2.ui.notificaciones.PantallaNotificaciones
 @Composable
 fun NavegacionApp() {
 
@@ -57,6 +60,12 @@ fun NavegacionApp() {
 
     val navController =
         rememberNavController()
+
+    // HU20: notificaciones del celular mientras la app está abierta
+    val contextoApp = LocalContext.current.applicationContext
+    LaunchedEffect(Unit) {
+        MonitorNotificaciones.iniciar(contextoApp)
+    }
 
     var destinoInicial by
     remember {
@@ -176,6 +185,11 @@ fun NavegacionApp() {
             Rutas.COMUNIDAD
         )
     }
+    val abrirNotificaciones: () -> Unit = {
+        navController.navigate(
+            Rutas.NOTIFICACIONES
+        )
+    }
 
     NavHost(
         navController =
@@ -248,6 +262,8 @@ fun NavegacionApp() {
                     abrirAnuncios,
                 onComunidad =
                     abrirComunidad,
+                onNotificaciones =
+                    abrirNotificaciones,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -272,6 +288,8 @@ fun NavegacionApp() {
                     abrirAnuncios,
                 onComunidad =
                     abrirComunidad,
+                onNotificaciones =
+                    abrirNotificaciones,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -299,6 +317,8 @@ fun NavegacionApp() {
                     abrirAnuncios,
                 onComunidad =
                     abrirComunidad,
+                onNotificaciones =
+                    abrirNotificaciones,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -331,6 +351,8 @@ fun NavegacionApp() {
                     abrirAnuncios,
                 onComunidad =
                     abrirComunidad,
+                onNotificaciones =
+                    abrirNotificaciones,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -941,6 +963,25 @@ fun NavegacionApp() {
             PantallaPanelModeracion(
                 onVolver = {
                     navController.popBackStack()
+                }
+            )
+        }
+        // HU20: centro de notificaciones
+        composable(
+            Rutas.NOTIFICACIONES
+        ) {
+            PantallaNotificaciones(
+                onVolver = {
+                    navController.popBackStack()
+                },
+                onAbrirAnuncios = {
+                    navController.navigate(Rutas.ANUNCIOS)
+                },
+                onAbrirEntrenamientos = {
+                    navController.navigate(Rutas.ENTRENAMIENTOS)
+                },
+                onAbrirConvocatorias = {
+                    navController.navigate(Rutas.MIS_CONVOCATORIAS)
                 }
             )
         }

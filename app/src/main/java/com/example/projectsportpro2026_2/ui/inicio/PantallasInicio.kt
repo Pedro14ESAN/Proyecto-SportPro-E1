@@ -84,6 +84,7 @@ fun InicioAdministrador(
     onPartidosEnVivo: () -> Unit = {},
     onAnuncios: () -> Unit = {},
     onComunidad: () -> Unit = {},
+    onNotificaciones: () -> Unit = {},          // ← nuevo (HU20)
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -195,6 +196,15 @@ fun InicioAdministrador(
     Spacer(
         Modifier.height(12.dp)
     )
+    Button(
+        onClick = onNotificaciones
+    ) {
+        Text("🔔 Notificaciones")
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
 
 }
 
@@ -207,6 +217,7 @@ fun InicioEntrenador(
     onPartidosEnVivo: () -> Unit = {},
     onAnuncios: () -> Unit = {},
     onComunidad: () -> Unit = {},
+    onNotificaciones: () -> Unit = {},          // ← nuevo (HU20)
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -305,6 +316,15 @@ fun InicioEntrenador(
     Spacer(
         Modifier.height(12.dp)
     )
+    Button(
+        onClick = onNotificaciones
+    ) {
+        Text("🔔 Notificaciones")
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
 }
 
 @Composable
@@ -316,6 +336,7 @@ fun InicioJugador(
     onPartidosEnVivo: () -> Unit = {},
     onAnuncios: () -> Unit = {},
     onComunidad: () -> Unit = {},
+    onNotificaciones: () -> Unit = {},          // ← nuevo (HU20)
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -414,6 +435,15 @@ fun InicioJugador(
     Spacer(
         Modifier.height(12.dp)
     )
+    Button(
+        onClick = onNotificaciones
+    ) {
+        Text("🔔 Notificaciones")
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
 }
 
 @Composable
@@ -426,6 +456,7 @@ fun InicioApoderado(
     onPartidosEnVivo: () -> Unit = {},
     onAnuncios: () -> Unit = {},
     onComunidad: () -> Unit = {},
+    onNotificaciones: () -> Unit = {},          // ← nuevo (HU20)
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -532,6 +563,15 @@ fun InicioApoderado(
         onClick = onComunidad
     ) {
         Text("Comunidad")
+    }
+
+    Spacer(
+        Modifier.height(12.dp)
+    )
+    Button(
+        onClick = onNotificaciones
+    ) {
+        Text("🔔 Notificaciones")
     }
 
     Spacer(
