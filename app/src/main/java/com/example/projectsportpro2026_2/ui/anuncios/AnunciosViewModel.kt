@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
+import com.example.projectsportpro2026_2.datos.repositorio.RepositorioNotificaciones
 // Pestañas del Figma: Todos / Activos / Archivados
 enum class FiltroAnuncios { TODOS, ACTIVOS, ARCHIVADOS }
 
@@ -52,7 +52,8 @@ data class EstadoAnuncios(
 
 class AnunciosViewModel(
     private val repositorio: RepositorioAnuncios = RepositorioAnuncios(),
-    private val autenticacion: RepositorioAutenticacion = RepositorioAutenticacion()
+    private val autenticacion: RepositorioAutenticacion = RepositorioAutenticacion(),
+    private val notificaciones: RepositorioNotificaciones = RepositorioNotificaciones()
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(EstadoAnuncios())
@@ -126,7 +127,7 @@ class AnunciosViewModel(
         rolDestino: Rol,
         alTerminar: () -> Unit = {}
     ) {
-        if (_estado.value.guardando) return   // evita publicar dos veces por doble toque
+        if (_estado.value.guardando) return
 
         viewModelScope.launch {
             _estado.update { it.copy(guardando = true, error = null) }
@@ -140,10 +141,12 @@ class AnunciosViewModel(
                 idEquipo = idEquipo,
                 rolDestino = rolDestino
             )
-                .onSuccess {
+                .onSuccess { anuncio ->
                     _estado.update { it.copy(guardando = false, mensaje = "Anuncio publicado") }
                     alTerminar()
                     cargar()
+                    // HU20: avisar a la audiencia del anuncio
+                    notificaciones.notificarAnuncio(anuncio)
                 }
                 .onFailure { e ->
                     _estado.update { it.copy(guardando = false, error = mensajeError(e)) }
