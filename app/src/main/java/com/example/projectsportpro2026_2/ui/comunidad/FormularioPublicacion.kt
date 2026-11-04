@@ -61,9 +61,13 @@ fun FormularioPublicacion(
             else VisibilidadPublicacion.COMUNIDAD
         )
     }
-    var idAcademia by remember { mutableStateOf(opciones.academias.firstOrNull()?.id.orEmpty()) }
-    var idEquipo by remember { mutableStateOf(opciones.equipos.firstOrNull()?.id.orEmpty()) }
+    // Lo que el usuario eligió a mano (vacío = todavía no eligió)
+    var idAcademiaElegida by remember { mutableStateOf("") }
+    var idEquipoElegido by remember { mutableStateOf("") }
 
+    // Si no eligió, se usa la primera opción disponible, aunque haya llegado después de abrir el formulario
+    val idAcademia = idAcademiaElegida.ifBlank { opciones.academias.firstOrNull()?.id.orEmpty() }
+    val idEquipo = idEquipoElegido.ifBlank { opciones.equipos.firstOrNull()?.id.orEmpty() }
     val destinoValido = when (visibilidad) {
         VisibilidadPublicacion.EQUIPO -> opciones.equipos.any { it.id == idEquipo }
         VisibilidadPublicacion.ACADEMIA -> opciones.academias.any { it.id == idAcademia }
@@ -193,7 +197,7 @@ fun FormularioPublicacion(
                     FilaDeChipsSportPro {
                         opciones.equipos.forEach { equipo ->
                             ChipSportPro("${equipo.nombre} · ${equipo.categoria}", equipo.id == idEquipo) {
-                                idEquipo = equipo.id
+                                idEquipoElegido = equipo.id
                             }
                         }
                     }
@@ -203,7 +207,7 @@ fun FormularioPublicacion(
                     FilaDeChipsSportPro {
                         opciones.academias.forEach { academia ->
                             ChipSportPro(academia.nombre, academia.id == idAcademia) {
-                                idAcademia = academia.id
+                                idAcademiaElegida = academia.id
                             }
                         }
                     }
