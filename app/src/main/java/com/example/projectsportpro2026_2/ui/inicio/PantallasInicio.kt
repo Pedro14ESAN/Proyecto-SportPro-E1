@@ -200,6 +200,9 @@ fun InicioAdministrador(
     onEjercicios: () -> Unit,
     onAsistencias: () -> Unit,
     onPartidosEnVivo: () -> Unit = {},
+    onAnuncios: () -> Unit = {},          // HU19
+    onComunidad: () -> Unit = {},         // HU21
+    onNotificaciones: () -> Unit = {},    // HU20
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -221,6 +224,10 @@ fun InicioAdministrador(
     BotonInicio("Mensualidades", onMensualidades)
     BotonInicio("Biblioteca de ejercicios", onEjercicios)
     BotonInicio("Asistencias", onAsistencias)
+    // HU19, HU21, HU20 (Cielo)
+    BotonInicio("Anuncios del club", onAnuncios)
+    BotonInicio("Comunidad", onComunidad)
+    BotonInicio("🔔 Notificaciones", onNotificaciones)
 }
 
 @Composable
@@ -229,7 +236,9 @@ fun InicioEntrenador(
     onEjercicios: () -> Unit,
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
-    onPartidosEnVivo: () -> Unit = {},
+    onPartidosEnVivo: () -> Unit = {},    onAnuncios: () -> Unit = {},          // HU19
+    onComunidad: () -> Unit = {},         // HU21
+    onNotificaciones: () -> Unit = {},    // HU20
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -250,6 +259,10 @@ fun InicioEntrenador(
     BotonInicio("Biblioteca de ejercicios", onEjercicios)
     BotonInicio("Entrenamientos", onEntrenamientos)
     BotonInicio("Asistencias", onAsistencias)
+    // HU19, HU21, HU20 (Cielo)
+    BotonInicio("Anuncios del club", onAnuncios)
+    BotonInicio("Comunidad", onComunidad)
+    BotonInicio("🔔 Notificaciones", onNotificaciones)
 }
 
 @Composable
@@ -258,7 +271,9 @@ fun InicioJugador(
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
     onConvocatorias: () -> Unit,
-    onPartidosEnVivo: () -> Unit = {},
+    onPartidosEnVivo: () -> Unit = {},    onAnuncios: () -> Unit = {},          // HU19
+    onComunidad: () -> Unit = {},         // HU21
+    onNotificaciones: () -> Unit = {},    // HU20
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -279,6 +294,10 @@ fun InicioJugador(
     BotonInicio("Mis entrenamientos", onEntrenamientos)
     BotonInicio("Mi asistencia", onAsistencias)
     BotonInicio("Mis convocatorias", onConvocatorias)
+    // HU19, HU21, HU20 (Cielo)
+    BotonInicio("Anuncios del club", onAnuncios)
+    BotonInicio("Comunidad", onComunidad)
+    BotonInicio("🔔 Notificaciones", onNotificaciones)
 }
 
 @Composable
@@ -288,7 +307,9 @@ fun InicioApoderado(
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
     onConvocatorias: () -> Unit,
-    onPartidosEnVivo: () -> Unit = {},
+    onPartidosEnVivo: () -> Unit = {},    onAnuncios: () -> Unit = {},          // HU19
+    onComunidad: () -> Unit = {},         // HU21
+    onNotificaciones: () -> Unit = {},    // HU20
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -310,6 +331,10 @@ fun InicioApoderado(
     BotonInicio("Entrenamientos", onEntrenamientos)
     BotonInicio("Historial de asistencia", onAsistencias)
     BotonInicio("Convocatorias", onConvocatorias)
+    // HU19, HU21, HU20 (Cielo)
+    BotonInicio("Anuncios del club", onAnuncios)
+    BotonInicio("Comunidad", onComunidad)
+    BotonInicio("🔔 Notificaciones", onNotificaciones)
 }
 
 @Composable

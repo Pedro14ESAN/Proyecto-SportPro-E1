@@ -17,10 +17,13 @@ import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
-
+import com.example.projectsportpro2026_2.datos.modelo.TipoNotificacion
 class RepositorioEntrenamientos(
     private val bd: FirebaseFirestore =
-        FirebaseFirestore.getInstance()
+        FirebaseFirestore.getInstance(),
+    // HU20 (Cielo): notificaciones de entrenamientos
+    private val notificaciones: RepositorioNotificaciones =
+        RepositorioNotificaciones(bd)
 ) {
 
     private val entrenamientos =
@@ -483,6 +486,8 @@ class RepositorioEntrenamientos(
                 entrenamiento
             )
             .await()
+        // HU20 (Cielo): avisar al equipo
+        notificaciones.notificarEntrenamiento(entrenamiento, TipoNotificacion.ENTRENAMIENTO_PUBLICADO, uid)
 
         entrenamiento
     }
@@ -622,6 +627,10 @@ class RepositorioEntrenamientos(
                 actualizado
             )
             .await()
+        // HU20 (Cielo): solo se avisa si cambió la fecha u hora
+        if (cambioHorario) {
+            notificaciones.notificarEntrenamiento(actualizado, TipoNotificacion.ENTRENAMIENTO_CAMBIADO, uid)
+        }
     }
 
     suspend fun cancelarEntrenamiento(
@@ -678,6 +687,12 @@ class RepositorioEntrenamientos(
                 )
             )
             .await()
+        // HU20 (Cielo): avisar al equipo que se canceló
+        notificaciones.notificarEntrenamiento(
+            entrenamiento.copy(estado = EstadoEntrenamiento.CANCELADO),
+            TipoNotificacion.ENTRENAMIENTO_CANCELADO,
+            uid
+        )
     }
 
     suspend fun listarParaDt(

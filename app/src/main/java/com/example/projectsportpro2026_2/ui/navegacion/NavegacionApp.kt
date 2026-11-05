@@ -44,6 +44,12 @@ import com.example.projectsportpro2026_2.ui.seguimiento.PantallaMisPartidos
 import com.example.projectsportpro2026_2.ui.seguimiento.PantallaSeguimientoPartido
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaMisJugadores
 import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaVinculaciones
+import com.example.projectsportpro2026_2.ui.anuncios.PantallaAnuncios
+import com.example.projectsportpro2026_2.ui.comunidad.PantallaComunidad
+import com.example.projectsportpro2026_2.ui.moderacion.PantallaPanelModeracion
+import androidx.compose.ui.platform.LocalContext
+import com.example.projectsportpro2026_2.ui.notificaciones.MonitorNotificaciones
+import com.example.projectsportpro2026_2.ui.notificaciones.PantallaNotificaciones
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRecuperar
 
 @Composable
@@ -56,6 +62,12 @@ fun NavegacionApp() {
 
     val navController =
         rememberNavController()
+
+    // HU20: notificaciones del celular mientras la app está abierta
+    val contextoApp = LocalContext.current.applicationContext
+    LaunchedEffect(Unit) {
+        MonitorNotificaciones.iniciar(contextoApp)
+    }
 
     var destinoInicial by
     remember {
@@ -165,6 +177,21 @@ fun NavegacionApp() {
             Rutas.MIS_PARTIDOS
         )
     }
+    val abrirAnuncios: () -> Unit = {
+        navController.navigate(
+            Rutas.ANUNCIOS
+        )
+    }
+    val abrirComunidad: () -> Unit = {
+        navController.navigate(
+            Rutas.COMUNIDAD
+        )
+    }
+    val abrirNotificaciones: () -> Unit = {
+        navController.navigate(
+            Rutas.NOTIFICACIONES
+        )
+    }
 
     NavHost(
         navController =
@@ -238,7 +265,12 @@ fun NavegacionApp() {
                     abrirAsistencias,
                 onPartidosEnVivo =
                     abrirPartidosEnVivo,
-
+                onAnuncios =
+                    abrirAnuncios,
+                onComunidad =
+                    abrirComunidad,
+                onNotificaciones =
+                    abrirNotificaciones,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -259,7 +291,12 @@ fun NavegacionApp() {
                     abrirAsistencias,
                 onPartidosEnVivo =
                     abrirPartidosEnVivo,
-
+                onAnuncios =
+                    abrirAnuncios,
+                onComunidad =
+                    abrirComunidad,
+                onNotificaciones =
+                    abrirNotificaciones,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -283,7 +320,12 @@ fun NavegacionApp() {
                 },
                 onPartidosEnVivo =
                     abrirPartidosEnVivo,
-
+                onAnuncios =
+                    abrirAnuncios,
+                onComunidad =
+                    abrirComunidad,
+                onNotificaciones =
+                    abrirNotificaciones,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -312,7 +354,12 @@ fun NavegacionApp() {
                 },
                 onPartidosEnVivo =
                     abrirPartidosEnVivo,
-
+                onAnuncios =
+                    abrirAnuncios,
+                onComunidad =
+                    abrirComunidad,
+                onNotificaciones =
+                    abrirNotificaciones,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -892,6 +939,60 @@ fun NavegacionApp() {
                     idPartido,
                 onVolver = {
                     navController.popBackStack()
+                }
+            )
+        }
+        // HU19: anuncios internos
+        composable(
+            Rutas.ANUNCIOS
+        ) {
+            PantallaAnuncios(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        // HU21: comunidad
+        // HU21: comunidad
+        composable(
+            Rutas.COMUNIDAD
+        ) {
+            PantallaComunidad(
+                onVolver = {
+                    navController.popBackStack()
+                },
+                onAbrirModeracion = {
+                    navController.navigate(Rutas.MODERACION)
+                }
+            )
+        }
+
+        // HU24: panel de moderación (solo ADM)
+        composable(
+            Rutas.MODERACION
+        ) {
+            PantallaPanelModeracion(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        // HU20: centro de notificaciones
+        composable(
+            Rutas.NOTIFICACIONES
+        ) {
+            PantallaNotificaciones(
+                onVolver = {
+                    navController.popBackStack()
+                },
+                onAbrirAnuncios = {
+                    navController.navigate(Rutas.ANUNCIOS)
+                },
+                onAbrirEntrenamientos = {
+                    navController.navigate(Rutas.ENTRENAMIENTOS)
+                },
+                onAbrirConvocatorias = {
+                    navController.navigate(Rutas.MIS_CONVOCATORIAS)
                 }
             )
         }
