@@ -60,6 +60,8 @@ object Rutas {
 
     // HU20: notificaciones
     const val NOTIFICACIONES = "notificaciones"
+
+    const val RECUPERAR = "recuperar"
 }
 
 fun rutaEquipos(

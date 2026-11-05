@@ -2,6 +2,7 @@ package com.example.projectsportpro2026_2.ui.equipos
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projectsportpro2026_2.datos.modelo.EntrenadorAcademia
 import com.example.projectsportpro2026_2.datos.modelo.Equipo
 import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAcademias
 import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAutenticacion
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 
 data class EstadoEquipos(
     val equipos: List<Equipo> = emptyList(),
+    val entrenadores: List<EntrenadorAcademia> = emptyList(),
     val cargando: Boolean = false,
     val error: String? = null
 )
@@ -40,6 +42,8 @@ class EquiposViewModel(
     fun cargar() {
         viewModelScope.launch {
             _estado.update { it.copy(cargando = true, error = null) }
+            repositorio.listarEntrenadores(idAcademia, uid)
+                .onSuccess { lista -> _estado.update { it.copy(entrenadores = lista) } }
             repositorio.listarEquipos(idAcademia)
                 .onSuccess { lista -> _estado.update { it.copy(cargando = false, equipos = lista) } }
                 .onFailure { e -> _estado.update { it.copy(cargando = false, error = mensaje(e)) } }
@@ -51,16 +55,15 @@ class EquiposViewModel(
         equipoActual: Equipo?,
         nombre: String,
         categoria: String,
+        idEntrenador: String,
         alTerminar: () -> Unit
     ) {
         viewModelScope.launch {
             _estado.update { it.copy(cargando = true, error = null) }
             val resultado = if (equipoActual == null) {
-                repositorio.crearEquipo(nombre, categoria, idAcademia, "", uid).map { }
+                repositorio.crearEquipo(nombre, categoria, idAcademia, idEntrenador, uid).map { }
             } else {
-                repositorio.editarEquipo(
-                    equipoActual.id, nombre, categoria, equipoActual.idEntrenador, uid
-                )
+                repositorio.editarEquipo(equipoActual.id, nombre, categoria, idEntrenador, uid)
             }
             resultado
                 .onSuccess {
@@ -77,6 +80,18 @@ class EquiposViewModel(
             repositorio.cambiarEstadoEquipo(equipo.id, !equipo.activo, uid)
                 .onSuccess { cargar() }
                 .onFailure { e -> _estado.update { it.copy(error = mensaje(e)) } }
+        }
+    }
+
+    fun agregarEntrenador(correo: String, alTerminar: () -> Unit) {
+        viewModelScope.launch {
+            _estado.update { it.copy(cargando = true, error = null) }
+            repositorio.agregarEntrenador(idAcademia, correo, uid)
+                .onSuccess {
+                    alTerminar()
+                    cargar()
+                }
+                .onFailure { e -> _estado.update { it.copy(cargando = false, error = mensaje(e)) } }
         }
     }
 

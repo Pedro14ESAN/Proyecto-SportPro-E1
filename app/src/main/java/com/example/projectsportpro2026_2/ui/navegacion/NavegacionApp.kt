@@ -50,6 +50,8 @@ import com.example.projectsportpro2026_2.ui.moderacion.PantallaPanelModeracion
 import androidx.compose.ui.platform.LocalContext
 import com.example.projectsportpro2026_2.ui.notificaciones.MonitorNotificaciones
 import com.example.projectsportpro2026_2.ui.notificaciones.PantallaNotificaciones
+import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRecuperar
+
 @Composable
 fun NavegacionApp() {
 
@@ -214,6 +216,11 @@ fun NavegacionApp() {
                 onIrARegistro = {
                     navController.navigate(
                         Rutas.REGISTRO
+                    )
+                },
+                onIrARecuperar = {
+                    navController.navigate(
+                        Rutas.RECUPERAR
                     )
                 }
             )
@@ -814,6 +821,10 @@ fun NavegacionApp() {
                     navController.popBackStack()
                 }
             )
+        }
+
+        composable(Rutas.RECUPERAR) {
+            PantallaRecuperar(onVolver = { navController.popBackStack() })
         }
 
         composable(

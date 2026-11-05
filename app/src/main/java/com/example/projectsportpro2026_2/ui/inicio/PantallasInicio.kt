@@ -1,20 +1,43 @@
 package com.example.projectsportpro2026_2.ui.inicio
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavy
+
+// Colores locales de estas pantallas (no se modifica el tema global)
+private val VerdePrincipal = Color(0xFF1B9A5C)
+private val FondoPantalla = Color(0xFFFAFAF7)
+private val TituloOscuro = Color(0xFF0F2438)
+private val BordeCampo = Color(0xFFD5E3DC)
+private val TextoSecundario = Color(0xFF6B7A80)
 
 @Composable
 private fun PantallaBaseInicio(
@@ -28,47 +51,142 @@ private fun PantallaBaseInicio(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-        verticalArrangement =
-            Arrangement.Center,
-        horizontalAlignment =
-            Alignment.CenterHorizontally
+                .background(FondoPantalla)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
 
+        // Logo y nombre de la app
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SportProNavy),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "⚽",
+                    fontSize = 22.sp
+                )
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            Text(
+                text = "SportPro",
+                style = TextStyle(
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 22.sp,
+                    color = TituloOscuro
+                )
+            )
+        }
+
+        Spacer(Modifier.height(32.dp))
+
         Text(
-            text =
-                titulo,
-            style =
-                MaterialTheme
-                    .typography
-                    .headlineMedium,
-            textAlign =
-                TextAlign.Center
+            text = "PANEL PRINCIPAL",
+            style = TextStyle(
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                letterSpacing = 2.sp,
+                color = VerdePrincipal
+            )
         )
 
-        Spacer(
-            Modifier.height(8.dp)
-        )
+        Spacer(Modifier.height(8.dp))
 
         Text(
-            text =
-                descripcion,
-            textAlign =
-                TextAlign.Center
+            text = titulo,
+            style = TextStyle(
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 28.sp,
+                color = TituloOscuro
+            )
         )
 
-        Spacer(
-            Modifier.height(24.dp)
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = descripcion,
+            color = TextoSecundario,
+            fontSize = 14.sp
         )
 
-        acciones()
+        Spacer(Modifier.height(24.dp))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            acciones()
+        }
+
+        Spacer(Modifier.height(24.dp))
 
         OutlinedButton(
             onClick =
-                onCerrarSesion
+                onCerrarSesion,
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.dp, BordeCampo),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
         ) {
             Text(
-                "Cerrar sesión"
+                "Cerrar sesión",
+                color = TextoSecundario,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+// Botón de acción del panel: ancho completo, texto a la izquierda y flecha a la derecha
+@Composable
+private fun BotonInicio(
+    texto: String,
+    onClick: () -> Unit,
+    destacado: Boolean = false
+) {
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (destacado) VerdePrincipal else Color.White,
+            contentColor = if (destacado) Color.White else TituloOscuro
+        ),
+        border = if (destacado) null else BorderStroke(1.dp, BordeCampo),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            horizontal = 20.dp,
+            vertical = 0.dp
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = texto,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp
+            )
+            Text(
+                text = "→",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = if (destacado) Color.White else VerdePrincipal
             )
         }
     }
@@ -82,9 +200,9 @@ fun InicioAdministrador(
     onEjercicios: () -> Unit,
     onAsistencias: () -> Unit,
     onPartidosEnVivo: () -> Unit = {},
-    onAnuncios: () -> Unit = {},
-    onComunidad: () -> Unit = {},
-    onNotificaciones: () -> Unit = {},          // ← nuevo (HU20)
+    onAnuncios: () -> Unit = {},          // HU19
+    onComunidad: () -> Unit = {},         // HU21
+    onNotificaciones: () -> Unit = {},    // HU20
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -100,112 +218,16 @@ fun InicioAdministrador(
 ) {
 
     // HU17: seguimiento de partidos en tiempo real
-    Button(
-        onClick =
-            onPartidosEnVivo
-    ) {
-        Text(
-            "Partidos en vivo"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-
-    Button(
-        onClick =
-            onGestionarAcademias
-    ) {
-        Text(
-            "Gestionar academias"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onVinculaciones
-    ) {
-        Text(
-            "Vinculaciones"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onMensualidades
-    ) {
-        Text(
-            "Mensualidades"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onEjercicios
-    ) {
-        Text(
-            "Biblioteca de ejercicios"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onAsistencias
-    ) {
-        Text(
-            "Asistencias"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onAnuncios
-    ) {
-        Text("Anuncios del club")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onComunidad
-    ) {
-        Text("Comunidad")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onNotificaciones
-    ) {
-        Text("🔔 Notificaciones")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
+    BotonInicio("Partidos en vivo", onPartidosEnVivo, destacado = true)
+    BotonInicio("Gestionar academias", onGestionarAcademias)
+    BotonInicio("Vinculaciones", onVinculaciones)
+    BotonInicio("Mensualidades", onMensualidades)
+    BotonInicio("Biblioteca de ejercicios", onEjercicios)
+    BotonInicio("Asistencias", onAsistencias)
+    // HU19, HU21, HU20 (Cielo)
+    BotonInicio("Anuncios del club", onAnuncios)
+    BotonInicio("Comunidad", onComunidad)
+    BotonInicio("🔔 Notificaciones", onNotificaciones)
 }
 
 @Composable
@@ -214,10 +236,9 @@ fun InicioEntrenador(
     onEjercicios: () -> Unit,
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
-    onPartidosEnVivo: () -> Unit = {},
-    onAnuncios: () -> Unit = {},
-    onComunidad: () -> Unit = {},
-    onNotificaciones: () -> Unit = {},          // ← nuevo (HU20)
+    onPartidosEnVivo: () -> Unit = {},    onAnuncios: () -> Unit = {},          // HU19
+    onComunidad: () -> Unit = {},         // HU21
+    onNotificaciones: () -> Unit = {},    // HU20
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -233,98 +254,15 @@ fun InicioEntrenador(
 ) {
 
     // HU17: seguimiento de partidos en tiempo real
-    Button(
-        onClick =
-            onPartidosEnVivo
-    ) {
-        Text(
-            "Partidos en vivo"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-
-    Button(
-        onClick =
-            onGestionarAcademias
-    ) {
-        Text(
-            "Gestionar academias"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onEjercicios
-    ) {
-        Text(
-            "Biblioteca de ejercicios"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onEntrenamientos
-    ) {
-        Text(
-            "Entrenamientos"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onAsistencias
-    ) {
-        Text(
-            "Asistencias"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onAnuncios
-    ) {
-        Text("Anuncios del club")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onComunidad
-    ) {
-        Text("Comunidad")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onNotificaciones
-    ) {
-        Text("🔔 Notificaciones")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
+    BotonInicio("Partidos en vivo", onPartidosEnVivo, destacado = true)
+    BotonInicio("Gestionar academias", onGestionarAcademias)
+    BotonInicio("Biblioteca de ejercicios", onEjercicios)
+    BotonInicio("Entrenamientos", onEntrenamientos)
+    BotonInicio("Asistencias", onAsistencias)
+    // HU19, HU21, HU20 (Cielo)
+    BotonInicio("Anuncios del club", onAnuncios)
+    BotonInicio("Comunidad", onComunidad)
+    BotonInicio("🔔 Notificaciones", onNotificaciones)
 }
 
 @Composable
@@ -333,10 +271,9 @@ fun InicioJugador(
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
     onConvocatorias: () -> Unit,
-    onPartidosEnVivo: () -> Unit = {},
-    onAnuncios: () -> Unit = {},
-    onComunidad: () -> Unit = {},
-    onNotificaciones: () -> Unit = {},          // ← nuevo (HU20)
+    onPartidosEnVivo: () -> Unit = {},    onAnuncios: () -> Unit = {},          // HU19
+    onComunidad: () -> Unit = {},         // HU21
+    onNotificaciones: () -> Unit = {},    // HU20
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -352,98 +289,15 @@ fun InicioJugador(
 ) {
 
     // HU17: seguimiento de partidos en tiempo real
-    Button(
-        onClick =
-            onPartidosEnVivo
-    ) {
-        Text(
-            "Partidos en vivo"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-
-    Button(
-        onClick =
-            onMensualidades
-    ) {
-        Text(
-            "Mis mensualidades"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onEntrenamientos
-    ) {
-        Text(
-            "Mis entrenamientos"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onAsistencias
-    ) {
-        Text(
-            "Mi asistencia"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onConvocatorias
-    ) {
-        Text(
-            "Mis convocatorias"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onAnuncios
-    ) {
-        Text("Anuncios del club")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onComunidad
-    ) {
-        Text("Comunidad")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onNotificaciones
-    ) {
-        Text("🔔 Notificaciones")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
+    BotonInicio("Partidos en vivo", onPartidosEnVivo, destacado = true)
+    BotonInicio("Mis mensualidades", onMensualidades)
+    BotonInicio("Mis entrenamientos", onEntrenamientos)
+    BotonInicio("Mi asistencia", onAsistencias)
+    BotonInicio("Mis convocatorias", onConvocatorias)
+    // HU19, HU21, HU20 (Cielo)
+    BotonInicio("Anuncios del club", onAnuncios)
+    BotonInicio("Comunidad", onComunidad)
+    BotonInicio("🔔 Notificaciones", onNotificaciones)
 }
 
 @Composable
@@ -453,10 +307,9 @@ fun InicioApoderado(
     onEntrenamientos: () -> Unit,
     onAsistencias: () -> Unit,
     onConvocatorias: () -> Unit,
-    onPartidosEnVivo: () -> Unit = {},
-    onAnuncios: () -> Unit = {},
-    onComunidad: () -> Unit = {},
-    onNotificaciones: () -> Unit = {},          // ← nuevo (HU20)
+    onPartidosEnVivo: () -> Unit = {},    onAnuncios: () -> Unit = {},          // HU19
+    onComunidad: () -> Unit = {},         // HU21
+    onNotificaciones: () -> Unit = {},    // HU20
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -472,112 +325,16 @@ fun InicioApoderado(
 ) {
 
     // HU17: seguimiento de partidos en tiempo real
-    Button(
-        onClick =
-            onPartidosEnVivo
-    ) {
-        Text(
-            "Partidos en vivo"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-
-    Button(
-        onClick =
-            onMisJugadores
-    ) {
-        Text(
-            "Mis jugadores"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onMensualidades
-    ) {
-        Text(
-            "Mensualidades"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onEntrenamientos
-    ) {
-        Text(
-            "Entrenamientos"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onAsistencias
-    ) {
-        Text(
-            "Historial de asistencia"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
-    Button(
-        onClick =
-            onConvocatorias
-    ) {
-        Text(
-            "Convocatorias"
-        )
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onAnuncios
-    ) {
-        Text("Anuncios del club")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onComunidad
-    ) {
-        Text("Comunidad")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-    Button(
-        onClick = onNotificaciones
-    ) {
-        Text("🔔 Notificaciones")
-    }
-
-    Spacer(
-        Modifier.height(12.dp)
-    )
-
+    BotonInicio("Partidos en vivo", onPartidosEnVivo, destacado = true)
+    BotonInicio("Mis jugadores", onMisJugadores)
+    BotonInicio("Mensualidades", onMensualidades)
+    BotonInicio("Entrenamientos", onEntrenamientos)
+    BotonInicio("Historial de asistencia", onAsistencias)
+    BotonInicio("Convocatorias", onConvocatorias)
+    // HU19, HU21, HU20 (Cielo)
+    BotonInicio("Anuncios del club", onAnuncios)
+    BotonInicio("Comunidad", onComunidad)
+    BotonInicio("🔔 Notificaciones", onNotificaciones)
 }
 
 @Composable
