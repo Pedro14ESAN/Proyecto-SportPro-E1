@@ -48,6 +48,8 @@ object Rutas {
 
     const val SEGUIMIENTO_PARTIDO =
         "partido/{idPartido}/seguimiento"
+
+    const val RECUPERAR = "recuperar"
 }
 
 fun rutaEquipos(
