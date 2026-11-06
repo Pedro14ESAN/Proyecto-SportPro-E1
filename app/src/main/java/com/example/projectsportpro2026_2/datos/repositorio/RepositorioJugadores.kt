@@ -6,6 +6,11 @@ import com.example.projectsportpro2026_2.datos.modelo.Equipo
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.PiesHabiles
 import com.example.projectsportpro2026_2.datos.modelo.Posiciones
+import com.example.projectsportpro2026_2.datos.seguridad.AccesoDenegadoException
+import com.example.projectsportpro2026_2.datos.seguridad.AccionesAuditoria
+import com.example.projectsportpro2026_2.datos.seguridad.ControlAcceso
+import com.example.projectsportpro2026_2.datos.seguridad.RegistroAuditoria
+import com.example.projectsportpro2026_2.datos.seguridad.RepositorioPermisos
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
@@ -34,6 +39,10 @@ class RepositorioJugadores(
     private val academias = bd.collection("academias")
     private val equipos = bd.collection("equipos")
     private val jugadores = bd.collection("jugadores")
+
+    // HU25: matriz de permisos y registro de operaciones sensibles
+    private val permisos = RepositorioPermisos(bd)
+    private val auditoria = RegistroAuditoria(bd)
 
     private suspend fun <T> intentar(bloque: suspend () -> T): Result<T> =
         try {
@@ -167,16 +176,39 @@ class RepositorioJugadores(
             .sortedWith(compareByDescending<Jugador> { it.activo }.thenBy { it.apellidos })
     }
 
-    // Datos sensibles: solo para quienes están autorizados en la academia
+    /*
+     * Datos sensibles (HU25): contacto, emergencia y datos físicos.
+     * ADM de la academia, DT de SU equipo, el propio JUG o el PAD
+     * con vínculo activo. El mensaje de error no revela si el
+     * jugador existe.
+     */
     suspend fun obtenerPrivados(
         idJugador: String, uid: String
     ): Result<DatosPrivadosJugador> = intentar {
         val documento = jugadores.document(idJugador)
         val jugador = documento.get().await().toObject(Jugador::class.java)
-            ?: throw IllegalStateException("El jugador no existe")
-        academiaAutorizada(jugador.idAcademia, uid)
-        documento.collection("privado").document("datos").get().await()
+            ?.copy(id = idJugador)
+            ?: throw AccesoDenegadoException()
+
+        val contexto = permisos.contexto(uid)
+        if (!ControlAcceso.puedeVerDatosSensibles(contexto, jugador)) {
+            throw AccesoDenegadoException()
+        }
+
+        val privados = documento.collection("privado").document("datos").get().await()
             .toObject(DatosPrivadosJugador::class.java) ?: DatosPrivadosJugador()
+
+        // Operación sensible: queda registrado quién consultó
+        auditoria.registrar(
+            accion = AccionesAuditoria.LECTURA_DATOS_SENSIBLES,
+            uid = uid,
+            rol = contexto.rol,
+            recurso = "jugadores",
+            idRecurso = idJugador,
+            idAcademia = jugador.idAcademia
+        )
+
+        privados
     }
 
     // Nunca se borra: solo se activa o inactiva
