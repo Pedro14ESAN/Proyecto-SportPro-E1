@@ -58,4 +58,6 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    // HU26: llamada segura a la Cloud Function del resumen IA
+    implementation(libs.firebase.functions)
 }

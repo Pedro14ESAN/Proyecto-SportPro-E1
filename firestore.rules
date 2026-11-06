@@ -1,0 +1,408 @@
+rules_version = '2';
+
+// =====================================================================
+// SportPro - Firebase Security Rules (HU25 - Control de acceso y privacidad)
+//
+// RN-02  Denegar por defecto: lo que no está permitido aquí, se rechaza.
+// RN-01  Nadie puede autoasignarse el rol ADM.
+// RN-20  Los permisos viven en el backend (estas reglas), no solo en la app.
+//
+// Matriz principal:
+//  - ADM: gestiona solo SU academia (idAdministrador o idsAutorizados).
+//  - DT : datos deportivos y de contacto/emergencia solo de SUS equipos.
+//  - JUG: sus propios datos sensibles; de los demás solo lo básico.
+//  - PAD: datos sensibles solo de jugadores con vínculo activo.
+//  - Comunidad: nunca ve contacto, emergencia, teléfono ni datos físicos
+//    (viven en jugadores/{id}/privado, que la comunidad no puede leer).
+//  - Operaciones críticas registran al usuario ejecutor (auditoria,
+//    auditoría de eventos y moderación).
+//
+// Publicar: firebase deploy --only firestore:rules
+// Probar antes con el emulador o el "Rules Playground" de la consola.
+// =====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------- Funciones de apoyo ----------------
+
+    function sesion() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function perfil() {
+      return get(/databases/$(database)/documents/usuarios/$(uid())).data;
+    }
+
+    function rol() {
+      return perfil().rol;
+    }
+
+    // Sesión con perfil y cuenta autorizada (no PENDIENTE)
+    function activo() {
+      return sesion()
+        && exists(/databases/$(database)/documents/usuarios/$(uid()))
+        && perfil().estado != 'PENDIENTE';
+    }
+
+    function academia(idAcademia) {
+      return get(/databases/$(database)/documents/academias/$(idAcademia)).data;
+    }
+
+    // Administrador o autorizado de la academia (ADM o DT asignado)
+    function gestionaAcademia(idAcademia) {
+      return activo()
+        && idAcademia is string && idAcademia != ''
+        && exists(/databases/$(database)/documents/academias/$(idAcademia))
+        && (academia(idAcademia).idAdministrador == uid()
+            || uid() in academia(idAcademia).get('idsAutorizados', []));
+    }
+
+    function esAdmDe(idAcademia) {
+      return gestionaAcademia(idAcademia) && rol() == 'ADM';
+    }
+
+    function equipo(idEquipo) {
+      return get(/databases/$(database)/documents/equipos/$(idEquipo)).data;
+    }
+
+    function esDtDelEquipo(idEquipo) {
+      return activo()
+        && idEquipo is string && idEquipo != ''
+        && exists(/databases/$(database)/documents/equipos/$(idEquipo))
+        && equipo(idEquipo).idEntrenador == uid();
+    }
+
+    function jugador(idJugador) {
+      return get(/databases/$(database)/documents/jugadores/$(idJugador)).data;
+    }
+
+    function partido(idPartido) {
+      return get(/databases/$(database)/documents/partidos/$(idPartido)).data;
+    }
+
+    // Datos sensibles de un jugador (contacto, emergencia, datos físicos)
+    function veDatosSensibles(idJugador) {
+      let j = jugador(idJugador);
+      return activo() && (
+        esAdmDe(j.idAcademia)
+        || esDtDelEquipo(j.idEquipo)
+        || j.get('idUsuario', '') == uid()
+        || uid() in j.get('idsApoderados', [])
+      );
+    }
+
+    // El campo indicado no cambia en una actualización
+    function sinCambio(campo) {
+      return request.resource.data.get(campo, null) == resource.data.get(campo, null);
+    }
+
+    function soloCambian(campos) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos);
+    }
+
+    // ---------------- Usuarios ----------------
+
+    match /usuarios/{idUsuario} {
+      // Nombre y rol se muestran en comunidad, convocatorias y auditoría
+      allow read: if sesion();
+
+      // RN-01: el registro desde la app nunca crea un ADM
+      allow create: if sesion()
+        && idUsuario == uid()
+        && request.resource.data.uid == uid()
+        && request.resource.data.rol in ['DT', 'JUG', 'PAD']
+        && request.resource.data.estado in ['ACTIVA', 'PENDIENTE'];
+
+      // El propio usuario no puede cambiar su rol ni autorizarse;
+      // un ADM puede autorizar cuentas pendientes (no cambiar roles).
+      allow update: if (sesion() && idUsuario == uid() && sinCambio('rol') && sinCambio('estado'))
+        || (activo() && rol() == 'ADM' && sinCambio('rol') && idUsuario != uid());
+
+      allow delete: if false;
+    }
+
+    // ---------------- Academias y equipos ----------------
+
+    match /academias/{idAcademia} {
+      allow read: if sesion();
+      allow create: if activo() && rol() == 'ADM'
+        && request.resource.data.idAdministrador == uid();
+      allow update: if gestionaAcademia(idAcademia) && sinCambio('idAdministrador');
+      allow delete: if false;
+
+      // HU13: catálogo de eventos configurable
+      match /catalogoEventos/{idTipo} {
+        allow read: if activo();
+        allow write: if gestionaAcademia(idAcademia);
+      }
+
+      match /{subcoleccion}/{documento=**} {
+        allow read: if activo();
+        allow write: if gestionaAcademia(idAcademia);
+      }
+    }
+
+    match /equipos/{idEquipo} {
+      allow read: if activo();
+      allow create: if gestionaAcademia(request.resource.data.idAcademia);
+      allow update: if gestionaAcademia(resource.data.idAcademia) && sinCambio('idAcademia');
+      allow delete: if false;
+    }
+
+    // ---------------- Jugadores ----------------
+
+    // Ficha básica (nombre, posición, equipo): sin contacto ni datos físicos
+    match /jugadores/{idJugador} {
+      allow read: if activo();
+      allow create: if gestionaAcademia(request.resource.data.idAcademia);
+      allow update: if gestionaAcademia(resource.data.idAcademia);
+      allow delete: if false;
+
+      // Datos sensibles: ADM de la academia, DT del equipo, propio JUG o PAD vinculado
+      match /privado/{documento} {
+        allow read: if veDatosSensibles(idJugador);
+        allow write: if gestionaAcademia(jugador(idJugador).idAcademia)
+          || jugador(idJugador).get('idUsuario', '') == uid();
+      }
+    }
+
+    // HU05: vínculo apoderado-jugador. Perder el vínculo revoca permisos.
+    match /vinculaciones/{idVinculacion} {
+      allow read: if activo()
+        && (resource.data.idApoderado == uid() || gestionaAcademia(resource.data.idAcademia));
+      allow create: if activo()
+        && (request.resource.data.idApoderado == uid() || gestionaAcademia(request.resource.data.idAcademia))
+        && (request.resource.data.estado == 'PENDIENTE' || gestionaAcademia(request.resource.data.idAcademia));
+      // El PAD solo puede pedir la desvinculación; aprobar/activar es de la academia
+      allow update: if gestionaAcademia(resource.data.idAcademia)
+        || (resource.data.idApoderado == uid()
+            && soloCambian(['desvinculacionSolicitada', 'actualizadoPor', 'fechaActualizacion']));
+      allow delete: if false;
+    }
+
+    // ---------------- Administración y entrenamientos ----------------
+
+    match /mensualidades/{id} {
+      allow read: if activo();
+      allow write: if gestionaAcademia(request.resource.data.idAcademia);
+    }
+
+    match /ejercicios/{id} {
+      allow read: if activo();
+      allow create: if gestionaAcademia(request.resource.data.idAcademia);
+      allow update, delete: if gestionaAcademia(resource.data.idAcademia);
+    }
+
+    match /entrenamientos/{id} {
+      allow read: if activo();
+      allow create: if gestionaAcademia(request.resource.data.idAcademia);
+      allow update: if gestionaAcademia(resource.data.idAcademia);
+      allow delete: if false;
+    }
+
+    match /asistencias/{id} {
+      allow read: if activo();
+      allow create, update: if activo() && rol() in ['ADM', 'DT']
+        && request.resource.data.registradoPor is string;
+      allow delete: if false;
+    }
+
+    // ---------------- Partidos (HU10-HU17) ----------------
+
+    match /partidos/{idPartido} {
+      allow read: if activo();
+      allow create: if gestionaAcademia(request.resource.data.idAcademia);
+      allow update: if gestionaAcademia(resource.data.idAcademia) && sinCambio('idAcademia');
+      allow delete: if false;
+
+      // HU14/HU15: eventos. Nunca se borran; correcciones y anulaciones
+      // dejan versión y auditoría (quién registró, modificó o anuló).
+      match /eventos/{idEvento} {
+        allow read: if activo();
+        allow create: if gestionaAcademia(partido(idPartido).idAcademia)
+          && request.resource.data.creadoPor == uid();
+        allow update: if gestionaAcademia(partido(idPartido).idAcademia)
+          && sinCambio('creadoPor')
+          && request.resource.data.version >= resource.data.version;
+        allow delete: if false;
+
+        match /auditoria/{idCambio} {
+          allow read: if gestionaAcademia(partido(idPartido).idAcademia);
+          allow create: if gestionaAcademia(partido(idPartido).idAcademia)
+            && request.resource.data.autor == uid();
+          allow update, delete: if false;
+        }
+      }
+
+      match /{subcoleccion}/{documento=**} {
+        allow read: if activo();
+        allow write: if gestionaAcademia(partido(idPartido).idAcademia);
+      }
+    }
+
+    match /alineaciones/{idPartido} {
+      allow read: if activo();
+      allow write: if gestionaAcademia(partido(idPartido).idAcademia);
+      match /jugadores/{idJugador} {
+        allow read: if activo();
+        allow write: if gestionaAcademia(partido(idPartido).idAcademia);
+      }
+    }
+
+    match /convocatorias/{idPartido} {
+      allow read: if activo();
+      allow write: if gestionaAcademia(partido(idPartido).idAcademia);
+      // HU11: el jugador o su apoderado confirma disponibilidad
+      match /jugadores/{idJugador} {
+        allow read: if activo();
+        allow write: if gestionaAcademia(partido(idPartido).idAcademia)
+          || jugador(idJugador).get('idUsuario', '') == uid()
+          || uid() in jugador(idJugador).get('idsApoderados', []);
+      }
+    }
+
+    // Consulta collectionGroup("jugadores") de convocatorias / alineaciones
+    match /{ruta=**}/jugadores/{idJugador} {
+      allow read: if activo();
+    }
+
+    // ---------------- HU26 / HU27: resumen narrativo ----------------
+
+    function esDtRevisor(idAcademia, idEquipo) {
+      return activo() && rol() == 'DT'
+        && (esDtDelEquipo(idEquipo) || gestionaAcademia(idAcademia));
+    }
+
+    match /resumenesPartido/{idPartido} {
+      // Aprobado: lo ve quien ve el partido. Borrador: solo DT y ADM de la academia.
+      allow read: if activo()
+        && (resource.data.estado == 'APROBADO' || gestionaAcademia(resource.data.idAcademia));
+
+      // Desde la app solo se crea el borrador SIN IA (origen PLANTILLA);
+      // el borrador con IA lo escribe la Cloud Function (Admin SDK).
+      allow create: if esDtRevisor(request.resource.data.idAcademia, request.resource.data.idEquipo)
+        && request.resource.data.estado == 'BORRADOR'
+        && request.resource.data.origen == 'PLANTILLA'
+        && request.resource.data.generadoPor == uid();
+
+      allow update: if
+        // Nueva generación sin IA (reemplaza un rechazado/desactualizado/borrador)
+        (esDtRevisor(resource.data.idAcademia, resource.data.idEquipo)
+          && request.resource.data.estado == 'BORRADOR'
+          && request.resource.data.origen == 'PLANTILLA'
+          && request.resource.data.generadoPor == uid()
+          && request.resource.data.version > resource.data.version)
+        // Edición del borrador (el texto original de la IA se conserva)
+        || (esDtRevisor(resource.data.idAcademia, resource.data.idEquipo)
+          && resource.data.estado == 'BORRADOR'
+          && request.resource.data.estado == 'BORRADOR'
+          && sinCambio('textoOriginalIA')
+          && soloCambian(['textoEditado', 'editadoPor', 'fechaEdicion']))
+        // Aprobación: guarda responsable, fecha/hora y versión final
+        || (esDtRevisor(resource.data.idAcademia, resource.data.idEquipo)
+          && resource.data.estado == 'BORRADOR'
+          && request.resource.data.estado == 'APROBADO'
+          && request.resource.data.aprobadoPor == uid()
+          && sinCambio('textoOriginalIA')
+          && soloCambian(['estado', 'textoEditado', 'textoFinal', 'aprobadoPor',
+                          'nombreAprobador', 'fechaAprobacion', 'evaluacion']))
+        // Rechazo con motivo (conserva historial)
+        || (esDtRevisor(resource.data.idAcademia, resource.data.idEquipo)
+          && resource.data.estado == 'BORRADOR'
+          && request.resource.data.estado == 'RECHAZADO'
+          && request.resource.data.rechazadoPor == uid()
+          && soloCambian(['estado', 'rechazadoPor', 'motivoRechazo', 'fechaRechazo']))
+        // RN-13: un evento corregido/anulado deja el aprobado DESACTUALIZADO
+        || (gestionaAcademia(resource.data.idAcademia)
+          && resource.data.estado == 'APROBADO'
+          && request.resource.data.estado == 'DESACTUALIZADO'
+          && soloCambian(['estado', 'motivoDesactualizado', 'fechaDesactualizado']));
+
+      allow delete: if false;
+
+      match /versiones/{idVersion} {
+        allow read: if gestionaAcademia(get(/databases/$(database)/documents/resumenesPartido/$(idPartido)).data.idAcademia);
+        allow create: if activo() && request.resource.data.autor == uid()
+          && gestionaAcademia(partido(idPartido).idAcademia);
+        allow update, delete: if false;
+      }
+    }
+
+    // ---------------- Auditoría (HU25) ----------------
+
+    match /auditoria/{idRegistro} {
+      allow read: if esAdmDe(resource.data.idAcademia);
+      allow create: if activo() && request.resource.data.uid == uid();
+      allow update, delete: if false;
+    }
+
+    // ---------------- Comunicación y comunidad (HU19-HU24) ----------------
+
+    match /anuncios/{id} {
+      allow read: if activo();
+      allow create: if gestionaAcademia(request.resource.data.idAcademia)
+        && request.resource.data.idAutor == uid();
+      allow update, delete: if gestionaAcademia(resource.data.idAcademia);
+    }
+
+    match /notificaciones/{id} {
+      allow read: if activo() && resource.data.idDestinatario == uid();
+      allow create: if activo() && request.resource.data.idEmisor == uid();
+      allow update: if activo() && resource.data.idDestinatario == uid();
+      allow delete: if activo() && resource.data.idDestinatario == uid();
+    }
+
+    match /publicaciones/{idPublicacion} {
+      allow read: if activo();
+      allow create: if activo() && request.resource.data.idAutor == uid();
+      // Autor, reacciones de cualquier miembro o moderación del ADM
+      allow update: if activo();
+      allow delete: if false;
+
+      match /comentarios/{idComentario} {
+        allow read: if activo();
+        allow create: if activo() && request.resource.data.idAutor == uid();
+        allow update: if activo();
+        allow delete: if false;
+      }
+    }
+
+    match /avisosPrueba/{id} {
+      allow read: if activo();
+      allow create: if activo() && request.resource.data.idAutor == uid();
+      allow update: if activo();
+      allow delete: if false;
+    }
+
+    match /reportes/{idReporte} {
+      allow read: if activo();
+      allow create, update: if activo();
+      allow delete: if false;
+      match /denuncias/{idDenunciante} {
+        allow read: if activo();
+        allow create: if activo() && idDenunciante == uid();
+        allow update, delete: if false;
+      }
+    }
+
+    match /moderaciones/{id} {
+      allow read: if activo() && rol() == 'ADM';
+      allow create: if activo() && rol() == 'ADM';
+      allow update, delete: if false;
+    }
+
+    match /bloqueos/{id} {
+      allow read: if activo();
+      allow create: if activo() && request.resource.data.idBloqueador == uid();
+      allow update: if activo() && resource.data.idBloqueador == uid();
+      allow delete: if false;
+    }
+
+    // RN-02: cualquier otra ruta queda denegada (no hay regla que la permita)
+  }
+}

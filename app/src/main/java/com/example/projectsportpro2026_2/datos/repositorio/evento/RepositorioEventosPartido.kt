@@ -20,6 +20,7 @@ import com.example.projectsportpro2026_2.datos.modelo.evento.TipoCambioEvento
 import com.example.projectsportpro2026_2.datos.sincronizacion.IdentificadorDispositivo
 import com.example.projectsportpro2026_2.datos.sincronizacion.RegistroRechazos
 import com.example.projectsportpro2026_2.datos.sincronizacion.confirmarOEncolar
+import com.example.projectsportpro2026_2.datos.resumen.RepositorioResumenPartido
 import kotlinx.coroutines.tasks.await
 
 data class ContextoPartidoEnVivo(
@@ -1165,7 +1166,10 @@ class RepositorioEventosPartido(
                 )
 
                 actualizado
-            }.await()
+            }.await().also {
+                // HU27 / RN-13: un resumen aprobado queda desactualizado
+                avisarResumenDesactualizado(idPartido, uid, "Se corrigió un evento del partido")
+            }
         }
 
     suspend fun anularEvento(
@@ -1338,7 +1342,10 @@ class RepositorioEventosPartido(
                 )
 
                 anulado
-            }.await()
+            }.await().also {
+                // HU27 / RN-13: un resumen aprobado queda desactualizado
+                avisarResumenDesactualizado(idPartido, uid, "Se anuló un evento del partido")
+            }
         }
 
     suspend fun listarEventosAuditoria(
@@ -1425,6 +1432,31 @@ class RepositorioEventosPartido(
                     it.fechaCambio
                 }
         }
+    /*
+     * HU27 (Pedro): si el partido ya tenía un resumen aprobado,
+     * pasa a DESACTUALIZADO para que el DT lo revise de nuevo.
+     * No bloquea la corrección si falla (p. ej. sin conexión);
+     * la pantalla del resumen vuelve a comprobarlo con la huella.
+     */
+    private suspend fun avisarResumenDesactualizado(
+        idPartido: String,
+        uid: String,
+        motivo: String
+    ) {
+        try {
+            val rol = usuarios.document(uid).get().await()
+                .toObject(PerfilUsuario::class.java)?.rol ?: Rol.DT
+            RepositorioResumenPartido(bd).marcarDesactualizadoSiCorresponde(
+                idPartido = idPartido,
+                uid = uid,
+                rol = rol,
+                motivo = motivo
+            )
+        } catch (e: Exception) {
+            // Se revalida al abrir el resumen
+        }
+    }
+
     fun calcularMarcador(
         eventos: List<EventoPartido>
     ): MarcadorPartido {

@@ -21,3 +21,6 @@ Thumbs.db
 # Capturas y logs
 captures/
 *.log
+# Cloud Functions
+functions/node_modules/
+.firebase/

@@ -84,6 +84,8 @@ import com.example.projectsportpro2026_2.ui.sincronizacion.simboloEvento
 fun PantallaSeguimientoPartido(
     idPartido: String,
     onVolver: () -> Unit,
+    // HU26/HU27: ver el resumen aprobado del partido finalizado
+    onVerResumen: (String) -> Unit = {},
     viewModel: SeguimientoPartidoViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -176,6 +178,26 @@ fun PantallaSeguimientoPartido(
                 AvisoEstadoPartido(
                     texto = "El partido fue cancelado."
                 )
+            }
+
+            // HU26/HU27: resumen narrativo (solo se muestra si el DT lo aprobó)
+            EstadoPartido.FINALIZADO -> item {
+                Surface(
+                    onClick = { onVerResumen(partido.id) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    color = SportProSuperficie,
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, SportProBorde)
+                ) {
+                    Text(
+                        text = "✨ Ver resumen del partido  →",
+                        modifier = Modifier.padding(16.dp),
+                        color = SportProTextoPrincipal,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             else -> Unit

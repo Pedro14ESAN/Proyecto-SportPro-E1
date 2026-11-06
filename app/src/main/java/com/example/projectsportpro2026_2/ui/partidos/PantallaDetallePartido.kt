@@ -53,6 +53,8 @@ fun PantallaDetallePartido(
     onGestionarConvocatoria: (String) -> Unit,
     onVerAlineacion: (String) -> Unit,
     onAbrirPartidoEnVivo: (String) -> Unit,
+    // HU26/HU27: resumen narrativo del partido finalizado
+    onAbrirResumen: (String) -> Unit = {},
     viewModel: PartidosViewModel = viewModel()
 ){
     val estado by viewModel.estado.collectAsState()
@@ -381,6 +383,28 @@ fun PantallaDetallePartido(
             ) {
                 Text(
                     text = "Ver cronología del partido",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // HU26/HU27: generar y revisar el resumen narrativo con IA
+            Button(
+                onClick = {
+                    onAbrirResumen(
+                        partido.id
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = FormaBotonSportPro,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1E9B5F),
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = "✨ Resumen del partido",
                     fontWeight = FontWeight.Bold
                 )
             }

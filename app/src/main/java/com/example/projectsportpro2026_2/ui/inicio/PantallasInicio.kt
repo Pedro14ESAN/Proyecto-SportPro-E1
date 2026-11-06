@@ -203,6 +203,7 @@ fun InicioAdministrador(
     onAnuncios: () -> Unit = {},          // HU19
     onComunidad: () -> Unit = {},         // HU21
     onNotificaciones: () -> Unit = {},    // HU20
+    onEstadisticas: () -> Unit = {},      // HU18
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -219,6 +220,8 @@ fun InicioAdministrador(
 
     // HU17: seguimiento de partidos en tiempo real
     BotonInicio("Partidos en vivo", onPartidosEnVivo, destacado = true)
+    // HU18 (Pedro): rendimiento de equipo y jugadores
+    BotonInicio("📊 Estadísticas", onEstadisticas)
     BotonInicio("Gestionar academias", onGestionarAcademias)
     BotonInicio("Vinculaciones", onVinculaciones)
     BotonInicio("Mensualidades", onMensualidades)
@@ -239,6 +242,7 @@ fun InicioEntrenador(
     onPartidosEnVivo: () -> Unit = {},    onAnuncios: () -> Unit = {},          // HU19
     onComunidad: () -> Unit = {},         // HU21
     onNotificaciones: () -> Unit = {},    // HU20
+    onEstadisticas: () -> Unit = {},      // HU18
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -255,6 +259,8 @@ fun InicioEntrenador(
 
     // HU17: seguimiento de partidos en tiempo real
     BotonInicio("Partidos en vivo", onPartidosEnVivo, destacado = true)
+    // HU18 (Pedro): rendimiento de equipo y jugadores
+    BotonInicio("📊 Estadísticas", onEstadisticas)
     BotonInicio("Gestionar academias", onGestionarAcademias)
     BotonInicio("Biblioteca de ejercicios", onEjercicios)
     BotonInicio("Entrenamientos", onEntrenamientos)
@@ -274,6 +280,7 @@ fun InicioJugador(
     onPartidosEnVivo: () -> Unit = {},    onAnuncios: () -> Unit = {},          // HU19
     onComunidad: () -> Unit = {},         // HU21
     onNotificaciones: () -> Unit = {},    // HU20
+    onEstadisticas: () -> Unit = {},      // HU18
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -290,6 +297,8 @@ fun InicioJugador(
 
     // HU17: seguimiento de partidos en tiempo real
     BotonInicio("Partidos en vivo", onPartidosEnVivo, destacado = true)
+    // HU18 (Pedro): rendimiento de equipo y jugadores
+    BotonInicio("📊 Estadísticas", onEstadisticas)
     BotonInicio("Mis mensualidades", onMensualidades)
     BotonInicio("Mis entrenamientos", onEntrenamientos)
     BotonInicio("Mi asistencia", onAsistencias)
@@ -310,6 +319,7 @@ fun InicioApoderado(
     onPartidosEnVivo: () -> Unit = {},    onAnuncios: () -> Unit = {},          // HU19
     onComunidad: () -> Unit = {},         // HU21
     onNotificaciones: () -> Unit = {},    // HU20
+    onEstadisticas: () -> Unit = {},      // HU18
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -326,6 +336,8 @@ fun InicioApoderado(
 
     // HU17: seguimiento de partidos en tiempo real
     BotonInicio("Partidos en vivo", onPartidosEnVivo, destacado = true)
+    // HU18 (Pedro): rendimiento de equipo y jugadores
+    BotonInicio("📊 Estadísticas", onEstadisticas)
     BotonInicio("Mis jugadores", onMisJugadores)
     BotonInicio("Mensualidades", onMensualidades)
     BotonInicio("Entrenamientos", onEntrenamientos)

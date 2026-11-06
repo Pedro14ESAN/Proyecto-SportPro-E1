@@ -62,7 +62,18 @@ object Rutas {
     const val NOTIFICACIONES = "notificaciones"
 
     const val RECUPERAR = "recuperar"
+
+    // HU18: estadísticas acumuladas (Pedro)
+    const val ESTADISTICAS = "estadisticas"
+
+    // HU26/HU27: resumen narrativo del partido (Pedro)
+    const val RESUMEN_PARTIDO = "partido/{idPartido}/resumen"
 }
+
+fun rutaResumenPartido(
+    idPartido: String
+): String =
+    "partido/$idPartido/resumen"
 
 fun rutaEquipos(
     idAcademia: String,
