@@ -1,6 +1,9 @@
 package com.example.projectsportpro2026_2
 
 import android.os.Bundle
+import com.google.firebase.Firebase
+import com.google.firebase.appcheck.appCheck
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +23,14 @@ class MainActivity : ComponentActivity() {
         // HU16: id del dispositivo y eventos rechazados al resincronizar
         IdentificadorDispositivo.inicializar(applicationContext)
         RegistroRechazos.inicializar(applicationContext)
+
+        // HU25/HU26: App Check protege la llamada a la IA (Firebase AI Logic).
+        // Proveedor de depuración: el token aparece en Logcat ("DebugAppCheckProvider")
+        // y se registra en Firebase → App Check → Administrar tokens de depuración.
+        // Al publicar en Play Store se cambia por Play Integrity.
+        Firebase.appCheck.installAppCheckProviderFactory(
+            DebugAppCheckProviderFactory.getInstance()
+        )
 
         enableEdgeToEdge()
         setContent {

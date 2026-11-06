@@ -18,21 +18,18 @@ import com.example.projectsportpro2026_2.datos.seguridad.ControlAcceso
 import com.example.projectsportpro2026_2.datos.seguridad.RegistroAuditoria
 import com.example.projectsportpro2026_2.datos.seguridad.RepositorioPermisos
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.functions.FirebaseFunctions
-import com.google.firebase.functions.FirebaseFunctionsException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.util.concurrent.TimeUnit
 
 /*
  * HU26 (generación) y HU27 (revisión, edición y aprobación).
  *
- * La IA NUNCA se llama desde el APK: la API key vive solo en la
- * Cloud Function "generarResumenPartido" (functions/index.js),
- * que valida permisos, lee los eventos válidos, llama al
- * proveedor y guarda el texto como BORRADOR.
+ * La API key del proveedor de IA NUNCA está en el APK: la llamada
+ * pasa por Firebase AI Logic (ver GeneradorResumenIA). Como
+ * alternativa con plan Blaze queda la Cloud Function de functions/.
+ * El texto siempre se guarda como BORRADOR.
  */
 
 data class ContextoResumen(
@@ -43,7 +40,7 @@ data class ContextoResumen(
     val puedeVerBorrador: Boolean    // DT o ADM de la academia
 )
 
-// La Cloud Function no respondió (no desplegada, sin red, proveedor caído)
+// El proveedor de IA no respondió (sin red, cuota agotada, modelo caído)
 class ServicioIANoDisponibleException(mensaje: String) : IllegalStateException(mensaje)
 
 class RepositorioResumenPartido(
@@ -141,49 +138,43 @@ class RepositorioResumenPartido(
     }
 
     /*
-     * Flujo principal HU26: el DT pulsa "Generar resumen" y la
-     * Cloud Function hace el resto. Devuelve la versión creada.
+     * Flujo principal HU26: el DT pulsa "Generar resumen".
+     * 1) se validan precondiciones, 2) se toman los eventos válidos,
+     * 3) se arma la entrada estructurada sin datos sensibles,
+     * 4) Firebase AI Logic la envía a Gemini (sin API key en el APK),
+     * 5) el texto se guarda como BORRADOR. Devuelve la versión creada.
      */
     suspend fun generarConIA(
         contexto: ContextoResumen,
         eventos: List<EventoPartido>,
-        hayPendientesSync: Boolean
+        hayPendientesSync: Boolean,
+        actual: ResumenPartido?
     ): Result<Int> = intentar {
         validarPrecondiciones(contexto, eventos, hayPendientesSync)
 
-        val llamada = FirebaseFunctions.getInstance()
-            .getHttpsCallable("generarResumenPartido")
-        llamada.setTimeout(120, TimeUnit.SECONDS)
-
-        try {
-            val respuesta = llamada.call(
-                hashMapOf(
-                    "idPartido" to contexto.partido.id,
-                    // La función compara con su propia lectura: si difiere,
-                    // es que llegaron cambios mientras se pedía el resumen.
-                    "huellaEsperada" to FuenteResumen.huella(eventos)
-                )
-            ).await()
-
-            val datos = respuesta.getData() as? Map<*, *>
-            (datos?.get("version") as? Number)?.toInt() ?: 1
-        } catch (e: FirebaseFunctionsException) {
-            when (e.code) {
-                FirebaseFunctionsException.Code.PERMISSION_DENIED,
-                FirebaseFunctionsException.Code.UNAUTHENTICATED ->
-                    throw AccesoDenegadoException(e.message ?: "No tienes permiso para generar el resumen.")
-
-                FirebaseFunctionsException.Code.FAILED_PRECONDITION,
-                FirebaseFunctionsException.Code.INVALID_ARGUMENT ->
-                    throw IllegalStateException(e.message ?: "No se pudo generar el resumen.")
-
-                else ->
-                    // NOT_FOUND (función no desplegada), UNAVAILABLE, INTERNAL, DEADLINE_EXCEEDED
-                    throw ServicioIANoDisponibleException(
-                        "El servicio de IA no respondió. Los eventos se conservan: puedes reintentar."
-                    )
-            }
+        val resultado = try {
+            GeneradorResumenIA.generar(
+                partido = contexto.partido,
+                nombreEquipo = contexto.equipo.nombre.ifBlank { "Mi equipo" },
+                eventos = eventos
+            )
+        } catch (e: Exception) {
+            // Si falla la IA no se toca el partido ni los eventos: se puede reintentar
+            val detalle = (e.message ?: e.javaClass.simpleName).take(160)
+            throw ServicioIANoDisponibleException(
+                "El servicio de IA no respondió ($detalle). Los eventos se conservan: puedes reintentar."
+            )
         }
+
+        guardarBorradorNuevo(
+            contexto = contexto,
+            eventos = eventos,
+            actual = actual,
+            texto = resultado.texto,
+            origen = OrigenResumen.IA,
+            modelo = resultado.modelo,
+            nota = "Generado con ${resultado.modelo}"
+        )
     }
 
     /*
@@ -198,24 +189,50 @@ class RepositorioResumenPartido(
     ): Result<Int> = intentar {
         validarPrecondiciones(contexto, eventos, hayPendientesSync)
 
-        val uid = contexto.acceso.uid
-        val ahora = System.currentTimeMillis()
-        val version = (actual?.version ?: 0) + 1
-        val validos = FuenteResumen.eventosValidos(eventos)
-        val huella = FuenteResumen.huella(eventos)
         val texto = FuenteResumen.redactarPlantilla(
             eventos = eventos,
             nombreEquipo = contexto.equipo.nombre.ifBlank { "Mi equipo" },
             nombreRival = contexto.partido.nombreRival.ifBlank { "Rival" }
         )
 
+        guardarBorradorNuevo(
+            contexto = contexto,
+            eventos = eventos,
+            actual = actual,
+            texto = texto,
+            origen = OrigenResumen.PLANTILLA,
+            modelo = "",
+            nota = "Borrador sin IA (servicio IA no disponible)"
+        )
+    }
+
+    /*
+     * Guarda una nueva versión como BORRADOR, con fecha de
+     * generación y el conjunto de eventos usado (ids + huella),
+     * más su entrada en el historial y la auditoría.
+     */
+    private suspend fun guardarBorradorNuevo(
+        contexto: ContextoResumen,
+        eventos: List<EventoPartido>,
+        actual: ResumenPartido?,
+        texto: String,
+        origen: OrigenResumen,
+        modelo: String,
+        nota: String
+    ): Int {
+        val uid = contexto.acceso.uid
+        val ahora = System.currentTimeMillis()
+        val version = (actual?.version ?: 0) + 1
+        val validos = FuenteResumen.eventosValidos(eventos)
+        val huella = FuenteResumen.huella(eventos)
+
         val resumen = ResumenPartido(
             idPartido = contexto.partido.id,
             idAcademia = contexto.partido.idAcademia,
             idEquipo = contexto.equipo.id,
             estado = EstadoResumen.BORRADOR,
-            origen = OrigenResumen.PLANTILLA,
-            modeloIA = "",
+            origen = origen,
+            modeloIA = modelo,
             version = version,
             textoOriginalIA = texto,
             textoEditado = texto,
@@ -234,22 +251,22 @@ class RepositorioResumenPartido(
             VersionResumen(
                 version = version,
                 tipo = TipoVersionResumen.GENERADA,
-                origen = OrigenResumen.PLANTILLA,
+                origen = origen,
                 texto = texto,
                 huellaEventos = huella,
                 totalEventos = validos.size,
                 autor = uid,
                 fecha = ahora,
-                nota = "Borrador sin IA (servicio IA no disponible)"
+                nota = nota
             )
         )
         auditoria.agregarA(
             lote, AccionesAuditoria.RESUMEN_GENERADO, uid, contexto.acceso.rol,
             "resumenesPartido", contexto.partido.id, contexto.partido.idAcademia,
-            "versión $version · plantilla · ${validos.size} eventos"
+            "versión $version · ${origen.name} ${modelo} · ${validos.size} eventos"
         )
         lote.commit().await()
-        version
+        return version
     }
 
     // HU27: el borrador es editable antes de aprobar
