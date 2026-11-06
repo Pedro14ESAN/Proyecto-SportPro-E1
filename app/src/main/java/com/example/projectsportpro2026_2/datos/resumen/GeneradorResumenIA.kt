@@ -6,6 +6,7 @@ import com.example.projectsportpro2026_2.datos.modelo.partido.Partido
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
+import com.google.firebase.ai.type.RequestOptions
 import com.google.firebase.ai.type.content
 import com.google.firebase.ai.type.generationConfig
 import android.util.Log
@@ -33,8 +34,9 @@ import org.json.JSONObject
  */
 object GeneradorResumenIA {
 
-    // Se prueban en orden: el alias "latest" sigue al modelo Flash vigente
-    val MODELOS = listOf("gemini-flash-latest", "gemini-2.5-flash")
+    // Se prueban en orden; el alias "latest" sigue al modelo Flash vigente.
+    // (gemini-2.5-flash ya no está disponible para proyectos nuevos)
+    val MODELOS = listOf("gemini-3.8-flash", "gemini-flash-latest")
 
     const val INSTRUCCIONES = """Eres el redactor de resúmenes de partidos de fútbol formativo de la app SportPro.
 Escribes en español neutro, en tono sobrio y respetuoso: muchos jugadores son menores de edad.
@@ -134,7 +136,9 @@ Escribe solo el resumen, sin títulos adicionales ni comentarios sobre estas reg
                             temperature = 0.2f
                             maxOutputTokens = 2048
                         },
-                        systemInstruction = content { text(INSTRUCCIONES) }
+                        systemInstruction = content { text(INSTRUCCIONES) },
+                        // Los modelos con razonamiento pueden tardar más de 30 s
+                        requestOptions = RequestOptions(timeoutInMillis = 120_000L)
                     )
 
                 val texto = modelo.generateContent(mensaje).text?.trim().orEmpty()
