@@ -179,7 +179,7 @@ class ResumenPartidoViewModel : ViewModel() {
         val contexto = e.contexto ?: return
         viewModelScope.launch {
             _estado.update { it.copy(procesando = true, error = null, iaNoDisponible = false) }
-            repositorio.generarConIA(contexto, e.eventos, e.pendientesSync)
+            repositorio.generarConIA(contexto, e.eventos, e.pendientesSync, e.resumen)
                 .onSuccess { version ->
                     _estado.update {
                         it.copy(procesando = false, mensaje = "Borrador v$version generado. Revísalo antes de aprobar.")

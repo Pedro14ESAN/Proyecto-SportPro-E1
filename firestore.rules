@@ -283,18 +283,18 @@ service cloud.firestore {
       allow read: if activo()
         && (resource.data.estado == 'APROBADO' || gestionaAcademia(resource.data.idAcademia));
 
-      // Desde la app solo se crea el borrador SIN IA (origen PLANTILLA);
-      // el borrador con IA lo escribe la Cloud Function (Admin SDK).
+      // El DT guarda el borrador generado (Firebase AI Logic o plantilla sin IA).
+      // Siempre nace como BORRADOR: nunca se publica sin aprobación.
       allow create: if esDtRevisor(request.resource.data.idAcademia, request.resource.data.idEquipo)
         && request.resource.data.estado == 'BORRADOR'
-        && request.resource.data.origen == 'PLANTILLA'
+        && request.resource.data.origen in ['IA', 'PLANTILLA']
         && request.resource.data.generadoPor == uid();
 
       allow update: if
-        // Nueva generación sin IA (reemplaza un rechazado/desactualizado/borrador)
+        // Nueva generación (reemplaza un rechazado/desactualizado/borrador)
         (esDtRevisor(resource.data.idAcademia, resource.data.idEquipo)
           && request.resource.data.estado == 'BORRADOR'
-          && request.resource.data.origen == 'PLANTILLA'
+          && request.resource.data.origen in ['IA', 'PLANTILLA']
           && request.resource.data.generadoPor == uid()
           && request.resource.data.version > resource.data.version)
         // Edición del borrador (el texto original de la IA se conserva)

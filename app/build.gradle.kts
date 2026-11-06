@@ -58,6 +58,6 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-    // HU26: llamada segura a la Cloud Function del resumen IA
-    implementation(libs.firebase.functions)
+    // HU26: Firebase AI Logic (Gemini) sin API key en el APK, plan gratuito Spark
+    implementation(libs.firebase.ai)
 }
