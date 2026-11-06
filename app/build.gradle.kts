@@ -60,4 +60,6 @@ dependencies {
     implementation(libs.firebase.firestore)
     // HU26: Firebase AI Logic (Gemini) sin API key en el APK, plan gratuito Spark
     implementation(libs.firebase.ai)
+    // HU25/HU26: App Check (proveedor de depuración para emulador y pruebas)
+    implementation(libs.firebase.appcheck.debug)
 }
