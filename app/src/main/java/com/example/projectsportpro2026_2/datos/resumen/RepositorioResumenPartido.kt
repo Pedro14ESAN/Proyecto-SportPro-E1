@@ -160,8 +160,9 @@ class RepositorioResumenPartido(
             )
         } catch (e: Exception) {
             // Si falla la IA no se toca el partido ni los eventos: se puede reintentar
+            val detalle = (e.message ?: e.javaClass.simpleName).take(160)
             throw ServicioIANoDisponibleException(
-                "El servicio de IA no respondió. Los eventos se conservan: puedes reintentar."
+                "El servicio de IA no respondió ($detalle). Los eventos se conservan: puedes reintentar."
             )
         }
 

@@ -8,6 +8,7 @@ import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
 import com.google.firebase.ai.type.content
 import com.google.firebase.ai.type.generationConfig
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -142,6 +143,8 @@ Escribe solo el resumen, sin títulos adicionales ni comentarios sobre estas reg
                 }
                 return Resultado(texto = texto, modelo = nombreModelo)
             } catch (e: Exception) {
+                // Queda en Logcat (filtro "SportProIA") para diagnosticar
+                Log.w("SportProIA", "Falló $nombreModelo: ${e.javaClass.simpleName}: ${e.message}", e)
                 ultimoError = e
             }
         }
