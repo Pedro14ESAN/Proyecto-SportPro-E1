@@ -43,13 +43,17 @@ class ResolutorPertenencia(
     private suspend fun buscarPorIds(
         coleccion: CollectionReference,
         ids: Collection<String>
-    ): List<DocumentSnapshot> =
-        ids.filter { it.isNotBlank() }.distinct().chunked(10).flatMap { grupo ->
+    ): List<DocumentSnapshot> {
+        val idsValidos = ids.filter { it.isNotBlank() }.distinct()
+        if (idsValidos.isEmpty()) return emptyList()
+        return idsValidos.chunked(10).flatMap { grupo ->
             coleccion.whereIn(FieldPath.documentId(), grupo).get().await().documents
         }
+    }
 
     // Academias donde el usuario es administrador o está autorizado
     suspend fun academiasQueGestiona(uid: String): List<Academia> {
+        if (uid.isBlank()) return emptyList()
         val comoAdmin = academias.whereEqualTo("idAdministrador", uid).get().await().documents
         val comoAutorizado = academias.whereArrayContains("idsAutorizados", uid).get().await().documents
         return (comoAdmin + comoAutorizado)
@@ -58,12 +62,15 @@ class ResolutorPertenencia(
             .filter { it.activa }
     }
 
-    suspend fun equiposDelDt(uid: String): List<Equipo> =
-        equipos.whereEqualTo("idEntrenador", uid).get().await().documents
+    suspend fun equiposDelDt(uid: String): List<Equipo> {
+        if (uid.isBlank()) return emptyList()
+        return equipos.whereEqualTo("idEntrenador", uid).get().await().documents
             .mapNotNull { convertirEquipo(it) }
             .filter { it.activo }
+    }
 
     suspend fun obtener(uid: String, rol: Rol): Pertenencia {
+        if (uid.isBlank()) return Pertenencia()
 
         // Fichas de jugador: la propia (JUG) o las de sus hijos vinculados (PAD)
         val fichas: List<Jugador> = when (rol) {
