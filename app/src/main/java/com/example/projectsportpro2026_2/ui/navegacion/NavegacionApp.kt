@@ -51,6 +51,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.projectsportpro2026_2.ui.notificaciones.MonitorNotificaciones
 import com.example.projectsportpro2026_2.ui.notificaciones.PantallaNotificaciones
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRecuperar
+import com.example.projectsportpro2026_2.ui.estadisticas.PantallaEstadisticas
+import com.example.projectsportpro2026_2.ui.resumen.PantallaResumenPartido
 
 @Composable
 fun NavegacionApp() {
@@ -193,6 +195,20 @@ fun NavegacionApp() {
         )
     }
 
+    // HU18: estadísticas
+    val abrirEstadisticas: () -> Unit = {
+        navController.navigate(
+            Rutas.ESTADISTICAS
+        )
+    }
+
+    // HU26/HU27: resumen narrativo del partido
+    val abrirResumen: (String) -> Unit = { idPartido ->
+        navController.navigate(
+            rutaResumenPartido(idPartido)
+        )
+    }
+
     NavHost(
         navController =
             navController,
@@ -271,6 +287,8 @@ fun NavegacionApp() {
                     abrirComunidad,
                 onNotificaciones =
                     abrirNotificaciones,
+                onEstadisticas =
+                    abrirEstadisticas,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -297,6 +315,8 @@ fun NavegacionApp() {
                     abrirComunidad,
                 onNotificaciones =
                     abrirNotificaciones,
+                onEstadisticas =
+                    abrirEstadisticas,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -326,6 +346,8 @@ fun NavegacionApp() {
                     abrirComunidad,
                 onNotificaciones =
                     abrirNotificaciones,
+                onEstadisticas =
+                    abrirEstadisticas,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -360,6 +382,8 @@ fun NavegacionApp() {
                     abrirComunidad,
                 onNotificaciones =
                     abrirNotificaciones,
+                onEstadisticas =
+                    abrirEstadisticas,
                 onCerrarSesion =
                     cerrarSesion
             )
@@ -632,7 +656,9 @@ fun NavegacionApp() {
                             idPartido
                         )
                     )
-                }
+                },
+                onAbrirResumen =
+                    abrirResumen
             )
         }
 
@@ -909,7 +935,9 @@ fun NavegacionApp() {
                     .orEmpty(),
                 onVolver = {
                     navController.popBackStack()
-                }
+                },
+                onVerResumen =
+                    abrirResumen
             )
         }
 
@@ -977,6 +1005,36 @@ fun NavegacionApp() {
                 }
             )
         }
+        // HU18: estadísticas acumuladas por jugador y equipo
+        composable(
+            Rutas.ESTADISTICAS
+        ) {
+            PantallaEstadisticas(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // HU26/HU27: resumen narrativo, revisión y aprobación del DT
+        composable(
+            route = Rutas.RESUMEN_PARTIDO,
+            arguments = listOf(
+                navArgument("idPartido") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entrada ->
+            PantallaResumenPartido(
+                idPartido = entrada.arguments
+                    ?.getString("idPartido")
+                    .orEmpty(),
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         // HU20: centro de notificaciones
         composable(
             Rutas.NOTIFICACIONES
