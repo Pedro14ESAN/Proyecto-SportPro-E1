@@ -1,0 +1,33 @@
+rules_version = '2';
+
+// =====================================================================
+// SportPro - Cloud Storage Security Rules (HU21 + HU25)
+//
+// Ruta de las imágenes de publicaciones:
+//   publicaciones/{uidAutor}/{idImagen}.jpg
+//
+// - Denegar por defecto (RN-02): cualquier otra ruta queda cerrada.
+// - Solo el autor sube imágenes a su propia carpeta.
+// - Solo imágenes, máximo 2 MB (la app ya las reduce a 1280 px).
+// - Leer requiere sesión: la visibilidad de la publicación la controla
+//   Firestore; la URL solo la conoce quien puede ver la publicación.
+// - No se borran desde la app: la eliminación de publicaciones es lógica.
+//
+// Publicar: firebase deploy --only storage
+// =====================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /publicaciones/{uidAutor}/{idImagen} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == uidAutor
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow update, delete: if false;
+    }
+  }
+}

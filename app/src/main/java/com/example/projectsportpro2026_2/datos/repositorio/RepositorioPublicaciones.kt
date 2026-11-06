@@ -117,7 +117,8 @@ class RepositorioPublicaciones(
         texto: String,
         visibilidad: VisibilidadPublicacion,
         idAcademia: String = "",
-        idEquipo: String = ""
+        idEquipo: String = "",
+        imagenUrl: String = ""          // HU21: ya subida a Cloud Storage (opcional)
     ): Result<Publicacion> = intentar {
         validarTexto(texto)
         val perfil = obtenerPerfil(uid)
@@ -142,6 +143,7 @@ class RepositorioPublicaciones(
         val publicacion = Publicacion(
             id = documento.id,
             texto = texto.trim(),
+            imagenUrl = imagenUrl,
             visibilidad = visibilidad,
             idAcademia = academia?.id.orEmpty(),
             nombreAcademia = academia?.nombre.orEmpty(),
