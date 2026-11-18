@@ -6,6 +6,7 @@ import com.example.projectsportpro2026_2.datos.modelo.evento.EventoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.Partido
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EstadoResumen
+import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionNarracion
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionResumen
 import com.example.projectsportpro2026_2.datos.modelo.resumen.OrigenResumen
 import com.example.projectsportpro2026_2.datos.modelo.resumen.ResumenPartido
@@ -52,6 +53,9 @@ class RepositorioResumenPartido(
     private val partidos = bd.collection("partidos")
     private val equipos = bd.collection("equipos")
     private val resumenes = bd.collection("resumenesPartido")
+
+    // Nota de evaluación de cada narración aprobada (una por versión y partido)
+    private val evaluaciones = bd.collection("evaluacionesResumen")
 
     private suspend fun <T> intentar(bloque: suspend () -> T): Result<T> =
         try {
@@ -105,6 +109,22 @@ class RepositorioResumenPartido(
             .documents.mapNotNull { d -> d.toObject(VersionResumen::class.java)?.copy(id = d.id) }
             .sortedByDescending { it.fecha }
     }
+
+    /*
+     * Notas de evaluación guardadas para las narraciones de este
+     * partido (DT o ADM). Se filtra también por academia y equipo
+     * para que la consulta cumpla las reglas de Firestore.
+     */
+    suspend fun evaluacionesDelPartido(contexto: ContextoResumen): Result<List<EvaluacionNarracion>> =
+        intentar {
+            evaluaciones
+                .whereEqualTo("idPartido", contexto.partido.id)
+                .whereEqualTo("idAcademia", contexto.partido.idAcademia)
+                .whereEqualTo("idEquipo", contexto.equipo.id)
+                .get().await()
+                .documents.mapNotNull { d -> d.toObject(EvaluacionNarracion::class.java)?.copy(id = d.id) }
+                .sortedByDescending { it.version }
+        }
 
     private fun exigirRevisor(contexto: ContextoResumen) {
         if (!contexto.puedeRevisar) {
@@ -348,6 +368,30 @@ class RepositorioResumenPartido(
                 autor = uid,
                 fecha = ahora,
                 nota = "Utilidad ${evaluacion.utilidad}/5"
+            )
+        )
+        // Nota de evaluación de esta narración: queda guardada aunque
+        // luego se genere otra versión para el mismo partido.
+        lote.set(
+            evaluaciones.document("${contexto.partido.id}_v${actual.version}"),
+            EvaluacionNarracion(
+                idPartido = contexto.partido.id,
+                idAcademia = contexto.partido.idAcademia,
+                idEquipo = contexto.equipo.id,
+                nombreRival = contexto.partido.nombreRival,
+                version = actual.version,
+                origen = actual.origen,
+                modeloIA = actual.modeloIA,
+                textoFinal = limpio,
+                totalEventos = actual.totalEventos,
+                utilidad = evaluacion.utilidad,
+                omisiones = evaluacion.omisiones.trim(),
+                erroresOInvenciones = evaluacion.erroresOInvenciones.trim(),
+                correccionesRealizadas = evaluacion.correccionesRealizadas.trim(),
+                textoModificado = limpio != actual.textoOriginalIA.trim(),
+                evaluadoPor = uid,
+                nombreEvaluador = contexto.acceso.perfil.nombre,
+                fechaEvaluacion = ahora
             )
         )
         auditoria.agregarA(

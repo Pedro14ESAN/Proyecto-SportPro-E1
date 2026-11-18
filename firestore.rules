@@ -333,6 +333,22 @@ service cloud.firestore {
       }
     }
 
+    // Nota de evaluación de cada narración aprobada (una por versión y partido).
+    // Solo la ven el DT y el ADM; no se modifica ni se borra.
+    match /evaluacionesResumen/{idEvaluacion} {
+      allow read: if gestionaAcademia(resource.data.idAcademia)
+        || esDtDelEquipo(resource.data.idEquipo);
+
+      allow create: if esDtRevisor(request.resource.data.idAcademia, request.resource.data.idEquipo)
+        && request.resource.data.evaluadoPor == uid()
+        && request.resource.data.utilidad is int
+        && request.resource.data.utilidad >= 1
+        && request.resource.data.utilidad <= 5
+        && idEvaluacion == request.resource.data.idPartido + '_v' + string(request.resource.data.version);
+
+      allow update, delete: if false;
+    }
+
     // ---------------- Auditoría (HU25) ----------------
 
     match /auditoria/{idRegistro} {

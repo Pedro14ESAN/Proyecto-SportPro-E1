@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projectsportpro2026_2.datos.modelo.evento.EventoPartido
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EstadoResumen
+import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionNarracion
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionResumen
 import com.example.projectsportpro2026_2.datos.modelo.resumen.ResumenPartido
 import com.example.projectsportpro2026_2.datos.modelo.resumen.VersionResumen
@@ -33,6 +34,9 @@ data class EstadoResumenPartido(
     val resumen: ResumenPartido? = null,
     val historial: List<VersionResumen> = emptyList(),
 
+    // Nota de evaluación de cada narración aprobada (evaluacionesResumen)
+    val evaluaciones: List<EvaluacionNarracion> = emptyList(),
+
     // Todos los eventos (activos y anulados) en tiempo real
     val eventos: List<EventoPartido> = emptyList(),
     val pendientesSync: Boolean = false,
@@ -57,6 +61,11 @@ data class EstadoResumenPartido(
     val marcador: FuenteResumen.Marcador get() = FuenteResumen.marcador(eventos)
 
     val puedeRevisar: Boolean get() = contexto?.puedeRevisar == true
+
+    // Nota guardada de la narración que está aprobada ahora
+    val evaluacionVigente: EvaluacionNarracion?
+        get() = resumen?.takeIf { it.estado == EstadoResumen.APROBADO }
+            ?.let { r -> evaluaciones.firstOrNull { it.version == r.version } }
 
     val hayCambiosSinGuardar: Boolean
         get() = resumen?.estado == EstadoResumen.BORRADOR &&
@@ -147,6 +156,13 @@ class ResumenPartidoViewModel : ViewModel() {
         viewModelScope.launch {
             repositorio.historial(idPartido).onSuccess { lista ->
                 _estado.update { it.copy(historial = lista) }
+            }
+        }
+        val contexto = _estado.value.contexto ?: return
+        if (!contexto.puedeVerBorrador) return
+        viewModelScope.launch {
+            repositorio.evaluacionesDelPartido(contexto).onSuccess { lista ->
+                _estado.update { it.copy(evaluaciones = lista) }
             }
         }
     }
@@ -247,7 +263,7 @@ class ResumenPartidoViewModel : ViewModel() {
             _estado.update { it.copy(procesando = true, error = null) }
             repositorio.aprobar(contexto, resumen, e.textoEditado, e.evaluacion, e.eventos)
                 .onSuccess {
-                    _estado.update { it.copy(procesando = false, mensaje = "✓ Resumen aprobado") }
+                    _estado.update { it.copy(procesando = false, mensaje = "✓ Resumen aprobado y nota de evaluación guardada") }
                     cargarHistorial()
                 }
                 .onFailure { error ->
