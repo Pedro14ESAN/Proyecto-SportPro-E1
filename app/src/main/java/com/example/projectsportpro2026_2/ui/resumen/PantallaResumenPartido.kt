@@ -49,6 +49,7 @@ import com.example.projectsportpro2026_2.datos.modelo.evento.EquipoEvento
 import com.example.projectsportpro2026_2.datos.modelo.evento.EventoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EstadoResumen
+import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionNarracion
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionResumen
 import com.example.projectsportpro2026_2.datos.modelo.resumen.OrigenResumen
 import com.example.projectsportpro2026_2.datos.modelo.resumen.ResumenPartido
@@ -100,6 +101,8 @@ fun PantallaResumenPartido(
     var verHistorial by remember { mutableStateOf(false) }
     var rechazando by remember { mutableStateOf(false) }
     var motivoRechazo by remember { mutableStateOf("") }
+    var verNotas by remember { mutableStateOf(false) }
+    val lector = rememberLectorNarracion()
 
     LaunchedEffect(idPartido) { viewModel.iniciar(idPartido) }
 
@@ -184,7 +187,7 @@ fun PantallaResumenPartido(
                 // ---------- Lectores (JUG / PAD / ADM sin ser DT) ----------
                 !puedeRevisar -> item {
                     if (resumen?.estado == EstadoResumen.APROBADO) {
-                        TarjetaAprobado(resumen)
+                        TarjetaAprobado(resumen, lector)
                     } else {
                         TarjetaBlanca {
                             Text("Resumen aún no disponible", color = SportProNavy,
@@ -230,7 +233,8 @@ fun PantallaResumenPartido(
 
                 // ---------- DT: aprobado ----------
                 resumen.estado == EstadoResumen.APROBADO -> {
-                    item { TarjetaAprobado(resumen) }
+                    item { TarjetaAprobado(resumen, lector) }
+                    item { TarjetaNotaEvaluacion(estado.evaluacionVigente, resumen) }
                     item {
                         Text(
                             "Al aprobar confirmaste que revisaste los eventos fuente. " +
@@ -326,6 +330,21 @@ fun PantallaResumenPartido(
                                 fontWeight = FontWeight.SemiBold)
                         }
                     }
+                }
+            }
+
+            // Notas de evaluación de cada narración aprobada (DT o ADM)
+            if (contexto.puedeVerBorrador && estado.evaluaciones.isNotEmpty()) {
+                item {
+                    Text(
+                        text = (if (verNotas) "▾ " else "▸ ") +
+                                "Notas de evaluación por narración (${estado.evaluaciones.size})",
+                        color = SportProNavy, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { verNotas = !verNotas }
+                    )
+                }
+                if (verNotas) {
+                    items(estado.evaluaciones, key = { it.id }) { n -> FilaNotaEvaluacion(n) }
                 }
             }
 
@@ -474,7 +493,7 @@ private fun TarjetaBorrador(
 }
 
 @Composable
-private fun TarjetaAprobado(resumen: ResumenPartido) {
+private fun TarjetaAprobado(resumen: ResumenPartido, lector: LectorNarracion) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -490,9 +509,110 @@ private fun TarjetaAprobado(resumen: ResumenPartido) {
                         " · ${resumen.totalEventos} eventos fuente",
                 color = SportProTextoSecundario, fontSize = 11.sp
             )
+            BotonEscuchar(resumen.textoFinal, lector)
         }
     }
 }
+
+// Escuchar la narración aprobada en vez de leerla (TextToSpeech de Android)
+@Composable
+private fun BotonEscuchar(texto: String, lector: LectorNarracion) {
+    if (lector.faltaVozEspanol) {
+        Text(
+            "Para escuchar la narración instala la voz en español en " +
+                    "Ajustes › Sistema › Idiomas › Salida de texto a voz.",
+            color = SportProTextoSecundario, fontSize = 11.sp
+        )
+        return
+    }
+    Button(
+        onClick = { if (lector.hablando) lector.detener() else lector.leer(texto) },
+        enabled = lector.disponible && texto.isNotBlank(),
+        shape = FormaBotonSportPro,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (lector.hablando) SportProRojo else SportProNavy
+        ),
+        modifier = Modifier.fillMaxWidth().height(46.dp)
+    ) {
+        Text(
+            when {
+                !lector.disponible -> "Preparando audio…"
+                lector.hablando -> "⏹ Detener audio"
+                else -> "🔊 Escuchar narración"
+            },
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+// Nota que el DT puso a la narración aprobada actual
+@Composable
+private fun TarjetaNotaEvaluacion(nota: EvaluacionNarracion?, resumen: ResumenPartido) {
+    TarjetaBlanca {
+        Text("NOTA DE EVALUACIÓN · v${resumen.version}", color = SportProTextoSecundario,
+            fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
+        // Si aún no carga la colección, se usa la evaluación del resumen
+        val utilidad = nota?.utilidad ?: resumen.evaluacion.utilidad
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("$utilidad/5", color = SportProNavy, fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.ExtraBold, fontSize = 28.sp)
+            Spacer(Modifier.width(10.dp))
+            Column {
+                Text(estrellas(utilidad), color = VerdeFigma, fontSize = 16.sp)
+                Text("Utilidad percibida", color = SportProTextoSecundario, fontSize = 11.sp)
+            }
+        }
+        val omisiones = nota?.omisiones ?: resumen.evaluacion.omisiones
+        val errores = nota?.erroresOInvenciones ?: resumen.evaluacion.erroresOInvenciones
+        val correcciones = nota?.correccionesRealizadas ?: resumen.evaluacion.correccionesRealizadas
+        DetalleNota("Omisiones", omisiones)
+        DetalleNota("Errores o información inventada", errores)
+        DetalleNota("Correcciones realizadas", correcciones)
+        if (nota != null) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                (if (nota.textoModificado) "El DT editó el texto de la IA" else "Texto de la IA sin cambios") +
+                        " · ${nota.nombreEvaluador.ifBlank { "DT" }} · ${formatearFecha(nota.fechaEvaluacion)}",
+                color = SportProTextoSecundario, fontSize = 11.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilaNotaEvaluacion(n: EvaluacionNarracion) {
+    TarjetaBlanca {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "v${n.version} · " + (if (n.origen == OrigenResumen.IA) "IA" else "Sin IA") +
+                        " · ${n.utilidad}/5 ${estrellas(n.utilidad)}",
+                color = SportProNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp
+            )
+            Text(formatearFecha(n.fechaEvaluacion), color = SportProTextoSecundario, fontSize = 11.sp)
+        }
+        DetalleNota("Omisiones", n.omisiones)
+        DetalleNota("Errores", n.erroresOInvenciones)
+        DetalleNota("Correcciones", n.correccionesRealizadas)
+        Text(
+            "Evaluó ${n.nombreEvaluador.ifBlank { "el DT" }}" +
+                    (if (n.modeloIA.isNotBlank()) " · ${n.modeloIA}" else ""),
+            color = SportProTextoSecundario, fontSize = 11.sp
+        )
+    }
+}
+
+@Composable
+private fun DetalleNota(titulo: String, valor: String) {
+    if (valor.isBlank()) return
+    Text("$titulo: $valor", color = SportProNavy, fontSize = 12.sp)
+}
+
+private fun estrellas(n: Int) = "★".repeat(n.coerceIn(0, 5)) + "☆".repeat(5 - n.coerceIn(0, 5))
 
 @Composable
 private fun AvisoEstado(titulo: String, texto: String, fondo: Color, color: Color) {

@@ -95,3 +95,38 @@ data class VersionResumen(
     val fecha: Long = 0L,
     val nota: String = ""
 )
+
+/*
+ * Nota de evaluación de cada narración aprobada (HU27).
+ *
+ * Colección: evaluacionesResumen/{idPartido}_v{version}
+ * Un documento por narración aprobada de cada partido. A diferencia
+ * del campo "evaluacion" de resumenesPartido (que se reemplaza al
+ * generar una nueva versión), aquí la nota queda guardada para siempre.
+ */
+data class EvaluacionNarracion(
+    val id: String = "",
+    val idPartido: String = "",
+    val idAcademia: String = "",
+    val idEquipo: String = "",
+    val nombreRival: String = "",
+
+    // Narración evaluada
+    val version: Int = 1,
+    val origen: OrigenResumen = OrigenResumen.IA,
+    val modeloIA: String = "",
+    val textoFinal: String = "",
+    val totalEventos: Int = 0,
+
+    // Nota del DT
+    val utilidad: Int = 0,                 // 1 a 5
+    val omisiones: String = "",
+    val erroresOInvenciones: String = "",
+    val correccionesRealizadas: String = "",
+    // true si el DT cambió el texto de la IA antes de aprobar
+    val textoModificado: Boolean = false,
+
+    val evaluadoPor: String = "",
+    val nombreEvaluador: String = "",
+    val fechaEvaluacion: Long = 0L
+)
