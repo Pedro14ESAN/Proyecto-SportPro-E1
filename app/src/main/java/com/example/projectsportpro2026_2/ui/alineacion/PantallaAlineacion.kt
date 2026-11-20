@@ -366,7 +366,7 @@ fun PantallaAlineacion(
                 item {
                     Text(
                         text = if (editable) {
-                            "Puedes cambiar su posición o devolverlos a suplentes."
+                            "Puedes asignar a cada jugador cualquier posición libre para este partido, sin cambiar su posición habitual."
                         } else {
                             "Alineación titular registrada."
                         },
@@ -956,6 +956,19 @@ private fun TarjetaTitular(
                     color = SportProTextoSecundario,
                     style =
                         MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text =
+                        "En este partido: ${
+                            slots.firstOrNull {
+                                it.id == alineado.posicionCampo
+                            }?.etiqueta ?: "Sin asignar"
+                        }",
+                    color = SportProVerde,
+                    style =
+                        MaterialTheme.typography.bodySmall,
+                    fontWeight =
+                        FontWeight.Bold
                 )
             }
 
