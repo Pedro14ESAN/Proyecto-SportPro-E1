@@ -792,51 +792,103 @@ private fun BotonEventoRapido(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+
+    val estilo =
+        estiloEventoEnVivo(
+            tipo.codigo
+        )
+
     val destacado =
         tipo.afectaMarcador
 
     Surface(
         modifier = modifier
-            .height(66.dp)
+            .height(76.dp)
             .clickable(
                 enabled = habilitado,
                 onClick = onClick
             ),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         color =
-            when {
-                !habilitado ->
-                    Color(0xFFE8ECEA)
-
-                destacado ->
-                    Color(0xFF1CA364)
-
-                else ->
-                    Color(0xFFEAF1EC)
-            }
+            if (habilitado) {
+                if (destacado) {
+                    SportProVerde
+                } else {
+                    SportProSuperficie
+                }
+            } else {
+                Color(0xFFE8ECEA)
+            },
+        border =
+            BorderStroke(
+                1.dp,
+                if (
+                    habilitado &&
+                    !destacado
+                ) {
+                    estilo.borde
+                } else {
+                    Color.Transparent
+                }
+            )
     ) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(6.dp),
+                .padding(7.dp),
             horizontalAlignment =
                 Alignment.CenterHorizontally,
             verticalArrangement =
                 Arrangement.Center
         ) {
 
-            Text(
-                text =
-                    iconoEvento(
-                        tipo.codigo
-                    ),
-                style =
-                    MaterialTheme.typography.titleMedium
-            )
+            Surface(
+                modifier =
+                    Modifier.size(32.dp),
+                shape =
+                    RoundedCornerShape(9.dp),
+                color =
+                    if (
+                        destacado &&
+                        habilitado
+                    ) {
+                        Color.White.copy(
+                            alpha = 0.18f
+                        )
+                    } else {
+                        estilo.fondoIcono
+                    }
+            ) {
+
+                Box(
+                    contentAlignment =
+                        Alignment.Center
+                ) {
+
+                    Text(
+                        text =
+                            estilo.icono,
+                        color =
+                            if (
+                                destacado &&
+                                habilitado
+                            ) {
+                                Color.White
+                            } else {
+                                estilo.colorIcono
+                            },
+                        style =
+                            MaterialTheme.typography.titleMedium,
+                        fontWeight =
+                            FontWeight.Black
+                    )
+                }
+            }
 
             Spacer(
-                modifier = Modifier.height(3.dp)
+                modifier =
+                    Modifier.height(4.dp)
             )
 
             Text(
@@ -845,16 +897,21 @@ private fun BotonEventoRapido(
                         tipo.nombre
                     ),
                 color =
-                    if (destacado && habilitado) {
+                    if (
+                        destacado &&
+                        habilitado
+                    ) {
                         Color.White
                     } else {
                         SportProNavy
                     },
                 style =
                     MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight =
+                    FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow =
+                    TextOverflow.Ellipsis
             )
         }
     }
@@ -865,18 +922,25 @@ private fun TarjetaCronologiaEvento(
     evento: EventoPartido,
     onClick: () -> Unit
 ) {
+
+    val estilo =
+        estiloEventoEnVivo(
+            evento.codigoTipoEvento
+        )
+
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .clickable(
                 onClick = onClick
             ),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = SportProSuperficie
         ),
         border = BorderStroke(
             1.dp,
-            SportProBorde
+            estilo.borde
         )
     ) {
 
@@ -884,81 +948,108 @@ private fun TarjetaCronologiaEvento(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(14.dp),
-            verticalAlignment =
-                Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement =
                 Arrangement.spacedBy(12.dp)
         ) {
 
             Surface(
-                modifier = Modifier.size(8.dp),
-                shape = CircleShape,
-                color = SportProVerde
-            ) {}
+                modifier = Modifier.size(46.dp),
+                shape = RoundedCornerShape(13.dp),
+                color = estilo.fondoIcono
+            ) {
 
-            Text(
-                text =
-                    "${evento.minuto}'",
-                color = SportProVerde,
-                style =
-                    MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Black
-            )
+                Box(
+                    contentAlignment =
+                        Alignment.Center
+                ) {
 
-            Text(
-                text =
-                    iconoEvento(
-                        evento.codigoTipoEvento
-                    ),
-                style =
-                    MaterialTheme.typography.titleMedium
-            )
+                    Text(
+                        text = estilo.icono,
+                        color = estilo.colorIcono,
+                        style =
+                            MaterialTheme.typography.titleLarge,
+                        fontWeight =
+                            FontWeight.Black
+                    )
+                }
+            }
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                verticalArrangement =
+                    Arrangement.spacedBy(3.dp)
             ) {
 
                 Row(
                     verticalAlignment =
-                        Alignment.CenterVertically
+                        Alignment.CenterVertically,
+                    horizontalArrangement =
+                        Arrangement.spacedBy(7.dp)
                 ) {
 
                     Text(
                         text =
                             evento.nombreTipoEvento,
-                        color = SportProTextoPrincipal,
+                        color =
+                            SportProTextoPrincipal,
                         style =
-                            MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
+                            MaterialTheme.typography.bodyLarge,
+                        fontWeight =
+                            FontWeight.Bold
                     )
 
-                    if (
-                        evento.nombreJugador
-                            .isNotBlank()
+                    Surface(
+                        shape = CircleShape,
+                        color = SportProVerdeClaro
                     ) {
 
                         Text(
                             text =
-                                " · ${evento.nombreJugador}",
-                            color =
-                                SportProTextoSecundario,
+                                "${evento.minuto}'",
+                            modifier =
+                                Modifier.padding(
+                                    horizontal = 8.dp,
+                                    vertical = 3.dp
+                                ),
+                            color = SportProVerde,
                             style =
-                                MaterialTheme.typography.bodySmall,
-                            maxLines = 1,
-                            overflow =
-                                TextOverflow.Ellipsis
+                                MaterialTheme.typography.labelSmall,
+                            fontWeight =
+                                FontWeight.Black
                         )
                     }
+                }
+
+                if (
+                    evento.nombreJugador
+                        .isNotBlank()
+                ) {
+
+                    Text(
+                        text =
+                            evento.nombreJugador,
+                        color = SportProNavy,
+                        style =
+                            MaterialTheme.typography.bodyMedium,
+                        fontWeight =
+                            FontWeight.Medium,
+                        maxLines = 1,
+                        overflow =
+                            TextOverflow.Ellipsis
+                    )
                 }
 
                 if (
                     evento.observacion
                         .isNotBlank()
                 ) {
+
                     Text(
                         text =
                             evento.observacion,
-                        color = SportProTextoSecundario,
+                        color =
+                            SportProTextoSecundario,
                         style =
                             MaterialTheme.typography.bodySmall,
                         maxLines = 2,
@@ -967,6 +1058,16 @@ private fun TarjetaCronologiaEvento(
                     )
                 }
             }
+
+            Text(
+                text = "›",
+                color =
+                    SportProTextoSecundario,
+                style =
+                    MaterialTheme.typography.titleLarge,
+                fontWeight =
+                    FontWeight.Bold
+            )
         }
     }
 }
@@ -1057,14 +1158,31 @@ private fun ModalRegistroEvento(
                             Arrangement.spacedBy(8.dp)
                     ) {
 
-                        Text(
-                            text =
-                                iconoEvento(
-                                    tipo.codigo
-                                ),
-                            style =
-                                MaterialTheme.typography.headlineSmall
-                        )
+                        val estilo =
+                            estiloEventoEnVivo(
+                                tipo.codigo
+                            )
+
+                        Surface(
+                            modifier = Modifier.size(42.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            color = estilo.fondoIcono
+                        ) {
+
+                            Box(
+                                contentAlignment = Alignment.Center
+                            ) {
+
+                                Text(
+                                    text = estilo.icono,
+                                    color = estilo.colorIcono,
+                                    style =
+                                        MaterialTheme.typography.titleLarge,
+                                    fontWeight =
+                                        FontWeight.Black
+                                )
+                            }
+                        }
 
                         Text(
                             text = tipo.nombre,
@@ -1616,33 +1734,149 @@ private fun textoEquipoSegunEvento(
         "EQUIPO DEL EVENTO"
     }
 
-private fun iconoEvento(
+private data class EstiloEventoEnVivo(
+    val icono: String,
+    val fondoIcono: Color,
+    val colorIcono: Color,
+    val borde: Color
+)
+
+private fun estiloEventoEnVivo(
     codigo: String
-): String =
+): EstiloEventoEnVivo =
     when (codigo) {
 
-        "INICIO" -> "▶"
-        "FIN" -> "■"
+        "INICIO" ->
+            EstiloEventoEnVivo(
+                icono = "▶",
+                fondoIcono =
+                    SportProVerdeClaro,
+                colorIcono =
+                    SportProVerde,
+                borde =
+                    Color(0xFFB9E0C3)
+            )
 
-        "SAQUE_META" -> "↑"
+        "FIN" ->
+            EstiloEventoEnVivo(
+                icono = "■",
+                fondoIcono =
+                    Color(0xFFE8ECEF),
+                colorIcono =
+                    SportProNavy,
+                borde =
+                    SportProBorde
+            )
 
-        "SAQUE_LATERAL" -> "↔"
+        "GOL" ->
+            EstiloEventoEnVivo(
+                icono = "⚽",
+                fondoIcono =
+                    SportProVerdeClaro,
+                colorIcono =
+                    SportProVerde,
+                borde =
+                    Color(0xFFB9E0C3)
+            )
 
-        "TIRO_ESQUINA" -> "⌒"
+        "TARJETA" ->
+            EstiloEventoEnVivo(
+                icono = "▰",
+                fondoIcono =
+                    Color(0xFFFFF3C4),
+                colorIcono =
+                    Color(0xFF9A7200),
+                borde =
+                    Color(0xFFE8D17A)
+            )
 
-        "FALTA" -> "⚑"
+        "CAMBIO" ->
+            EstiloEventoEnVivo(
+                icono = "⇅",
+                fondoIcono =
+                    Color(0xFFE7F0F8),
+                colorIcono =
+                    Color(0xFF28659A),
+                borde =
+                    Color(0xFFB9D2E7)
+            )
 
-        "PENAL" -> "◎"
+        "FUERA_JUEGO" ->
+            EstiloEventoEnVivo(
+                icono = "⚑",
+                fondoIcono =
+                    Color(0xFFF0EBF8),
+                colorIcono =
+                    Color(0xFF67508A),
+                borde =
+                    Color(0xFFD4C8E8)
+            )
 
-        "GOL" -> "⚽"
+        "FALTA" ->
+            EstiloEventoEnVivo(
+                icono = "!",
+                fondoIcono =
+                    SportProRojoClaro,
+                colorIcono =
+                    SportProRojo,
+                borde =
+                    Color(0xFFF0C6C2)
+            )
 
-        "TARJETA" -> "▬"
+        "PENAL" ->
+            EstiloEventoEnVivo(
+                icono = "◎",
+                fondoIcono =
+                    Color(0xFFFFEEDB),
+                colorIcono =
+                    Color(0xFFA85D16),
+                borde =
+                    Color(0xFFF0D0A9)
+            )
 
-        "FUERA_JUEGO" -> "⊘"
+        "TIRO_ESQUINA" ->
+            EstiloEventoEnVivo(
+                icono = "⌑",
+                fondoIcono =
+                    Color(0xFFE7F0F8),
+                colorIcono =
+                    Color(0xFF28659A),
+                borde =
+                    Color(0xFFB9D2E7)
+            )
 
-        "CAMBIO" -> "↕"
+        "SAQUE_META" ->
+            EstiloEventoEnVivo(
+                icono = "↑",
+                fondoIcono =
+                    Color(0xFFEAF1EC),
+                colorIcono =
+                    SportProNavy,
+                borde =
+                    SportProBorde
+            )
 
-        else -> "•"
+        "SAQUE_LATERAL" ->
+            EstiloEventoEnVivo(
+                icono = "↔",
+                fondoIcono =
+                    Color(0xFFEAF1EC),
+                colorIcono =
+                    SportProNavy,
+                borde =
+                    SportProBorde
+            )
+
+        else ->
+            EstiloEventoEnVivo(
+                icono = "◆",
+                fondoIcono =
+                    SportProVerdeClaro,
+                colorIcono =
+                    SportProVerde,
+                borde =
+                    SportProBorde
+            )
     }
 
 private fun nombreCortoEvento(

@@ -54,24 +54,28 @@ fun simboloEvento(
     observacion: String = ""
 ): String =
     when (codigo) {
+
         "INICIO" -> "▶"
+
         "FIN" -> "■"
+
         "SAQUE_META" -> "↑"
+
         "SAQUE_LATERAL" -> "↔"
-        "TIRO_ESQUINA" -> "⌒"
-        "FALTA" -> "⚑"
+
+        "TIRO_ESQUINA" -> "⌑"
+
+        "FALTA" -> "!"
+
         "PENAL" -> "◎"
+
         "GOL" -> "⚽"
-        "TARJETA" ->
-            if (
-                nombre.contains("roja", ignoreCase = true) ||
-                observacion.contains("roja", ignoreCase = true)
-            ) {
-                "🟥"
-            } else {
-                "🟨"
-            }
-        "FUERA_JUEGO" -> "⊘"
-        "CAMBIO" -> "🔄"
-        else -> "•"
+
+        "TARJETA" -> "▰"
+
+        "FUERA_JUEGO" -> "⚑"
+
+        "CAMBIO" -> "⇅"
+
+        else -> "◆"
     }

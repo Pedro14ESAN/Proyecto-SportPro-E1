@@ -343,6 +343,12 @@ private fun TarjetaEventoCatalogo(
         mutableStateOf(false)
     }
 
+    val estilo =
+        estiloVisualEvento(
+            codigo = evento.codigo,
+            activo = evento.activo
+        )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -364,25 +370,20 @@ private fun TarjetaEventoCatalogo(
         ) {
 
             Surface(
-                modifier = Modifier.size(42.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = if (evento.activo) {
-                    SportProVerdeClaro
-                } else {
-                    SportProFondo
-                }
+                modifier = Modifier.size(46.dp),
+                shape = RoundedCornerShape(13.dp),
+                color = estilo.fondo
             ) {
 
                 Box(
                     contentAlignment = Alignment.Center
                 ) {
+
                     Text(
-                        text = inicialEvento(evento),
-                        color = if (evento.activo) {
-                            SportProVerde
-                        } else {
-                            SportProTextoSecundario
-                        },
+                        text = estilo.icono,
+                        color = estilo.color,
+                        style =
+                            MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black
                     )
                 }
@@ -968,12 +969,109 @@ private fun camposRequeridos(
         }
     }
 
-private fun inicialEvento(
-    evento: TipoEventoCatalogo
-): String =
-    evento.nombre
-        .trim()
-        .firstOrNull()
-        ?.uppercaseChar()
-        ?.toString()
-        ?: "E"
+private data class EstiloVisualEvento(
+    val icono: String,
+    val fondo: Color,
+    val color: Color
+)
+
+private fun estiloVisualEvento(
+    codigo: String,
+    activo: Boolean
+): EstiloVisualEvento {
+
+    if (!activo) {
+        return EstiloVisualEvento(
+            icono = "•",
+            fondo = Color(0xFFF0F1F1),
+            color = SportProTextoSecundario
+        )
+    }
+
+    return when (codigo) {
+
+        "INICIO" ->
+            EstiloVisualEvento(
+                icono = "▶",
+                fondo = Color(0xFFE3F0E7),
+                color = SportProVerde
+            )
+
+        "FIN" ->
+            EstiloVisualEvento(
+                icono = "■",
+                fondo = Color(0xFFE5E9EC),
+                color = SportProNavy
+            )
+
+        "GOL" ->
+            EstiloVisualEvento(
+                icono = "⚽",
+                fondo = Color(0xFFE3F0E7),
+                color = SportProVerde
+            )
+
+        "TARJETA" ->
+            EstiloVisualEvento(
+                icono = "▰",
+                fondo = Color(0xFFFFF3C4),
+                color = Color(0xFF9A7200)
+            )
+
+        "CAMBIO" ->
+            EstiloVisualEvento(
+                icono = "⇅",
+                fondo = Color(0xFFE8F1FA),
+                color = Color(0xFF28659A)
+            )
+
+        "FUERA_JUEGO" ->
+            EstiloVisualEvento(
+                icono = "⚑",
+                fondo = Color(0xFFF0EBF8),
+                color = Color(0xFF67508A)
+            )
+
+        "FALTA" ->
+            EstiloVisualEvento(
+                icono = "!",
+                fondo = SportProRojoClaro,
+                color = SportProRojo
+            )
+
+        "PENAL" ->
+            EstiloVisualEvento(
+                icono = "◎",
+                fondo = Color(0xFFFFEEDB),
+                color = Color(0xFFA85D16)
+            )
+
+        "TIRO_ESQUINA" ->
+            EstiloVisualEvento(
+                icono = "⌑",
+                fondo = Color(0xFFE8F1FA),
+                color = Color(0xFF28659A)
+            )
+
+        "SAQUE_META" ->
+            EstiloVisualEvento(
+                icono = "↑",
+                fondo = Color(0xFFEAF1EC),
+                color = SportProNavy
+            )
+
+        "SAQUE_LATERAL" ->
+            EstiloVisualEvento(
+                icono = "↔",
+                fondo = Color(0xFFEAF1EC),
+                color = SportProNavy
+            )
+
+        else ->
+            EstiloVisualEvento(
+                icono = "◆",
+                fondo = SportProVerdeClaro,
+                color = SportProVerde
+            )
+    }
+}
