@@ -48,6 +48,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.evento.EquipoEvento
 import com.example.projectsportpro2026_2.datos.modelo.evento.EventoPartido
@@ -1109,6 +1111,11 @@ private fun ModalRegistroEvento(
                     Modifier.fillMaxWidth(),
                 enabled = !registrando,
                 singleLine = true,
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType =
+                            KeyboardType.Number
+                    ),
                 label = {
                     Text("Minuto")
                 },

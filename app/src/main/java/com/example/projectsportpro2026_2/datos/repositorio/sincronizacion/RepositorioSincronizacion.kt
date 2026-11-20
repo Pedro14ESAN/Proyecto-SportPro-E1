@@ -147,9 +147,9 @@ class RepositorioSincronizacion(
                 it.estado == EstadoEventoPartido.ACTIVO
             }
             .sortedWith(
-                compareBy<EventoPartido> {
+                compareByDescending<EventoPartido> {
                     it.minuto
-                }.thenBy {
+                }.thenByDescending {
                     it.fechaCaptura
                 }
             )

@@ -753,9 +753,9 @@ class RepositorioEventosPartido(
                             EstadoEventoPartido.ACTIVO
                 }
                 .sortedWith(
-                    compareBy<EventoPartido> {
+                    compareByDescending<EventoPartido> {
                         it.minuto
-                    }.thenBy {
+                    }.thenByDescending {
                         it.fechaCaptura
                     }
                 )

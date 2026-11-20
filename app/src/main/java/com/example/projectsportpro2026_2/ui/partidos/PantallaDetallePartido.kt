@@ -44,6 +44,8 @@ import com.example.projectsportpro2026_2.datos.modelo.partido.Partido
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Composable
 fun PantallaDetallePartido(
@@ -432,6 +434,7 @@ fun PantallaDetallePartido(
 
         DialogoCambioEstadoSportPro(
             nuevoEstado = nuevoEstado,
+            partido = partido,
 
             onConfirmar = {
 
@@ -713,12 +716,23 @@ private fun CabeceraDetalleSportPro() {
 @Composable
 private fun DialogoCambioEstadoSportPro(
     nuevoEstado: EstadoPartido,
+    partido: Partido?,
     onConfirmar: () -> Unit,
     onCancelar: () -> Unit
 ) {
+
+    val inicioAnticipado =
+        nuevoEstado == EstadoPartido.EN_CURSO &&
+                partido?.let {
+                    esInicioAnticipado(it)
+                } == true
     val titulo = when (nuevoEstado) {
         EstadoPartido.EN_CURSO ->
-            "¿Iniciar partido?"
+            if (inicioAnticipado) {
+                "¿Iniciar antes de lo previsto?"
+            } else {
+                "¿Iniciar partido?"
+            }
 
         EstadoPartido.FINALIZADO ->
             "¿Finalizar partido?"
@@ -732,7 +746,15 @@ private fun DialogoCambioEstadoSportPro(
 
     val mensaje = when (nuevoEstado) {
         EstadoPartido.EN_CURSO ->
-            "El partido pasará a estado EN CURSO."
+            if (inicioAnticipado
+            ) {
+                "Este partido está programado para ${
+                    mostrarFechaLarga(partido.fecha)
+                } a las ${partido.hora}. " +
+                        "¿Deseas iniciarlo ahora de todas formas?"
+            } else {
+                "El partido pasará a estado EN CURSO."
+            }
 
         EstadoPartido.FINALIZADO ->
             "El partido pasará a estado FINALIZADO."
@@ -831,5 +853,37 @@ private fun mostrarFechaLarga(
     } catch (e: Exception) {
 
         fecha
+    }
+}
+private fun esInicioAnticipado(
+    partido: Partido
+): Boolean {
+
+    return try {
+
+        val fecha =
+            LocalDate.parse(
+                partido.fecha
+            )
+
+        val hora =
+            LocalTime.parse(
+                partido.hora
+            )
+
+        val fechaHoraProgramada =
+            LocalDateTime.of(
+                fecha,
+                hora
+            )
+
+        LocalDateTime.now()
+            .isBefore(
+                fechaHoraProgramada
+            )
+
+    } catch (e: Exception) {
+
+        false
     }
 }
