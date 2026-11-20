@@ -582,6 +582,18 @@ fun PantallaPartidoEnVivo(
                 onJugadorRival =
                     viewModel::cambiarNombreJugadorRival,
 
+                onJugadorSale =
+                    viewModel::cambiarJugadorSale,
+
+                onJugadorEntra =
+                    viewModel::cambiarJugadorEntra,
+
+                onJugadorSaleRival =
+                    viewModel::cambiarJugadorSaleRival,
+
+                onJugadorEntraRival =
+                    viewModel::cambiarJugadorEntraRival,
+
                 onTipoTarjeta =
                     viewModel::cambiarTipoTarjeta,
 

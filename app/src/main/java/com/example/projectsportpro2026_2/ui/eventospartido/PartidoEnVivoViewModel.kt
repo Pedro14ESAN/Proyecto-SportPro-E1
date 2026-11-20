@@ -442,6 +442,43 @@ class PartidoEnVivoViewModel(
                             } else {
                                 ""
                             },
+                        idJugadorSale =
+                            evento.idJugadorSale
+                                .ifBlank {
+                                    if (
+                                        evento.codigoTipoEvento == "CAMBIO"
+                                    ) {
+                                        evento.idJugador
+                                    } else {
+                                        ""
+                                    }
+                                },
+
+                        nombreJugadorSaleRival =
+                            if (
+                                evento.equipoEvento ==
+                                EquipoEvento.RIVAL
+                            ) {
+                                evento.nombreJugadorSale
+                                    .ifBlank {
+                                        evento.nombreJugador
+                                    }
+                            } else {
+                                ""
+                            },
+
+                        idJugadorEntra =
+                            evento.idJugadorEntra,
+
+                        nombreJugadorEntraRival =
+                            if (
+                                evento.equipoEvento ==
+                                EquipoEvento.RIVAL
+                            ) {
+                                evento.nombreJugadorEntra
+                            } else {
+                                ""
+                            },
 
                         tipoTarjeta =
                             evento.tipoTarjeta,
@@ -630,6 +667,7 @@ class PartidoEnVivoViewModel(
         }
 
         if (
+            tipo.codigo != "CAMBIO" &&
             tipo.requiereJugador &&
             formulario.equipoEvento !=
             EquipoEvento.RIVAL &&
@@ -695,6 +733,75 @@ class PartidoEnVivoViewModel(
 
             return
         }
+        if (tipo.codigo == "CAMBIO") {
+
+            if (
+                formulario.equipoEvento ==
+                EquipoEvento.PROPIO
+            ) {
+
+                if (
+                    formulario.idJugadorSale.isBlank() ||
+                    formulario.idJugadorEntra.isBlank()
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "Selecciona el jugador que sale y el jugador que entra"
+                        )
+                    }
+                    return
+                }
+
+                if (
+                    formulario.idJugadorSale ==
+                    formulario.idJugadorEntra
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "El jugador que entra debe ser diferente al que sale"
+                        )
+                    }
+                    return
+                }
+
+            } else if (
+                formulario.equipoEvento ==
+                EquipoEvento.RIVAL
+            ) {
+
+                if (
+                    formulario.nombreJugadorSaleRival.isBlank() ||
+                    formulario.nombreJugadorEntraRival.isBlank()
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "Indica quién sale y quién entra"
+                        )
+                    }
+                    return
+                }
+
+                if (
+                    formulario.nombreJugadorSaleRival
+                        .trim()
+                        .equals(
+                            formulario.nombreJugadorEntraRival.trim(),
+                            ignoreCase = true
+                        )
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "El jugador que entra debe ser diferente al que sale"
+                        )
+                    }
+                    return
+                }
+            }
+        }
 
         viewModelScope.launch {
 
@@ -735,6 +842,18 @@ class PartidoEnVivoViewModel(
                     nombreJugadorRival =
                         formulario
                             .nombreJugadorRival,
+
+                    idJugadorSale =
+                        formulario.idJugadorSale,
+
+                    nombreJugadorSaleRival =
+                        formulario.nombreJugadorSaleRival,
+
+                    idJugadorEntra =
+                        formulario.idJugadorEntra,
+
+                    nombreJugadorEntraRival =
+                        formulario.nombreJugadorEntraRival,
 
                     tipoTarjeta =
                         formulario

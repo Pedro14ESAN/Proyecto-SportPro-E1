@@ -86,6 +86,10 @@ fun ModalGestionEvento(
     onEquipo: (EquipoEvento) -> Unit,
     onJugador: (String) -> Unit,
     onJugadorRival: (String) -> Unit,
+    onJugadorSale: (String) -> Unit,
+    onJugadorEntra: (String) -> Unit,
+    onJugadorSaleRival: (String) -> Unit,
+    onJugadorEntraRival: (String) -> Unit,
     onTipoTarjeta: (TipoTarjeta) -> Unit,
     onObservacion: (String) -> Unit,
     onGuardarCorreccion: () -> Unit,
@@ -240,6 +244,18 @@ fun ModalGestionEvento(
                     onJugadorRival =
                         onJugadorRival,
 
+                    onJugadorSale =
+                        onJugadorSale,
+
+                    onJugadorEntra =
+                        onJugadorEntra,
+
+                    onJugadorSaleRival =
+                        onJugadorSaleRival,
+
+                    onJugadorEntraRival =
+                        onJugadorEntraRival,
+
                     onTipoTarjeta =
                         onTipoTarjeta,
 
@@ -377,9 +393,34 @@ private fun DetalleEvento(
             )
 
             if (
+                evento.codigoTipoEvento == "CAMBIO"
+            ) {
+
+                if (
+                    evento.nombreJugadorSale
+                        .isNotBlank()
+                ) {
+                    DatoDetalle(
+                        "↓ Sale",
+                        evento.nombreJugadorSale
+                    )
+                }
+
+                if (
+                    evento.nombreJugadorEntra
+                        .isNotBlank()
+                ) {
+                    DatoDetalle(
+                        "↑ Entra",
+                        evento.nombreJugadorEntra
+                    )
+                }
+
+            } else if (
                 evento.nombreJugador
                     .isNotBlank()
             ) {
+
                 DatoDetalle(
                     "Jugador",
                     evento.nombreJugador
@@ -616,6 +657,10 @@ private fun FormularioCorreccion(
     onEquipo: (EquipoEvento) -> Unit,
     onJugador: (String) -> Unit,
     onJugadorRival: (String) -> Unit,
+    onJugadorSale: (String) -> Unit,
+    onJugadorEntra: (String) -> Unit,
+    onJugadorSaleRival: (String) -> Unit,
+    onJugadorEntraRival: (String) -> Unit,
     onTipoTarjeta: (TipoTarjeta) -> Unit,
     onObservacion: (String) -> Unit,
     onGuardar: () -> Unit,
@@ -763,49 +808,127 @@ private fun FormularioCorreccion(
         }
     }
 
-    if (tipo.requiereJugador) {
+    when {
 
-        if (
-            formulario.equipoEvento ==
-            EquipoEvento.RIVAL
-        ) {
+        tipo.codigo == "CAMBIO" -> {
 
-            OutlinedTextField(
-                value =
-                    formulario
-                        .nombreJugadorRival,
-
-                onValueChange =
-                    onJugadorRival,
-
-                modifier =
-                    Modifier.fillMaxWidth(),
-
-                enabled =
-                    !procesando,
-
-                label = {
-                    Text("Jugador rival")
-                },
-
-                singleLine = true
+            Text(
+                text = "SUSTITUCIÓN",
+                color = SportProTextoSecundario,
+                fontWeight = FontWeight.Bold
             )
 
-        } else {
+            if (
+                formulario.equipoEvento ==
+                EquipoEvento.RIVAL
+            ) {
 
-            SelectorJugadorCorreccion(
-                jugadores =
-                    jugadores,
+                OutlinedTextField(
+                    value =
+                        formulario.nombreJugadorSaleRival,
+                    onValueChange =
+                        onJugadorSaleRival,
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    enabled =
+                        !procesando,
+                    singleLine = true,
+                    label = {
+                        Text("Jugador que sale")
+                    }
+                )
 
-                idSeleccionado =
-                    formulario.idJugador,
+                OutlinedTextField(
+                    value =
+                        formulario.nombreJugadorEntraRival,
+                    onValueChange =
+                        onJugadorEntraRival,
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    enabled =
+                        !procesando,
+                    singleLine = true,
+                    label = {
+                        Text("Jugador que entra")
+                    }
+                )
 
-                habilitado =
-                    !procesando,
+            } else {
 
-                onSeleccionar =
-                    onJugador
-            )
+                Text(
+                    text = "↓ JUGADOR QUE SALE",
+                    color = SportProRojo,
+                    fontWeight = FontWeight.Bold
+                )
+
+                SelectorJugadorCorreccion(
+                    jugadores =
+                        jugadores,
+                    idSeleccionado =
+                        formulario.idJugadorSale,
+                    habilitado =
+                        !procesando,
+                    onSeleccionar =
+                        onJugadorSale
+                )
+
+                Text(
+                    text = "↑ JUGADOR QUE ENTRA",
+                    color = SportProVerde,
+                    fontWeight = FontWeight.Bold
+                )
+
+                SelectorJugadorCorreccion(
+                    jugadores =
+                        jugadores.filter {
+                            it.id !=
+                                    formulario.idJugadorSale
+                        },
+                    idSeleccionado =
+                        formulario.idJugadorEntra,
+                    habilitado =
+                        !procesando,
+                    onSeleccionar =
+                        onJugadorEntra
+                )
+            }
+        }
+
+        tipo.requiereJugador -> {
+
+            if (
+                formulario.equipoEvento ==
+                EquipoEvento.RIVAL
+            ) {
+
+                OutlinedTextField(
+                    value =
+                        formulario.nombreJugadorRival,
+                    onValueChange =
+                        onJugadorRival,
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    enabled =
+                        !procesando,
+                    label = {
+                        Text("Jugador rival")
+                    },
+                    singleLine = true
+                )
+
+            } else {
+
+                SelectorJugadorCorreccion(
+                    jugadores =
+                        jugadores,
+                    idSeleccionado =
+                        formulario.idJugador,
+                    habilitado =
+                        !procesando,
+                    onSeleccionar =
+                        onJugador
+                )
+            }
         }
     }
 
@@ -1195,6 +1318,27 @@ private fun resumenDatos(
                 TipoTarjeta.NINGUNA ->
                     ""
             }
+    }
+
+    if (
+        datos.codigoTipoEvento == "CAMBIO"
+    ) {
+
+        if (
+            datos.nombreJugadorSale
+                .isNotBlank()
+        ) {
+            partes +=
+                "Sale: ${datos.nombreJugadorSale}"
+        }
+
+        if (
+            datos.nombreJugadorEntra
+                .isNotBlank()
+        ) {
+            partes +=
+                "Entra: ${datos.nombreJugadorEntra}"
+        }
     }
 
     return partes.joinToString(

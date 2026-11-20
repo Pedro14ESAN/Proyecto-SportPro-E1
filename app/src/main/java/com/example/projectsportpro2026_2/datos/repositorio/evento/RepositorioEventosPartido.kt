@@ -816,6 +816,18 @@ class RepositorioEventosPartido(
             nombreJugador =
                 evento.nombreJugador,
 
+            idJugadorSale =
+                evento.idJugadorSale,
+
+            nombreJugadorSale =
+                evento.nombreJugadorSale,
+
+            idJugadorEntra =
+                evento.idJugadorEntra,
+
+            nombreJugadorEntra =
+                evento.nombreJugadorEntra,
+
             tipoTarjeta =
                 evento.tipoTarjeta,
 
@@ -959,6 +971,12 @@ class RepositorioEventosPartido(
 
         idJugador: String,
         nombreJugadorRival: String,
+
+        idJugadorSale: String,
+        nombreJugadorSaleRival: String,
+
+        idJugadorEntra: String,
+        nombreJugadorEntraRival: String,
 
         tipoTarjeta: TipoTarjeta,
 
@@ -1108,16 +1126,71 @@ class RepositorioEventosPartido(
                 )
 
             val jugadorFinal =
-                validarJugadorCorreccion(
-                    partido = partido,
-                    tipo = tipo,
-                    equipoEvento =
-                        equipoFinal,
-                    idJugador =
-                        idJugador,
-                    nombreJugadorRival =
-                        nombreJugadorRival
+                if (tipo.codigo == "CAMBIO") {
+                    "" to ""
+                } else {
+                    validarJugadorCorreccion(
+                        partido = partido,
+                        tipo = tipo,
+                        equipoEvento = equipoFinal,
+                        idJugador = idJugador,
+                        nombreJugadorRival =
+                            nombreJugadorRival
+                    )
+                }
+            val jugadorSale =
+                if (tipo.codigo == "CAMBIO") {
+
+                    validarJugadorCorreccion(
+                        partido = partido,
+                        tipo = tipo,
+                        equipoEvento = equipoFinal,
+                        idJugador = idJugadorSale,
+                        nombreJugadorRival =
+                            nombreJugadorSaleRival
+                    )
+
+                } else {
+                    "" to ""
+                }
+
+            val jugadorEntra =
+                if (tipo.codigo == "CAMBIO") {
+
+                    validarJugadorCorreccion(
+                        partido = partido,
+                        tipo = tipo,
+                        equipoEvento = equipoFinal,
+                        idJugador = idJugadorEntra,
+                        nombreJugadorRival =
+                            nombreJugadorEntraRival
+                    )
+
+                } else {
+                    "" to ""
+                }
+
+            if (
+                tipo.codigo == "CAMBIO" &&
+                (
+                        (
+                                jugadorSale.first.isNotBlank() &&
+                                        jugadorSale.first ==
+                                        jugadorEntra.first
+                                ) ||
+                                (
+                                        jugadorSale.first.isBlank() &&
+                                                jugadorSale.second.equals(
+                                                    jugadorEntra.second,
+                                                    ignoreCase = true
+                                                )
+                                        )
+                        )
+            ) {
+                throw IllegalArgumentException(
+                    "El jugador que entra debe ser diferente al que sale"
                 )
+            }
 
             val tipoTarjetaFinal =
                 validarTipoTarjeta(
@@ -1213,10 +1286,30 @@ class RepositorioEventosPartido(
                             equipoFinal,
 
                         idJugador =
-                            jugadorFinal.first,
+                            if (tipo.codigo == "CAMBIO") {
+                                jugadorSale.first
+                            } else {
+                                jugadorFinal.first
+                            },
 
                         nombreJugador =
-                            jugadorFinal.second,
+                            if (tipo.codigo == "CAMBIO") {
+                                jugadorSale.second
+                            } else {
+                                jugadorFinal.second
+                            },
+
+                        idJugadorSale =
+                            jugadorSale.first,
+
+                        nombreJugadorSale =
+                            jugadorSale.second,
+
+                        idJugadorEntra =
+                            jugadorEntra.first,
+
+                        nombreJugadorEntra =
+                            jugadorEntra.second,
 
                         tipoTarjeta =
                             tipoTarjetaFinal,
