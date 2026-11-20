@@ -502,7 +502,18 @@ fun PantallaPartidoEnVivo(
 
             onRegistrar = {
                 viewModel.registrarEvento()
-            }
+            },
+            onCambiarJugadorSale =
+                viewModel::cambiarJugadorSale,
+
+            onCambiarJugadorEntra =
+                viewModel::cambiarJugadorEntra,
+
+            onCambiarJugadorSaleRival =
+                viewModel::cambiarJugadorSaleRival,
+
+            onCambiarJugadorEntraRival =
+                viewModel::cambiarJugadorEntraRival,
         )
     }
     estado.eventoSeleccionado?.let {
@@ -1029,6 +1040,44 @@ private fun TarjetaCronologiaEvento(
                 }
 
                 if (
+                    evento.codigoTipoEvento == "CAMBIO" &&
+                    (
+                            evento.nombreJugadorSale.isNotBlank() ||
+                                    evento.nombreJugadorEntra.isNotBlank()
+                            )
+                ) {
+
+                    if (
+                        evento.nombreJugadorSale
+                            .isNotBlank()
+                    ) {
+                        Text(
+                            text =
+                                "↓ Sale: ${evento.nombreJugadorSale}",
+                            color = SportProRojo,
+                            style =
+                                MaterialTheme.typography.bodyMedium,
+                            fontWeight =
+                                FontWeight.Medium
+                        )
+                    }
+
+                    if (
+                        evento.nombreJugadorEntra
+                            .isNotBlank()
+                    ) {
+                        Text(
+                            text =
+                                "↑ Entra: ${evento.nombreJugadorEntra}",
+                            color = SportProVerde,
+                            style =
+                                MaterialTheme.typography.bodyMedium,
+                            fontWeight =
+                                FontWeight.Medium
+                        )
+                    }
+
+                } else if (
                     evento.nombreJugador
                         .isNotBlank()
                 ) {
@@ -1095,7 +1144,12 @@ private fun ModalRegistroEvento(
     onCambiarJugadorRival: (String) -> Unit,
     onCambiarTipoTarjeta: (TipoTarjeta) -> Unit,
     onCambiarObservacion: (String) -> Unit,
-    onRegistrar: () -> Unit
+    onRegistrar: () -> Unit,
+    onCambiarJugadorSale: (String) -> Unit,
+    onCambiarJugadorEntra: (String) -> Unit,
+    onCambiarJugadorSaleRival: (String) -> Unit,
+    onCambiarJugadorEntraRival: (String) -> Unit,
+
 
 ) {
     val tipo =
@@ -1310,7 +1364,90 @@ private fun ModalRegistroEvento(
                 }
             }
 
-            if (tipo.requiereJugador) {
+            if (tipo.codigo == "CAMBIO") {
+
+                Text(
+                    text = "SUSTITUCIÓN",
+                    color = SportProTextoSecundario,
+                    style =
+                        MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Black
+                )
+
+                if (
+                    formulario.equipoEvento ==
+                    EquipoEvento.RIVAL
+                ) {
+
+                    OutlinedTextField(
+                        value =
+                            formulario.nombreJugadorSaleRival,
+                        onValueChange =
+                            onCambiarJugadorSaleRival,
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        enabled = !registrando,
+                        singleLine = true,
+                        label = {
+                            Text("Jugador que sale")
+                        }
+                    )
+
+                    OutlinedTextField(
+                        value =
+                            formulario.nombreJugadorEntraRival,
+                        onValueChange =
+                            onCambiarJugadorEntraRival,
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        enabled = !registrando,
+                        singleLine = true,
+                        label = {
+                            Text("Jugador que entra")
+                        }
+                    )
+
+                } else {
+
+                    Text(
+                        text = "↓ JUGADOR QUE SALE",
+                        color = SportProRojo,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    SelectorJugador(
+                        jugadores = jugadores,
+                        idSeleccionado =
+                            formulario.idJugadorSale,
+                        habilitado = !registrando,
+                        onSeleccionar =
+                            onCambiarJugadorSale
+                    )
+
+                    Text(
+                        text = "↑ JUGADOR QUE ENTRA",
+                        color = SportProVerde,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    SelectorJugador(
+                        jugadores =
+                            jugadores.filter {
+                                it.id !=
+                                        formulario.idJugadorSale
+                            },
+                        idSeleccionado =
+                            formulario.idJugadorEntra,
+                        habilitado = !registrando,
+                        onSeleccionar =
+                            onCambiarJugadorEntra
+                    )
+                }
+            }
+            if (
+                tipo.requiereJugador &&
+                tipo.codigo != "CAMBIO"
+            ) {
 
                 if (
                     formulario.equipoEvento ==
@@ -1368,162 +1505,164 @@ private fun ModalRegistroEvento(
                     )
                 }
             }
+        }
 
-            if (tipo.codigo == "TARJETA") {
+        if (tipo.codigo == "TARJETA") {
 
-                Text(
-                    text = "TIPO DE TARJETA",
-                    color = SportProTextoSecundario,
-                    style =
-                        MaterialTheme.typography.labelSmall,
-                    fontWeight =
-                        FontWeight.Black
-                )
+            Text(
+                text = "TIPO DE TARJETA",
+                color = SportProTextoSecundario,
+                style =
+                    MaterialTheme.typography.labelSmall,
+                fontWeight =
+                    FontWeight.Black
+            )
 
-                Row(
-                    modifier =
-                        Modifier.fillMaxWidth(),
-                    horizontalArrangement =
-                        Arrangement.spacedBy(8.dp)
-                ) {
-
-                    BotonTipoTarjeta(
-                        texto = "Amarilla",
-                        simbolo = "▰",
-                        seleccionado =
-                            formulario.tipoTarjeta ==
-                                    TipoTarjeta.AMARILLA,
-                        habilitado = !registrando,
-                        color = Color(0xFFD9A900),
-                        modifier =
-                            Modifier.weight(1f),
-                        onClick = {
-                            onCambiarTipoTarjeta(
-                                TipoTarjeta.AMARILLA
-                            )
-                        }
-                    )
-
-                    BotonTipoTarjeta(
-                        texto = "Roja",
-                        simbolo = "▰",
-                        seleccionado =
-                            formulario.tipoTarjeta ==
-                                    TipoTarjeta.ROJA,
-                        habilitado = !registrando,
-                        color = Color(0xFFC62828),
-                        modifier =
-                            Modifier.weight(1f),
-                        onClick = {
-                            onCambiarTipoTarjeta(
-                                TipoTarjeta.ROJA
-                            )
-                        }
-                    )
-                }
-            }
-
-            if (
-                tipo.requiereObservacion
+            Row(
+                modifier =
+                    Modifier.fillMaxWidth(),
+                horizontalArrangement =
+                    Arrangement.spacedBy(8.dp)
             ) {
 
-                OutlinedTextField(
-                    value =
-                        formulario.observacion,
-
-                    onValueChange =
-                        onCambiarObservacion,
-
+                BotonTipoTarjeta(
+                    texto = "Amarilla",
+                    simbolo = "▰",
+                    seleccionado =
+                        formulario.tipoTarjeta ==
+                                TipoTarjeta.AMARILLA,
+                    habilitado = !registrando,
+                    color = Color(0xFFD9A900),
                     modifier =
-                        Modifier.fillMaxWidth(),
-
-                    enabled =
-                        !registrando,
-
-                    minLines = 2,
-
-                    label = {
-                        Text("Observación")
-                    },
-
-                    placeholder = {
-                        Text(
-                            "Describe brevemente el evento"
+                        Modifier.weight(1f),
+                    onClick = {
+                        onCambiarTipoTarjeta(
+                            TipoTarjeta.AMARILLA
                         )
-                    },
+                    }
+                )
 
-                    shape =
-                        RoundedCornerShape(12.dp)
+                BotonTipoTarjeta(
+                    texto = "Roja",
+                    simbolo = "▰",
+                    seleccionado =
+                        formulario.tipoTarjeta ==
+                                TipoTarjeta.ROJA,
+                    habilitado = !registrando,
+                    color = Color(0xFFC62828),
+                    modifier =
+                        Modifier.weight(1f),
+                    onClick = {
+                        onCambiarTipoTarjeta(
+                            TipoTarjeta.ROJA
+                        )
+                    }
                 )
             }
+        }
 
-            error?.let { mensaje ->
+        if (
+            tipo.requiereObservacion
+        ) {
 
-                Surface(
-                    modifier =
-                        Modifier.fillMaxWidth(),
-                    color =
-                        SportProRojoClaro,
-                    shape =
-                        RoundedCornerShape(10.dp)
-                ) {
-                    Text(
-                        text = mensaje,
-                        modifier =
-                            Modifier.padding(10.dp),
-                        color = SportProRojo,
-                        style =
-                            MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
+            OutlinedTextField(
+                value =
+                    formulario.observacion,
 
-            Button(
-                onClick = onRegistrar,
+                onValueChange =
+                    onCambiarObservacion,
+
+                modifier =
+                    Modifier.fillMaxWidth(),
+
                 enabled =
                     !registrando,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = FormaBotonSportPro,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor =
-                            SportProVerde,
-                        contentColor =
-                            Color.White
-                    )
-            ) {
 
-                if (registrando) {
+                minLines = 2,
 
-                    CircularProgressIndicator(
-                        modifier =
-                            Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
+                label = {
+                    Text("Observación")
+                },
 
-                } else {
-
+                placeholder = {
                     Text(
-                        text =
-                            if (
-                                tipo.codigo ==
-                                "FIN"
-                            ) {
-                                "Registrar y finalizar"
-                            } else {
-                                "Registrar ${tipo.nombre}"
-                            },
-                        fontWeight =
-                            FontWeight.Bold
+                        "Describe brevemente el evento"
                     )
-                }
+                },
+
+                shape =
+                    RoundedCornerShape(12.dp)
+            )
+        }
+
+        error?.let { mensaje ->
+
+            Surface(
+                modifier =
+                    Modifier.fillMaxWidth(),
+                color =
+                    SportProRojoClaro,
+                shape =
+                    RoundedCornerShape(10.dp)
+            ) {
+                Text(
+                    text = mensaje,
+                    modifier =
+                        Modifier.padding(10.dp),
+                    color = SportProRojo,
+                    style =
+                        MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+
+        Button(
+            onClick = onRegistrar,
+            enabled =
+                !registrando,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = FormaBotonSportPro,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor =
+                        SportProVerde,
+                    contentColor =
+                        Color.White
+                )
+        ) {
+
+            if (registrando) {
+
+                CircularProgressIndicator(
+                    modifier =
+                        Modifier.size(20.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+
+            } else {
+
+                Text(
+                    text =
+                        if (
+                            tipo.codigo ==
+                            "FIN"
+                        ) {
+                            "Registrar y finalizar"
+                        } else {
+                            "Registrar ${tipo.nombre}"
+                        },
+                    fontWeight =
+                        FontWeight.Bold
+                )
             }
         }
     }
+
 }
+
 
 @Composable
 private fun BotonTipoTarjeta(

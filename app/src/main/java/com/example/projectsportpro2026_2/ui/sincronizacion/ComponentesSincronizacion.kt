@@ -474,13 +474,64 @@ fun TarjetaEventoSincronizado(
                         fontWeight = FontWeight.Bold
                     )
 
-                    if (evento.nombreJugador.isNotBlank()) {
+                    if (
+                        evento.codigoTipoEvento == "CAMBIO" &&
+                        (
+                                evento.nombreJugadorSale.isNotBlank() ||
+                                        evento.nombreJugadorEntra.isNotBlank()
+                                )
+                    ) {
+
+                        Column(
+                            verticalArrangement =
+                                Arrangement.spacedBy(2.dp)
+                        ) {
+
+                            if (
+                                evento.nombreJugadorSale
+                                    .isNotBlank()
+                            ) {
+                                Text(
+                                    text =
+                                        "↓ Sale: ${evento.nombreJugadorSale}",
+                                    color = SyncRojoTexto,
+                                    style =
+                                        MaterialTheme.typography.bodySmall,
+                                    fontWeight =
+                                        FontWeight.Medium
+                                )
+                            }
+
+                            if (
+                                evento.nombreJugadorEntra
+                                    .isNotBlank()
+                            ) {
+                                Text(
+                                    text =
+                                        "↑ Entra: ${evento.nombreJugadorEntra}",
+                                    color = SyncVerdeTexto,
+                                    style =
+                                        MaterialTheme.typography.bodySmall,
+                                    fontWeight =
+                                        FontWeight.Medium
+                                )
+                            }
+                        }
+
+                    } else if (
+                        evento.nombreJugador.isNotBlank()
+                    ) {
+
                         Text(
-                            text = " · ${evento.nombreJugador}",
-                            color = SportProTextoSecundario,
-                            style = MaterialTheme.typography.bodySmall,
+                            text =
+                                " · ${evento.nombreJugador}",
+                            color =
+                                SportProTextoSecundario,
+                            style =
+                                MaterialTheme.typography.bodySmall,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow =
+                                TextOverflow.Ellipsis
                         )
                     }
                 }

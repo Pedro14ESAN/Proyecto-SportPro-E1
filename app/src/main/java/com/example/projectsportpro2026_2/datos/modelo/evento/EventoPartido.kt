@@ -44,16 +44,14 @@ data class EventoPartido(
      * registrado dentro de SportPro.
      */
     val idJugador: String = "",
-
-    /*
-     * Guardamos también el nombre mostrado en el momento
-     * del evento.
-     *
-     * Esto permite conservar la cronología aunque después
-     * el perfil del jugador cambie de nombre o deje de
-     * pertenecer al equipo.
-     */
     val nombreJugador: String = "",
+
+// Datos estructurados para una sustitución.
+    val idJugadorSale: String = "",
+    val nombreJugadorSale: String = "",
+
+    val idJugadorEntra: String = "",
+    val nombreJugadorEntra: String = "",
 
     val tipoTarjeta: TipoTarjeta =
         TipoTarjeta.NINGUNA,
