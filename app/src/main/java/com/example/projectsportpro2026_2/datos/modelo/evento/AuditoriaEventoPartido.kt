@@ -13,6 +13,15 @@ data class DatosEventoAuditoria(
     val idJugador: String = "",
     val nombreJugador: String = "",
 
+    val idJugadorSale: String = "",
+    val nombreJugadorSale: String = "",
+
+    val idJugadorEntra: String = "",
+    val nombreJugadorEntra: String = "",
+
+    val tipoTarjeta: TipoTarjeta =
+        TipoTarjeta.NINGUNA,
+
     val observacion: String = "",
 
     val afectaMarcador: Boolean = false,

@@ -10,6 +10,7 @@ import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAutenticac
 import com.example.projectsportpro2026_2.datos.repositorio.evento.ContextoPartidoEnVivo
 import com.example.projectsportpro2026_2.datos.repositorio.evento.MarcadorPartido
 import com.example.projectsportpro2026_2.datos.repositorio.evento.RepositorioEventosPartido
+import com.example.projectsportpro2026_2.datos.modelo.evento.TipoTarjeta
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,8 +28,16 @@ data class FormularioEventoPartido(
         EquipoEvento.NINGUNO,
 
     val idJugador: String = "",
-
     val nombreJugadorRival: String = "",
+
+    val idJugadorSale: String = "",
+    val nombreJugadorSaleRival: String = "",
+
+    val idJugadorEntra: String = "",
+    val nombreJugadorEntraRival: String = "",
+
+    val tipoTarjeta: TipoTarjeta =
+        TipoTarjeta.NINGUNA,
 
     val observacion: String = ""
 )
@@ -433,6 +442,46 @@ class PartidoEnVivoViewModel(
                             } else {
                                 ""
                             },
+                        idJugadorSale =
+                            evento.idJugadorSale
+                                .ifBlank {
+                                    if (
+                                        evento.codigoTipoEvento == "CAMBIO"
+                                    ) {
+                                        evento.idJugador
+                                    } else {
+                                        ""
+                                    }
+                                },
+
+                        nombreJugadorSaleRival =
+                            if (
+                                evento.equipoEvento ==
+                                EquipoEvento.RIVAL
+                            ) {
+                                evento.nombreJugadorSale
+                                    .ifBlank {
+                                        evento.nombreJugador
+                                    }
+                            } else {
+                                ""
+                            },
+
+                        idJugadorEntra =
+                            evento.idJugadorEntra,
+
+                        nombreJugadorEntraRival =
+                            if (
+                                evento.equipoEvento ==
+                                EquipoEvento.RIVAL
+                            ) {
+                                evento.nombreJugadorEntra
+                            } else {
+                                ""
+                            },
+
+                        tipoTarjeta =
+                            evento.tipoTarjeta,
 
                         observacion =
                             evento.observacion
@@ -618,6 +667,7 @@ class PartidoEnVivoViewModel(
         }
 
         if (
+            tipo.codigo != "CAMBIO" &&
             tipo.requiereJugador &&
             formulario.equipoEvento !=
             EquipoEvento.RIVAL &&
@@ -653,6 +703,22 @@ class PartidoEnVivoViewModel(
         }
 
         if (
+            tipo.codigo == "TARJETA" &&
+            formulario.tipoTarjeta ==
+            TipoTarjeta.NINGUNA
+        ) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "Selecciona si la tarjeta es amarilla o roja"
+                )
+            }
+
+            return
+        }
+
+        if (
             tipo.requiereObservacion &&
             formulario.observacion
                 .isBlank()
@@ -666,6 +732,75 @@ class PartidoEnVivoViewModel(
             }
 
             return
+        }
+        if (tipo.codigo == "CAMBIO") {
+
+            if (
+                formulario.equipoEvento ==
+                EquipoEvento.PROPIO
+            ) {
+
+                if (
+                    formulario.idJugadorSale.isBlank() ||
+                    formulario.idJugadorEntra.isBlank()
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "Selecciona el jugador que sale y el jugador que entra"
+                        )
+                    }
+                    return
+                }
+
+                if (
+                    formulario.idJugadorSale ==
+                    formulario.idJugadorEntra
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "El jugador que entra debe ser diferente al que sale"
+                        )
+                    }
+                    return
+                }
+
+            } else if (
+                formulario.equipoEvento ==
+                EquipoEvento.RIVAL
+            ) {
+
+                if (
+                    formulario.nombreJugadorSaleRival.isBlank() ||
+                    formulario.nombreJugadorEntraRival.isBlank()
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "Indica quién sale y quién entra"
+                        )
+                    }
+                    return
+                }
+
+                if (
+                    formulario.nombreJugadorSaleRival
+                        .trim()
+                        .equals(
+                            formulario.nombreJugadorEntraRival.trim(),
+                            ignoreCase = true
+                        )
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "El jugador que entra debe ser diferente al que sale"
+                        )
+                    }
+                    return
+                }
+            }
         }
 
         viewModelScope.launch {
@@ -707,6 +842,22 @@ class PartidoEnVivoViewModel(
                     nombreJugadorRival =
                         formulario
                             .nombreJugadorRival,
+
+                    idJugadorSale =
+                        formulario.idJugadorSale,
+
+                    nombreJugadorSaleRival =
+                        formulario.nombreJugadorSaleRival,
+
+                    idJugadorEntra =
+                        formulario.idJugadorEntra,
+
+                    nombreJugadorEntraRival =
+                        formulario.nombreJugadorEntraRival,
+
+                    tipoTarjeta =
+                        formulario
+                            .tipoTarjeta,
 
                     observacion =
                         formulario.observacion,
@@ -924,7 +1075,12 @@ class PartidoEnVivoViewModel(
                          */
                         idJugador = "",
 
-                        nombreJugadorRival = ""
+                        nombreJugadorRival = "",
+
+                        idJugadorSale = "",
+                        nombreJugadorSaleRival = "",
+                        idJugadorEntra = "",
+                        nombreJugadorEntraRival = "",
                     )
             )
         }
@@ -945,6 +1101,58 @@ class PartidoEnVivoViewModel(
         }
     }
 
+    fun cambiarJugadorSale(
+        idJugador: String
+    ) {
+        _estado.update {
+            it.copy(
+                formulario =
+                    it.formulario.copy(
+                        idJugadorSale = idJugador
+                    )
+            )
+        }
+    }
+
+    fun cambiarJugadorEntra(
+        idJugador: String
+    ) {
+        _estado.update {
+            it.copy(
+                formulario =
+                    it.formulario.copy(
+                        idJugadorEntra = idJugador
+                    )
+            )
+        }
+    }
+
+    fun cambiarJugadorSaleRival(
+        nombre: String
+    ) {
+        _estado.update {
+            it.copy(
+                formulario =
+                    it.formulario.copy(
+                        nombreJugadorSaleRival = nombre
+                    )
+            )
+        }
+    }
+
+    fun cambiarJugadorEntraRival(
+        nombre: String
+    ) {
+        _estado.update {
+            it.copy(
+                formulario =
+                    it.formulario.copy(
+                        nombreJugadorEntraRival = nombre
+                    )
+            )
+        }
+    }
+
     fun cambiarNombreJugadorRival(
         valor: String
     ) {
@@ -960,6 +1168,20 @@ class PartidoEnVivoViewModel(
         }
     }
 
+    fun cambiarTipoTarjeta(
+        tipoTarjeta: TipoTarjeta
+    ) {
+
+        _estado.update {
+            it.copy(
+                formulario =
+                    it.formulario.copy(
+                        tipoTarjeta =
+                            tipoTarjeta
+                    )
+            )
+        }
+    }
     fun cambiarObservacion(
         valor: String
     ) {
@@ -1046,7 +1268,78 @@ class PartidoEnVivoViewModel(
             return
         }
 
+        if (tipo.codigo == "CAMBIO") {
+
+            if (
+                formulario.equipoEvento ==
+                EquipoEvento.PROPIO
+            ) {
+
+                if (
+                    formulario.idJugadorSale.isBlank() ||
+                    formulario.idJugadorEntra.isBlank()
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "Selecciona el jugador que sale y el jugador que entra"
+                        )
+                    }
+                    return
+                }
+
+                if (
+                    formulario.idJugadorSale ==
+                    formulario.idJugadorEntra
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "El jugador que entra debe ser diferente al que sale"
+                        )
+                    }
+                    return
+                }
+
+            } else if (
+                formulario.equipoEvento ==
+                EquipoEvento.RIVAL
+            ) {
+
+                if (
+                    formulario.nombreJugadorSaleRival.isBlank() ||
+                    formulario.nombreJugadorEntraRival.isBlank()
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "Indica quién sale y quién entra en el equipo rival"
+                        )
+                    }
+                    return
+                }
+
+                if (
+                    formulario.nombreJugadorSaleRival
+                        .trim()
+                        .equals(
+                            formulario.nombreJugadorEntraRival.trim(),
+                            ignoreCase = true
+                        )
+                ) {
+                    _estado.update {
+                        it.copy(
+                            error =
+                                "El jugador que entra debe ser diferente al que sale"
+                        )
+                    }
+                    return
+                }
+            }
+        }
+
         if (
+            tipo.codigo != "CAMBIO" &&
             tipo.requiereJugador &&
             formulario.equipoEvento != EquipoEvento.RIVAL &&
             formulario.idJugador.isBlank()
@@ -1063,18 +1356,33 @@ class PartidoEnVivoViewModel(
         }
 
         if (
+            tipo.codigo != "CAMBIO" &&
             tipo.requiereJugador &&
             formulario.equipoEvento ==
             EquipoEvento.RIVAL &&
-            formulario
-                .nombreJugadorRival
-                .isBlank()
+            formulario.nombreJugadorRival.isBlank()
         ) {
 
             _estado.update {
                 it.copy(
                     error =
                         "Indica el jugador rival"
+                )
+            }
+
+            return
+        }
+
+        if (
+            tipo.codigo == "TARJETA" &&
+            formulario.tipoTarjeta ==
+            TipoTarjeta.NINGUNA
+        ) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "Selecciona si la tarjeta es amarilla o roja"
                 )
             }
 
@@ -1129,6 +1437,22 @@ class PartidoEnVivoViewModel(
                     nombreJugadorRival =
                         formulario
                             .nombreJugadorRival,
+
+                    idJugadorSale =
+                        formulario.idJugadorSale,
+
+                    nombreJugadorSaleRival =
+                        formulario.nombreJugadorSaleRival,
+
+                    idJugadorEntra =
+                        formulario.idJugadorEntra,
+
+                    nombreJugadorEntraRival =
+                        formulario.nombreJugadorEntraRival,
+
+                    tipoTarjeta =
+                        formulario
+                            .tipoTarjeta,
 
                     observacion =
                         formulario

@@ -22,6 +22,7 @@ import com.example.projectsportpro2026_2.datos.sincronizacion.RegistroRechazos
 import com.example.projectsportpro2026_2.datos.sincronizacion.confirmarOEncolar
 import com.example.projectsportpro2026_2.datos.resumen.RepositorioResumenPartido
 import kotlinx.coroutines.tasks.await
+import com.example.projectsportpro2026_2.datos.modelo.evento.TipoTarjeta
 
 data class ContextoPartidoEnVivo(
     val partido: Partido,
@@ -318,6 +319,11 @@ class RepositorioEventosPartido(
         equipoEvento: EquipoEvento,
         idJugador: String,
         nombreJugadorRival: String,
+        idJugadorSale: String,
+        nombreJugadorSaleRival: String,
+        idJugadorEntra: String,
+        nombreJugadorEntraRival: String,
+        tipoTarjeta: TipoTarjeta,
         observacion: String,
         uid: String
     ): Result<EventoPartido> =
@@ -412,13 +418,76 @@ class RepositorioEventosPartido(
                 )
 
             val jugadorFinal =
-                validarJugador(
-                    partido = partido,
+                if (tipo.codigo == "CAMBIO") {
+                    "" to ""
+                } else {
+                    validarJugador(
+                        partido = partido,
+                        tipo = tipo,
+                        equipoEvento = equipoFinal,
+                        idJugador = idJugador,
+                        nombreJugadorRival =
+                            nombreJugadorRival
+                    )
+                }
+            val jugadorSale =
+                if (tipo.codigo == "CAMBIO") {
+
+                    validarJugador(
+                        partido = partido,
+                        tipo = tipo,
+                        equipoEvento = equipoFinal,
+                        idJugador = idJugadorSale,
+                        nombreJugadorRival =
+                            nombreJugadorSaleRival
+                    )
+
+                } else {
+                    "" to ""
+                }
+
+            val jugadorEntra =
+                if (tipo.codigo == "CAMBIO") {
+
+                    validarJugador(
+                        partido = partido,
+                        tipo = tipo,
+                        equipoEvento = equipoFinal,
+                        idJugador = idJugadorEntra,
+                        nombreJugadorRival =
+                            nombreJugadorEntraRival
+                    )
+
+                } else {
+                    "" to ""
+                }
+
+            if (
+                tipo.codigo == "CAMBIO" &&
+                (
+                        (
+                                jugadorSale.first.isNotBlank() &&
+                                        jugadorSale.first ==
+                                        jugadorEntra.first
+                                ) ||
+                                (
+                                        jugadorSale.first.isBlank() &&
+                                                jugadorSale.second.equals(
+                                                    jugadorEntra.second,
+                                                    ignoreCase = true
+                                                )
+                                        )
+                        )
+            ) {
+                throw IllegalArgumentException(
+                    "El jugador que entra debe ser diferente al que sale"
+                )
+            }
+
+            val tipoTarjetaFinal =
+                validarTipoTarjeta(
                     tipo = tipo,
-                    equipoEvento = equipoFinal,
-                    idJugador = idJugador,
-                    nombreJugadorRival =
-                        nombreJugadorRival
+                    tipoTarjeta = tipoTarjeta
                 )
 
             val observacionFinal =
@@ -462,10 +531,33 @@ class RepositorioEventosPartido(
                         equipoFinal,
 
                     idJugador =
-                        jugadorFinal.first,
+                        if (tipo.codigo == "CAMBIO") {
+                            jugadorSale.first
+                        } else {
+                            jugadorFinal.first
+                        },
 
                     nombreJugador =
-                        jugadorFinal.second,
+                        if (tipo.codigo == "CAMBIO") {
+                            jugadorSale.second
+                        } else {
+                            jugadorFinal.second
+                        },
+
+                    idJugadorSale =
+                        jugadorSale.first,
+
+                    nombreJugadorSale =
+                        jugadorSale.second,
+
+                    idJugadorEntra =
+                        jugadorEntra.first,
+
+                    nombreJugadorEntra =
+                        jugadorEntra.second,
+
+                    tipoTarjeta =
+                        tipoTarjetaFinal,
 
                     observacion =
                         observacionFinal,
@@ -658,6 +750,26 @@ class RepositorioEventosPartido(
                 jugador.nombreCompleto()
     }
 
+    private fun validarTipoTarjeta(
+        tipo: TipoEventoCatalogo,
+        tipoTarjeta: TipoTarjeta
+    ): TipoTarjeta {
+
+        if (tipo.codigo != "TARJETA") {
+            return TipoTarjeta.NINGUNA
+        }
+
+        if (
+            tipoTarjeta ==
+            TipoTarjeta.NINGUNA
+        ) {
+            throw IllegalArgumentException(
+                "Debes indicar si la tarjeta es amarilla o roja"
+            )
+        }
+
+        return tipoTarjeta
+    }
     private fun validarObservacion(
         tipo: TipoEventoCatalogo,
         observacion: String
@@ -704,9 +816,23 @@ class RepositorioEventosPartido(
             nombreJugador =
                 evento.nombreJugador,
 
+            idJugadorSale =
+                evento.idJugadorSale,
+
+            nombreJugadorSale =
+                evento.nombreJugadorSale,
+
+            idJugadorEntra =
+                evento.idJugadorEntra,
+
+            nombreJugadorEntra =
+                evento.nombreJugadorEntra,
+
+            tipoTarjeta =
+                evento.tipoTarjeta,
+
             observacion =
                 evento.observacion,
-
             afectaMarcador =
                 evento.afectaMarcador,
 
@@ -753,9 +879,9 @@ class RepositorioEventosPartido(
                             EstadoEventoPartido.ACTIVO
                 }
                 .sortedWith(
-                    compareBy<EventoPartido> {
+                    compareByDescending<EventoPartido> {
                         it.minuto
-                    }.thenBy {
+                    }.thenByDescending {
                         it.fechaCaptura
                     }
                 )
@@ -845,6 +971,14 @@ class RepositorioEventosPartido(
 
         idJugador: String,
         nombreJugadorRival: String,
+
+        idJugadorSale: String,
+        nombreJugadorSaleRival: String,
+
+        idJugadorEntra: String,
+        nombreJugadorEntraRival: String,
+
+        tipoTarjeta: TipoTarjeta,
 
         observacion: String,
 
@@ -992,15 +1126,76 @@ class RepositorioEventosPartido(
                 )
 
             val jugadorFinal =
-                validarJugadorCorreccion(
-                    partido = partido,
+                if (tipo.codigo == "CAMBIO") {
+                    "" to ""
+                } else {
+                    validarJugadorCorreccion(
+                        partido = partido,
+                        tipo = tipo,
+                        equipoEvento = equipoFinal,
+                        idJugador = idJugador,
+                        nombreJugadorRival =
+                            nombreJugadorRival
+                    )
+                }
+            val jugadorSale =
+                if (tipo.codigo == "CAMBIO") {
+
+                    validarJugadorCorreccion(
+                        partido = partido,
+                        tipo = tipo,
+                        equipoEvento = equipoFinal,
+                        idJugador = idJugadorSale,
+                        nombreJugadorRival =
+                            nombreJugadorSaleRival
+                    )
+
+                } else {
+                    "" to ""
+                }
+
+            val jugadorEntra =
+                if (tipo.codigo == "CAMBIO") {
+
+                    validarJugadorCorreccion(
+                        partido = partido,
+                        tipo = tipo,
+                        equipoEvento = equipoFinal,
+                        idJugador = idJugadorEntra,
+                        nombreJugadorRival =
+                            nombreJugadorEntraRival
+                    )
+
+                } else {
+                    "" to ""
+                }
+
+            if (
+                tipo.codigo == "CAMBIO" &&
+                (
+                        (
+                                jugadorSale.first.isNotBlank() &&
+                                        jugadorSale.first ==
+                                        jugadorEntra.first
+                                ) ||
+                                (
+                                        jugadorSale.first.isBlank() &&
+                                                jugadorSale.second.equals(
+                                                    jugadorEntra.second,
+                                                    ignoreCase = true
+                                                )
+                                        )
+                        )
+            ) {
+                throw IllegalArgumentException(
+                    "El jugador que entra debe ser diferente al que sale"
+                )
+            }
+
+            val tipoTarjetaFinal =
+                validarTipoTarjeta(
                     tipo = tipo,
-                    equipoEvento =
-                        equipoFinal,
-                    idJugador =
-                        idJugador,
-                    nombreJugadorRival =
-                        nombreJugadorRival
+                    tipoTarjeta = tipoTarjeta
                 )
 
             val observacionFinal =
@@ -1091,10 +1286,33 @@ class RepositorioEventosPartido(
                             equipoFinal,
 
                         idJugador =
-                            jugadorFinal.first,
+                            if (tipo.codigo == "CAMBIO") {
+                                jugadorSale.first
+                            } else {
+                                jugadorFinal.first
+                            },
 
                         nombreJugador =
-                            jugadorFinal.second,
+                            if (tipo.codigo == "CAMBIO") {
+                                jugadorSale.second
+                            } else {
+                                jugadorFinal.second
+                            },
+
+                        idJugadorSale =
+                            jugadorSale.first,
+
+                        nombreJugadorSale =
+                            jugadorSale.second,
+
+                        idJugadorEntra =
+                            jugadorEntra.first,
+
+                        nombreJugadorEntra =
+                            jugadorEntra.second,
+
+                        tipoTarjeta =
+                            tipoTarjetaFinal,
 
                         observacion =
                             observacionFinal,

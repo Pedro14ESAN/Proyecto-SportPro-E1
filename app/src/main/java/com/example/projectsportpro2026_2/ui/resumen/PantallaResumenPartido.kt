@@ -630,8 +630,13 @@ private fun FilaEventoFuente(e: EventoPartido, nombreEquipo: String, nombreRival
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("${e.minuto}'", color = SportProNavy, fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold, modifier = Modifier.width(44.dp))
-            Text(simboloEvento(e.codigoTipoEvento, e.nombreTipoEvento, e.observacion),
-                modifier = Modifier.width(28.dp))
+            Text(
+                simboloEvento(
+                    codigo = e.codigoTipoEvento,
+                    tipoTarjeta = e.tipoTarjeta
+                ),
+                modifier = Modifier.width(28.dp)
+            )
             Column(Modifier.weight(1f)) {
                 Text(e.nombreTipoEvento.ifBlank { e.codigoTipoEvento }, color = SportProNavy,
                     fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
