@@ -22,6 +22,7 @@ import com.example.projectsportpro2026_2.datos.sincronizacion.RegistroRechazos
 import com.example.projectsportpro2026_2.datos.sincronizacion.confirmarOEncolar
 import com.example.projectsportpro2026_2.datos.resumen.RepositorioResumenPartido
 import kotlinx.coroutines.tasks.await
+import com.example.projectsportpro2026_2.datos.modelo.evento.TipoTarjeta
 
 data class ContextoPartidoEnVivo(
     val partido: Partido,
@@ -318,6 +319,7 @@ class RepositorioEventosPartido(
         equipoEvento: EquipoEvento,
         idJugador: String,
         nombreJugadorRival: String,
+        tipoTarjeta: TipoTarjeta,
         observacion: String,
         uid: String
     ): Result<EventoPartido> =
@@ -421,6 +423,12 @@ class RepositorioEventosPartido(
                         nombreJugadorRival
                 )
 
+            val tipoTarjetaFinal =
+                validarTipoTarjeta(
+                    tipo = tipo,
+                    tipoTarjeta = tipoTarjeta
+                )
+
             val observacionFinal =
                 validarObservacion(
                     tipo = tipo,
@@ -466,6 +474,9 @@ class RepositorioEventosPartido(
 
                     nombreJugador =
                         jugadorFinal.second,
+
+                    tipoTarjeta =
+                        tipoTarjetaFinal,
 
                     observacion =
                         observacionFinal,
@@ -658,6 +669,26 @@ class RepositorioEventosPartido(
                 jugador.nombreCompleto()
     }
 
+    private fun validarTipoTarjeta(
+        tipo: TipoEventoCatalogo,
+        tipoTarjeta: TipoTarjeta
+    ): TipoTarjeta {
+
+        if (tipo.codigo != "TARJETA") {
+            return TipoTarjeta.NINGUNA
+        }
+
+        if (
+            tipoTarjeta ==
+            TipoTarjeta.NINGUNA
+        ) {
+            throw IllegalArgumentException(
+                "Debes indicar si la tarjeta es amarilla o roja"
+            )
+        }
+
+        return tipoTarjeta
+    }
     private fun validarObservacion(
         tipo: TipoEventoCatalogo,
         observacion: String
@@ -704,9 +735,11 @@ class RepositorioEventosPartido(
             nombreJugador =
                 evento.nombreJugador,
 
+            tipoTarjeta =
+                evento.tipoTarjeta,
+
             observacion =
                 evento.observacion,
-
             afectaMarcador =
                 evento.afectaMarcador,
 
@@ -845,6 +878,8 @@ class RepositorioEventosPartido(
 
         idJugador: String,
         nombreJugadorRival: String,
+
+        tipoTarjeta: TipoTarjeta,
 
         observacion: String,
 
@@ -1003,6 +1038,12 @@ class RepositorioEventosPartido(
                         nombreJugadorRival
                 )
 
+            val tipoTarjetaFinal =
+                validarTipoTarjeta(
+                    tipo = tipo,
+                    tipoTarjeta = tipoTarjeta
+                )
+
             val observacionFinal =
                 validarObservacion(
                     tipo = tipo,
@@ -1095,6 +1136,9 @@ class RepositorioEventosPartido(
 
                         nombreJugador =
                             jugadorFinal.second,
+
+                        tipoTarjeta =
+                            tipoTarjetaFinal,
 
                         observacion =
                             observacionFinal,

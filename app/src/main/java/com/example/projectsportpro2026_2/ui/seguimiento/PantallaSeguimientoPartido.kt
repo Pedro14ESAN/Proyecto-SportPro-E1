@@ -686,9 +686,8 @@ private fun TarjetaEventoVivo(
 
             Text(
                 text = simboloEvento(
-                    evento.codigoTipoEvento,
-                    evento.nombreTipoEvento,
-                    evento.observacion
+                    codigo = evento.codigoTipoEvento,
+                    tipoTarjeta = evento.tipoTarjeta
                 ),
                 fontSize = 18.sp
             )

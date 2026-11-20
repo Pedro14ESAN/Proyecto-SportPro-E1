@@ -10,6 +10,7 @@ import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAutenticac
 import com.example.projectsportpro2026_2.datos.repositorio.evento.ContextoPartidoEnVivo
 import com.example.projectsportpro2026_2.datos.repositorio.evento.MarcadorPartido
 import com.example.projectsportpro2026_2.datos.repositorio.evento.RepositorioEventosPartido
+import com.example.projectsportpro2026_2.datos.modelo.evento.TipoTarjeta
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +30,9 @@ data class FormularioEventoPartido(
     val idJugador: String = "",
 
     val nombreJugadorRival: String = "",
+
+    val tipoTarjeta: TipoTarjeta =
+        TipoTarjeta.NINGUNA,
 
     val observacion: String = ""
 )
@@ -434,6 +438,9 @@ class PartidoEnVivoViewModel(
                                 ""
                             },
 
+                        tipoTarjeta =
+                            evento.tipoTarjeta,
+
                         observacion =
                             evento.observacion
                     ),
@@ -653,6 +660,22 @@ class PartidoEnVivoViewModel(
         }
 
         if (
+            tipo.codigo == "TARJETA" &&
+            formulario.tipoTarjeta ==
+            TipoTarjeta.NINGUNA
+        ) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "Selecciona si la tarjeta es amarilla o roja"
+                )
+            }
+
+            return
+        }
+
+        if (
             tipo.requiereObservacion &&
             formulario.observacion
                 .isBlank()
@@ -707,6 +730,10 @@ class PartidoEnVivoViewModel(
                     nombreJugadorRival =
                         formulario
                             .nombreJugadorRival,
+
+                    tipoTarjeta =
+                        formulario
+                            .tipoTarjeta,
 
                     observacion =
                         formulario.observacion,
@@ -960,6 +987,20 @@ class PartidoEnVivoViewModel(
         }
     }
 
+    fun cambiarTipoTarjeta(
+        tipoTarjeta: TipoTarjeta
+    ) {
+
+        _estado.update {
+            it.copy(
+                formulario =
+                    it.formulario.copy(
+                        tipoTarjeta =
+                            tipoTarjeta
+                    )
+            )
+        }
+    }
     fun cambiarObservacion(
         valor: String
     ) {
@@ -1082,6 +1123,22 @@ class PartidoEnVivoViewModel(
         }
 
         if (
+            tipo.codigo == "TARJETA" &&
+            formulario.tipoTarjeta ==
+            TipoTarjeta.NINGUNA
+        ) {
+
+            _estado.update {
+                it.copy(
+                    error =
+                        "Selecciona si la tarjeta es amarilla o roja"
+                )
+            }
+
+            return
+        }
+
+        if (
             tipo.requiereObservacion &&
             formulario.observacion
                 .isBlank()
@@ -1129,6 +1186,10 @@ class PartidoEnVivoViewModel(
                     nombreJugadorRival =
                         formulario
                             .nombreJugadorRival,
+
+                    tipoTarjeta =
+                        formulario
+                            .tipoTarjeta,
 
                     observacion =
                         formulario

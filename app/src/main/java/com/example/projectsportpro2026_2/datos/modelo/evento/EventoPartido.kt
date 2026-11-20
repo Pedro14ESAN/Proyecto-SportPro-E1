@@ -55,6 +55,9 @@ data class EventoPartido(
      */
     val nombreJugador: String = "",
 
+    val tipoTarjeta: TipoTarjeta =
+        TipoTarjeta.NINGUNA,
+
     val observacion: String = "",
 
     /*
@@ -114,4 +117,10 @@ enum class EquipoEvento {
 enum class EstadoEventoPartido {
     ACTIVO,
     ANULADO
+}
+
+enum class TipoTarjeta {
+    NINGUNA,
+    AMARILLA,
+    ROJA
 }

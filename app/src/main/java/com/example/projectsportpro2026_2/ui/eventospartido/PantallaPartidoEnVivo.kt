@@ -51,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
+import com.example.projectsportpro2026_2.datos.modelo.evento.TipoTarjeta
 import com.example.projectsportpro2026_2.datos.modelo.evento.EquipoEvento
 import com.example.projectsportpro2026_2.datos.modelo.evento.EventoPartido
 import com.example.projectsportpro2026_2.datos.modelo.evento.TipoEventoCatalogo
@@ -493,6 +494,9 @@ fun PantallaPartidoEnVivo(
             onCambiarJugadorRival =
                 viewModel::cambiarNombreJugadorRival,
 
+            onCambiarTipoTarjeta =
+                viewModel::cambiarTipoTarjeta,
+
             onCambiarObservacion =
                 viewModel::cambiarObservacion,
 
@@ -566,6 +570,9 @@ fun PantallaPartidoEnVivo(
 
                 onJugadorRival =
                     viewModel::cambiarNombreJugadorRival,
+
+                onTipoTarjeta =
+                    viewModel::cambiarTipoTarjeta,
 
                 onObservacion =
                     viewModel::cambiarObservacion,
@@ -1086,6 +1093,7 @@ private fun ModalRegistroEvento(
     onCambiarEquipo: (EquipoEvento) -> Unit,
     onCambiarJugador: (String) -> Unit,
     onCambiarJugadorRival: (String) -> Unit,
+    onCambiarTipoTarjeta: (TipoTarjeta) -> Unit,
     onCambiarObservacion: (String) -> Unit,
     onRegistrar: () -> Unit
 
@@ -1361,6 +1369,60 @@ private fun ModalRegistroEvento(
                 }
             }
 
+            if (tipo.codigo == "TARJETA") {
+
+                Text(
+                    text = "TIPO DE TARJETA",
+                    color = SportProTextoSecundario,
+                    style =
+                        MaterialTheme.typography.labelSmall,
+                    fontWeight =
+                        FontWeight.Black
+                )
+
+                Row(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    horizontalArrangement =
+                        Arrangement.spacedBy(8.dp)
+                ) {
+
+                    BotonTipoTarjeta(
+                        texto = "Amarilla",
+                        simbolo = "▰",
+                        seleccionado =
+                            formulario.tipoTarjeta ==
+                                    TipoTarjeta.AMARILLA,
+                        habilitado = !registrando,
+                        color = Color(0xFFD9A900),
+                        modifier =
+                            Modifier.weight(1f),
+                        onClick = {
+                            onCambiarTipoTarjeta(
+                                TipoTarjeta.AMARILLA
+                            )
+                        }
+                    )
+
+                    BotonTipoTarjeta(
+                        texto = "Roja",
+                        simbolo = "▰",
+                        seleccionado =
+                            formulario.tipoTarjeta ==
+                                    TipoTarjeta.ROJA,
+                        habilitado = !registrando,
+                        color = Color(0xFFC62828),
+                        modifier =
+                            Modifier.weight(1f),
+                        onClick = {
+                            onCambiarTipoTarjeta(
+                                TipoTarjeta.ROJA
+                            )
+                        }
+                    )
+                }
+            }
+
             if (
                 tipo.requiereObservacion
             ) {
@@ -1459,6 +1521,80 @@ private fun ModalRegistroEvento(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun BotonTipoTarjeta(
+    texto: String,
+    simbolo: String,
+    seleccionado: Boolean,
+    habilitado: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+
+    Surface(
+        modifier = modifier
+            .height(50.dp)
+            .clickable(
+                enabled = habilitado,
+                onClick = onClick
+            ),
+        shape = RoundedCornerShape(12.dp),
+        color =
+            if (seleccionado) {
+                color.copy(alpha = 0.14f)
+            } else {
+                SportProSuperficie
+            },
+        border = BorderStroke(
+            width =
+                if (seleccionado) {
+                    2.dp
+                } else {
+                    1.dp
+                },
+            color =
+                if (seleccionado) {
+                    color
+                } else {
+                    SportProBorde
+                }
+        )
+    ) {
+
+        Row(
+            modifier =
+                Modifier.padding(
+                    horizontal = 12.dp
+                ),
+            verticalAlignment =
+                Alignment.CenterVertically,
+            horizontalArrangement =
+                Arrangement.Center
+        ) {
+
+            Text(
+                text = simbolo,
+                color = color,
+                fontWeight =
+                    FontWeight.Black
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.size(7.dp)
+            )
+
+            Text(
+                text = texto,
+                color = SportProNavy,
+                fontWeight =
+                    FontWeight.Bold
+            )
         }
     }
 }

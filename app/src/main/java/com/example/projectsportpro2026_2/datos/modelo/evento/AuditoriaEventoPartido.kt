@@ -13,6 +13,9 @@ data class DatosEventoAuditoria(
     val idJugador: String = "",
     val nombreJugador: String = "",
 
+    val tipoTarjeta: TipoTarjeta =
+        TipoTarjeta.NINGUNA,
+
     val observacion: String = "",
 
     val afectaMarcador: Boolean = false,

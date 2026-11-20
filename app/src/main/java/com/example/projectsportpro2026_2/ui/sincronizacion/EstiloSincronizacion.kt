@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.projectsportpro2026_2.datos.modelo.evento.TipoTarjeta
 
 /*
  * Colores de estado tomados del diseño en Figma
@@ -50,32 +51,55 @@ fun horaConSegundos(milisegundos: Long): String =
  */
 fun simboloEvento(
     codigo: String,
-    nombre: String = "",
-    observacion: String = ""
+    tipoTarjeta: TipoTarjeta =
+        TipoTarjeta.NINGUNA
 ): String =
     when (codigo) {
 
         "INICIO" -> "▶"
-
         "FIN" -> "■"
-
         "SAQUE_META" -> "↑"
-
         "SAQUE_LATERAL" -> "↔"
-
         "TIRO_ESQUINA" -> "⌑"
-
         "FALTA" -> "!"
-
         "PENAL" -> "◎"
-
         "GOL" -> "⚽"
 
-        "TARJETA" -> "▰"
+        "TARJETA" ->
+            "▰"
 
         "FUERA_JUEGO" -> "⚑"
-
         "CAMBIO" -> "⇅"
 
         else -> "◆"
+    }
+
+fun colorSimboloEvento(
+    codigo: String,
+    tipoTarjeta: TipoTarjeta =
+        TipoTarjeta.NINGUNA
+): Color =
+    when {
+
+        codigo == "TARJETA" &&
+                tipoTarjeta ==
+                TipoTarjeta.AMARILLA ->
+            Color(0xFFE0B000)
+
+        codigo == "TARJETA" &&
+                tipoTarjeta ==
+                TipoTarjeta.ROJA ->
+            Color(0xFFC62828)
+
+        codigo == "TARJETA" ->
+            Color(0xFF9A7200)
+
+        codigo == "GOL" ->
+            SyncVerde
+
+        codigo == "FALTA" ->
+            SyncRojo
+
+        else ->
+            Color(0xFF123047)
     }

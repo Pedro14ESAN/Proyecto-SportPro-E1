@@ -445,11 +445,21 @@ fun TarjetaEventoSincronizado(
 
             Text(
                 text = simboloEvento(
-                    evento.codigoTipoEvento,
-                    evento.nombreTipoEvento,
-                    evento.observacion
+                    codigo =
+                        evento.codigoTipoEvento,
+                    tipoTarjeta =
+                        evento.tipoTarjeta
                 ),
-                style = MaterialTheme.typography.titleMedium
+                color = colorSimboloEvento(
+                    codigo =
+                        evento.codigoTipoEvento,
+                    tipoTarjeta =
+                        evento.tipoTarjeta
+                ),
+                style =
+                    MaterialTheme.typography.titleMedium,
+                fontWeight =
+                    FontWeight.Black
             )
 
             Column(
@@ -548,9 +558,16 @@ fun TarjetaEventoRechazado(
 
                 Text(
                     text = simboloEvento(
-                        evento.codigoTipoEvento,
-                        evento.nombreTipoEvento,
-                        evento.observacion
+                        codigo =
+                            evento.codigoTipoEvento,
+                        tipoTarjeta =
+                            evento.tipoTarjeta
+                    ),
+                    color = colorSimboloEvento(
+                        codigo =
+                            evento.codigoTipoEvento,
+                        tipoTarjeta =
+                            evento.tipoTarjeta
                     )
                 )
 
@@ -645,11 +662,21 @@ fun ModalConflictoSincronizacion(
             ) {
                 Text(
                     text = simboloEvento(
-                        evento.codigoTipoEvento,
-                        evento.nombreTipoEvento,
-                        evento.observacion
+                        codigo =
+                            evento.codigoTipoEvento,
+                        tipoTarjeta =
+                            evento.tipoTarjeta
                     ),
-                    style = MaterialTheme.typography.headlineSmall
+                    color = colorSimboloEvento(
+                        codigo =
+                            evento.codigoTipoEvento,
+                        tipoTarjeta =
+                            evento.tipoTarjeta
+                    ),
+                    style =
+                        MaterialTheme.typography.headlineSmall,
+                    fontWeight =
+                        FontWeight.Black
                 )
 
                 Text(

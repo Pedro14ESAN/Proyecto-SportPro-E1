@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import com.example.projectsportpro2026_2.datos.modelo.evento.TipoTarjeta
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.evento.AuditoriaEventoPartido
 import com.example.projectsportpro2026_2.datos.modelo.evento.EquipoEvento
@@ -85,6 +86,7 @@ fun ModalGestionEvento(
     onEquipo: (EquipoEvento) -> Unit,
     onJugador: (String) -> Unit,
     onJugadorRival: (String) -> Unit,
+    onTipoTarjeta: (TipoTarjeta) -> Unit,
     onObservacion: (String) -> Unit,
     onGuardarCorreccion: () -> Unit,
     onConfirmarAnulacion: () -> Unit
@@ -238,6 +240,9 @@ fun ModalGestionEvento(
                     onJugadorRival =
                         onJugadorRival,
 
+                    onTipoTarjeta =
+                        onTipoTarjeta,
+
                     onObservacion =
                         onObservacion,
 
@@ -378,6 +383,26 @@ private fun DetalleEvento(
                 DatoDetalle(
                     "Jugador",
                     evento.nombreJugador
+                )
+            }
+
+            if (
+                evento.codigoTipoEvento == "TARJETA" &&
+                evento.tipoTarjeta != TipoTarjeta.NINGUNA
+            ) {
+
+                DatoDetalle(
+                    "Tipo de tarjeta",
+                    when (evento.tipoTarjeta) {
+                        TipoTarjeta.AMARILLA ->
+                            "Amarilla"
+
+                        TipoTarjeta.ROJA ->
+                            "Roja"
+
+                        TipoTarjeta.NINGUNA ->
+                            "Sin especificar"
+                    }
                 )
             }
 
@@ -591,6 +616,7 @@ private fun FormularioCorreccion(
     onEquipo: (EquipoEvento) -> Unit,
     onJugador: (String) -> Unit,
     onJugadorRival: (String) -> Unit,
+    onTipoTarjeta: (TipoTarjeta) -> Unit,
     onObservacion: (String) -> Unit,
     onGuardar: () -> Unit,
     onCancelar: () -> Unit
@@ -637,6 +663,50 @@ private fun FormularioCorreccion(
                     KeyboardType.Number
             )
     )
+
+    if (tipo.codigo == "TARJETA") {
+
+        Text(
+            text = "TIPO DE TARJETA",
+            color = SportProTextoSecundario,
+            fontWeight = FontWeight.Bold
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement =
+                Arrangement.spacedBy(8.dp)
+        ) {
+
+            BotonTipoTarjetaCorreccion(
+                texto = "Amarilla",
+                seleccionado =
+                    formulario.tipoTarjeta ==
+                            TipoTarjeta.AMARILLA,
+                color = Color(0xFFD9A900),
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onTipoTarjeta(
+                        TipoTarjeta.AMARILLA
+                    )
+                }
+            )
+
+            BotonTipoTarjetaCorreccion(
+                texto = "Roja",
+                seleccionado =
+                    formulario.tipoTarjeta ==
+                            TipoTarjeta.ROJA,
+                color = Color(0xFFC62828),
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onTipoTarjeta(
+                        TipoTarjeta.ROJA
+                    )
+                }
+            )
+        }
+    }
 
     if (tipo.requiereEquipo) {
 
@@ -831,6 +901,68 @@ private fun FormularioCorreccion(
             !procesando
     ) {
         Text("Cancelar")
+    }
+}
+
+@Composable
+private fun BotonTipoTarjetaCorreccion(
+    texto: String,
+    seleccionado: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+
+    Surface(
+        modifier = modifier
+            .height(48.dp)
+            .clickable(
+                onClick = onClick
+            ),
+        shape = RoundedCornerShape(12.dp),
+        color =
+            if (seleccionado) {
+                color.copy(alpha = 0.14f)
+            } else {
+                SportProSuperficie
+            },
+        border = BorderStroke(
+            if (seleccionado) 2.dp else 1.dp,
+            if (seleccionado) {
+                color
+            } else {
+                SportProBorde
+            }
+        )
+    ) {
+
+        Row(
+            modifier =
+                Modifier.padding(
+                    horizontal = 12.dp
+                ),
+            verticalAlignment =
+                Alignment.CenterVertically,
+            horizontalArrangement =
+                Arrangement.Center
+        ) {
+
+            Text(
+                text = "▰",
+                color = color,
+                fontWeight = FontWeight.Black
+            )
+
+            Spacer(
+                modifier = Modifier.size(7.dp)
+            )
+
+            Text(
+                text = texto,
+                color = SportProNavy,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -1044,6 +1176,25 @@ private fun resumenDatos(
             textoEquipo(
                 datos.equipoEvento
             )
+    }
+
+    if (
+        datos.tipoTarjeta !=
+        TipoTarjeta.NINGUNA
+    ) {
+
+        partes +=
+            when (datos.tipoTarjeta) {
+
+                TipoTarjeta.AMARILLA ->
+                    "Tarjeta amarilla"
+
+                TipoTarjeta.ROJA ->
+                    "Tarjeta roja"
+
+                TipoTarjeta.NINGUNA ->
+                    ""
+            }
     }
 
     return partes.joinToString(
