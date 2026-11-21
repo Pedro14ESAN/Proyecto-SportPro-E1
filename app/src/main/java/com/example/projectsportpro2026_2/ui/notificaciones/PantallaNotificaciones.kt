@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +37,7 @@ import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
 @Composable
 fun PantallaNotificaciones(
     onVolver: () -> Unit,
+    abrirAlIniciar: String? = null,       // HU20 (deep link): id del aviso tocado en la barra
     onAbrirAnuncios: () -> Unit,
     onAbrirEntrenamientos: () -> Unit,
     onAbrirConvocatorias: () -> Unit,
@@ -55,6 +57,30 @@ fun PantallaNotificaciones(
     }
 
     LaunchedEffect(Unit) { viewModel.iniciar() }
+
+    // A dónde lleva cada tipo de aviso (se usa al tocar la fila y en el deep link)
+    val irAlContenido: (Notificacion) -> Unit = { destino ->
+        when (destino.tipo) {
+            TipoNotificacion.ANUNCIO -> onAbrirAnuncios()
+
+            TipoNotificacion.ENTRENAMIENTO_PUBLICADO,
+            TipoNotificacion.ENTRENAMIENTO_CAMBIADO,
+            TipoNotificacion.ENTRENAMIENTO_CANCELADO -> onAbrirEntrenamientos()
+
+            TipoNotificacion.CONVOCATORIA,
+            TipoNotificacion.CONVOCATORIA_RETIRADA -> onAbrirConvocatorias()
+        }
+    }
+
+    // HU20 (deep link): cuando cargan los avisos, abre el que se tocó en la barra.
+    // Pasa por la misma verificación de permisos que tocar la fila.
+    var deepLinkUsado by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(estado.notificaciones, abrirAlIniciar) {
+        if (deepLinkUsado || abrirAlIniciar.isNullOrBlank()) return@LaunchedEffect
+        val aviso = estado.notificaciones.find { it.id == abrirAlIniciar } ?: return@LaunchedEffect
+        deepLinkUsado = true
+        viewModel.abrir(aviso, irAlContenido)
+    }
 
     Scaffold(containerColor = SportProFondo) { relleno ->
         LazyColumn(
@@ -144,18 +170,7 @@ fun PantallaNotificaciones(
 
                 else -> items(estado.notificaciones, key = { it.id }) { notificacion ->
                     FilaNotificacion(notificacion) {
-                        viewModel.abrir(notificacion) { destino ->
-                            when (destino.tipo) {
-                                TipoNotificacion.ANUNCIO -> onAbrirAnuncios()
-
-                                TipoNotificacion.ENTRENAMIENTO_PUBLICADO,
-                                TipoNotificacion.ENTRENAMIENTO_CAMBIADO,
-                                TipoNotificacion.ENTRENAMIENTO_CANCELADO -> onAbrirEntrenamientos()
-
-                                TipoNotificacion.CONVOCATORIA,
-                                TipoNotificacion.CONVOCATORIA_RETIRADA -> onAbrirConvocatorias()
-                            }
-                        }
+                        viewModel.abrir(notificacion, irAlContenido)
                     }
                 }
             }

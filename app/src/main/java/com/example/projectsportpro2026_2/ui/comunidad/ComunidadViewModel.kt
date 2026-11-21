@@ -17,7 +17,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
+import com.example.projectsportpro2026_2.datos.remoto.ConfigSupabase
+import com.example.projectsportpro2026_2.datos.repositorio.RepositorioImagenes
 // Pestañas del Figma: "Para ti" / "Academias" / "Pruebas"
 enum class PestanaComunidad { PARA_TI, ACADEMIAS, PRUEBAS }
 
@@ -31,6 +32,9 @@ data class EstadoComunidad(
     val cargando: Boolean = false,
     val guardando: Boolean = false,
     val error: String? = null,
+    // HU21: subida de la imagen
+    val progresoImagen: Float? = null,          // null = no se está subiendo
+    val falloImagen: Boolean = false,           // ofrecer "Reintentar" o "Publicar solo texto"
     val mensaje: String? = null,
 
     // Hoja de comentarios (HU22)
@@ -56,7 +60,8 @@ data class EstadoComunidad(
 class ComunidadViewModel(
     private val repositorio: RepositorioPublicaciones = RepositorioPublicaciones(),
     private val interacciones: RepositorioInteracciones = RepositorioInteracciones(),
-    private val autenticacion: RepositorioAutenticacion = RepositorioAutenticacion()
+    private val autenticacion: RepositorioAutenticacion = RepositorioAutenticacion(),
+    private val imagenes: RepositorioImagenes = RepositorioImagenes()
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(EstadoComunidad())
@@ -117,19 +122,47 @@ class ComunidadViewModel(
         _estado.update { it.copy(pestana = pestana) }
     }
 
+    /*
+ * HU21: si hay imagen, primero se sube a Supabase (con progreso) y luego
+ * se crea la publicación con su URL. Si la subida falla, la publicación NO
+ * se crea y el usuario decide: reintentar o publicar solo el texto
+ * (caso alterno de la HU21).
+ */
     fun publicar(
         texto: String,
         visibilidad: VisibilidadPublicacion,
         idAcademia: String,
         idEquipo: String,
+        imagen: ByteArray? = null,
         alTerminar: () -> Unit = {}
     ) {
         if (_estado.value.guardando) return
 
         viewModelScope.launch {
-            _estado.update { it.copy(guardando = true, error = null) }
+            _estado.update { it.copy(guardando = true, error = null, falloImagen = false) }
 
-            repositorio.crear(_estado.value.uid, texto, visibilidad, idAcademia, idEquipo)
+            var imagenUrl = ""
+            if (imagen != null) {
+                _estado.update { it.copy(progresoImagen = 0f) }
+                try {
+                    imagenUrl = imagenes.subirImagen(
+                        ConfigSupabase.CARPETA_PUBLICACIONES, _estado.value.uid, imagen
+                    ) { p -> _estado.update { it.copy(progresoImagen = p) } }
+                } catch (e: Exception) {
+                    _estado.update {
+                        it.copy(
+                            guardando = false,
+                            progresoImagen = null,
+                            falloImagen = true,
+                            error = mensajeError(e)
+                        )
+                    }
+                    return@launch
+                }
+                _estado.update { it.copy(progresoImagen = null) }
+            }
+
+            repositorio.crear(_estado.value.uid, texto, visibilidad, idAcademia, idEquipo, imagenUrl)
                 .onSuccess { publicada ->
                     _estado.update {
                         it.copy(guardando = false, mensaje = "Publicación compartida con ${destino(publicada)}")
@@ -140,6 +173,8 @@ class ComunidadViewModel(
                 .onFailure { e -> _estado.update { it.copy(guardando = false, error = mensajeError(e)) } }
         }
     }
+
+    fun limpiarErrorImagen() = _estado.update { it.copy(falloImagen = false, error = null) }
 
     fun editar(idPublicacion: String, texto: String, alTerminar: () -> Unit = {}) {
         if (_estado.value.guardando) return
