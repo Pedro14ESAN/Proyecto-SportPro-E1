@@ -82,6 +82,8 @@ data class EstadoResumenPartido(
 
     val uidActual: String get() = contexto?.acceso?.uid.orEmpty()
 
+    val puedeModerarComentarios: Boolean get() = contexto?.puedeModerarComentarios == true
+
     val hayCambiosSinGuardar: Boolean
         get() = resumen?.estado == EstadoResumen.BORRADOR &&
                 textoEditado.trim() != resumen.textoEditado.trim()
@@ -338,10 +340,10 @@ class ResumenPartidoViewModel : ViewModel() {
         }
     }
 
-    fun eliminarComentario(comentario: ComentarioNarracion) {
+    fun eliminarComentario(comentario: ComentarioNarracion, motivo: String = "") {
         val contexto = _estado.value.contexto ?: return
         viewModelScope.launch {
-            repositorio.eliminarComentario(contexto, comentario)
+            repositorio.eliminarComentario(contexto, comentario, motivo)
                 .onSuccess { _estado.update { it.copy(mensaje = "Comentario eliminado") } }
                 .onFailure { error -> _estado.update { it.copy(mensaje = MensajesPermiso.traducir(error)) } }
         }

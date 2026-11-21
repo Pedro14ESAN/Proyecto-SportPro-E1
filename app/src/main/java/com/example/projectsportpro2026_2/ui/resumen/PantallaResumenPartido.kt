@@ -242,6 +242,7 @@ fun PantallaResumenPartido(
                         TarjetaComentarios(
                             comentarios = estado.comentariosVigentes,
                             uidActual = estado.uidActual,
+                            puedeModerar = estado.puedeModerarComentarios,
                             nuevo = estado.nuevoComentario,
                             enviando = estado.enviandoComentario,
                             onEscribir = viewModel::editarComentario,
@@ -547,13 +548,15 @@ private val TransformacionResaltado = VisualTransformation { texto ->
 private fun TarjetaComentarios(
     comentarios: List<ComentarioNarracion>,
     uidActual: String,
+    puedeModerar: Boolean,
     nuevo: String,
     enviando: Boolean,
     onEscribir: (String) -> Unit,
     onEnviar: () -> Unit,
-    onEliminar: (ComentarioNarracion) -> Unit
+    onEliminar: (ComentarioNarracion, String) -> Unit
 ) {
     var porEliminar by remember { mutableStateOf<ComentarioNarracion?>(null) }
+    var motivo by remember { mutableStateOf("") }
 
     TarjetaBlanca {
         Text("COMENTARIOS DE LOS DT (${comentarios.size})", color = SportProTextoSecundario,
@@ -585,10 +588,17 @@ private fun TarjetaComentarios(
                         Text(formatearFecha(c.fecha), color = SportProTextoSecundario, fontSize = 11.sp)
                     }
                     Text(c.texto, color = SportProNavy, fontSize = 13.sp, lineHeight = 18.sp)
-                    if (c.autor == uidActual) {
+                    // El autor borra lo suyo; el DT titular puede retirar
+                    // un comentario ofensivo o negativo de otro DT
+                    val propio = c.autor == uidActual
+                    if (propio || puedeModerar) {
                         Text(
-                            "Eliminar", color = SportProRojo, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(top = 4.dp).clickable { porEliminar = c }
+                            if (propio) "Eliminar" else "Eliminar por ofensivo o inapropiado",
+                            color = SportProRojo, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(top = 4.dp).clickable {
+                                motivo = ""
+                                porEliminar = c
+                            }
                         )
                     }
                 }
@@ -622,15 +632,38 @@ private fun TarjetaComentarios(
     }
 
     porEliminar?.let { c ->
+        val propio = c.autor == uidActual
         AlertDialog(
             onDismissRequest = { porEliminar = null },
-            title = { Text("Eliminar comentario") },
-            text = { Text("Se borrará tu comentario para todos los DT.", fontSize = 13.sp) },
+            title = { Text(if (propio) "Eliminar comentario" else "Eliminar comentario de otro DT") },
+            text = {
+                if (propio) {
+                    Text("Se borrará tu comentario para todos los DT.", fontSize = 13.sp)
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Se borrará el comentario de ${c.nombreAutor.ifBlank { "este DT" }}. " +
+                                    "El motivo y el texto original quedan en la auditoría para el ADM.",
+                            fontSize = 13.sp
+                        )
+                        OutlinedTextField(
+                            value = motivo,
+                            onValueChange = { if (it.length <= 200) motivo = it },
+                            placeholder = { Text("Motivo (ej. lenguaje ofensivo)", fontSize = 13.sp) },
+                            minLines = 2,
+                            shape = FormaCampoSportPro
+                        )
+                    }
+                }
+            },
             confirmButton = {
-                TextButton(onClick = {
-                    onEliminar(c)
-                    porEliminar = null
-                }) { Text("Eliminar", color = SportProRojo, fontWeight = FontWeight.Bold) }
+                TextButton(
+                    onClick = {
+                        onEliminar(c, motivo)
+                        porEliminar = null
+                    },
+                    enabled = propio || motivo.trim().length >= 5
+                ) { Text("Eliminar", color = SportProRojo, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
                 TextButton(onClick = { porEliminar = null }) { Text("Cancelar") }

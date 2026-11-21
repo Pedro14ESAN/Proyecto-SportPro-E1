@@ -40,7 +40,11 @@ data class ContextoResumen(
     val acceso: ContextoAcceso,
     val puedeRevisar: Boolean,       // DT autorizado: genera, edita, aprueba
     val puedeVerBorrador: Boolean    // DT o ADM de la academia
-)
+) {
+    // El DT titular del equipo modera los comentarios de los otros DT
+    val puedeModerarComentarios: Boolean
+        get() = puedeRevisar && equipo.id in acceso.idsEquiposDirigidos
+}
 
 // El proveedor de IA no respondió (sin red, cuota agotada, modelo caído)
 class ServicioIANoDisponibleException(mensaje: String) : IllegalStateException(mensaje)
@@ -185,16 +189,41 @@ class RepositorioResumenPartido(
         ).await()
     }
 
-    // Cada DT solo puede borrar sus propios comentarios
+    /*
+     * Cada DT borra sus propios comentarios. Además, el DT titular
+     * del equipo puede eliminar un comentario ofensivo o negativo de
+     * otro DT indicando el motivo; queda registrado en la auditoría
+     * (autor, texto original y motivo) para que el ADM lo revise.
+     */
     suspend fun eliminarComentario(
         contexto: ContextoResumen,
-        comentario: ComentarioNarracion
+        comentario: ComentarioNarracion,
+        motivo: String = ""
     ): Result<Unit> = intentar {
         exigirRevisor(contexto)
-        if (comentario.autor != contexto.acceso.uid) {
-            throw AccesoDenegadoException("Solo puedes eliminar tus propios comentarios.")
+        val uid = contexto.acceso.uid
+        val propio = comentario.autor == uid
+        if (!propio && !contexto.puedeModerarComentarios) {
+            throw AccesoDenegadoException(
+                "Solo el DT titular del equipo puede eliminar comentarios de otros DT."
+            )
         }
-        comentarios.document(comentario.id).delete().await()
+        val razon = motivo.trim()
+        if (!propio && razon.length < 5) {
+            throw IllegalArgumentException("Indica el motivo para eliminar el comentario.")
+        }
+
+        val lote = bd.batch()
+        lote.delete(comentarios.document(comentario.id))
+        if (!propio) {
+            auditoria.agregarA(
+                lote, AccionesAuditoria.COMENTARIO_RESUMEN_ELIMINADO, uid, contexto.acceso.rol,
+                "comentariosResumen", comentario.id, contexto.partido.idAcademia,
+                "Motivo: $razon · Autor: ${comentario.nombreAutor.ifBlank { comentario.autor }} · " +
+                        "Texto: ${comentario.texto}"
+            )
+        }
+        lote.commit().await()
     }
 
     private fun exigirRevisor(contexto: ContextoResumen) {
