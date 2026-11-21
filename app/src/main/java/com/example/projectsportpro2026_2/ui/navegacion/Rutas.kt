@@ -61,6 +61,9 @@ object Rutas {
     // HU20: notificaciones
     const val NOTIFICACIONES = "notificaciones"
 
+    // HU20: abrir el centro de notificaciones con un aviso (deep link)
+    const val NOTIFICACIONES_ABRIR = "notificaciones?abrir={idNotificacion}"
+
     const val RECUPERAR = "recuperar"
 
     // HU18: estadísticas acumuladas (Pedro)

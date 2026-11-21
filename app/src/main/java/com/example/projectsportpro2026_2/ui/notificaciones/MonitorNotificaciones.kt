@@ -7,6 +7,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -94,7 +95,14 @@ object MonitorNotificaciones {
         if (!tienePermiso(contexto)) return
 
         val abrirApp = contexto.packageManager
-            .getLaunchIntentForPackage(contexto.packageName) ?: return
+            .getLaunchIntentForPackage(contexto.packageName)
+            ?.apply {
+                // HU20 (deep link): solo viaja el id del aviso, ningún dato sensible
+                putExtra(DestinoNotificacion.EXTRA_ID_NOTIFICACION, n.id)
+                // Si la app ya está abierta, reutiliza la misma pantalla en vez de abrir otra
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            ?: return
 
         val intencion = PendingIntent.getActivity(
             contexto,

@@ -50,6 +50,8 @@ import com.example.projectsportpro2026_2.ui.moderacion.PantallaPanelModeracion
 import androidx.compose.ui.platform.LocalContext
 import com.example.projectsportpro2026_2.ui.notificaciones.MonitorNotificaciones
 import com.example.projectsportpro2026_2.ui.notificaciones.PantallaNotificaciones
+import com.example.projectsportpro2026_2.ui.notificaciones.DestinoNotificacion
+import kotlinx.coroutines.delay
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRecuperar
 import com.example.projectsportpro2026_2.ui.estadisticas.PantallaEstadisticas
 import com.example.projectsportpro2026_2.ui.resumen.PantallaResumenPartido
@@ -1037,9 +1039,18 @@ fun NavegacionApp() {
 
         // HU20: centro de notificaciones
         composable(
-            Rutas.NOTIFICACIONES
-        ) {
+            Rutas.NOTIFICACIONES_ABRIR,
+            arguments = listOf(
+                navArgument("idNotificacion") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { entrada ->
             PantallaNotificaciones(
+                // HU20 (deep link): aviso tocado en la barra del celular (null = entrada normal)
+                abrirAlIniciar = entrada.arguments?.getString("idNotificacion"),
                 onVolver = {
                     navController.popBackStack()
                 },
@@ -1053,6 +1064,29 @@ fun NavegacionApp() {
                     navController.navigate(Rutas.MIS_CONVOCATORIAS)
                 }
             )
+        }
+    }
+
+    // HU20 (deep link): al tocar una notificación de la barra, abre el centro de
+    // notificaciones con ese aviso. Espera a que haya sesión y a que el usuario
+    // no esté en login / registro / cuenta pendiente.
+    LaunchedEffect(Unit) {
+        val pantallasPublicas = setOf(
+            Rutas.LOGIN, Rutas.REGISTRO, Rutas.RECUPERAR, Rutas.CUENTA_PENDIENTE
+        )
+        DestinoNotificacion.pendiente.collect { id ->
+            if (id == null) return@collect
+            while (
+                repositorio.uidActual() == null ||
+                navController.currentDestination?.route in pantallasPublicas
+            ) {
+                delay(500)
+            }
+            DestinoNotificacion.consumir()?.let { idNotificacion ->
+                navController.navigate("notificaciones?abrir=$idNotificacion") {
+                    launchSingleTop = true
+                }
+            }
         }
     }
 }

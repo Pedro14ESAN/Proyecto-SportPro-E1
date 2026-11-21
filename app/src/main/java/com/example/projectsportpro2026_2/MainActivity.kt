@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2
 
+import android.content.Intent
 import android.os.Bundle
 import com.google.firebase.Firebase
 import com.google.firebase.appcheck.appCheck
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import com.example.projectsportpro2026_2.datos.sincronizacion.IdentificadorDispositivo
 import com.example.projectsportpro2026_2.datos.sincronizacion.RegistroRechazos
 import com.example.projectsportpro2026_2.ui.navegacion.NavegacionApp
+import com.example.projectsportpro2026_2.ui.notificaciones.DestinoNotificacion
 import com.example.projectsportpro2026_2.ui.theme.ProjectSportPro2026_2Theme
 
 class MainActivity : ComponentActivity() {
@@ -23,6 +25,9 @@ class MainActivity : ComponentActivity() {
         // HU16: id del dispositivo y eventos rechazados al resincronizar
         IdentificadorDispositivo.inicializar(applicationContext)
         RegistroRechazos.inicializar(applicationContext)
+
+        // HU20 (Cielo): si la app se abrió tocando una notificación, guarda a dónde ir
+        DestinoNotificacion.desdeIntent(intent)
 
         // HU25/HU26: App Check protege la llamada a la IA (Firebase AI Logic).
         // Proveedor de depuración: el token aparece en Logcat ("DebugAppCheckProvider")
@@ -40,5 +45,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // HU20 (Cielo): notificación tocada con la app ya abierta
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        DestinoNotificacion.desdeIntent(intent)
     }
 }
