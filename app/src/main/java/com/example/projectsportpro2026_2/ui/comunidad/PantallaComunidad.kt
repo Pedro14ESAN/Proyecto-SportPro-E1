@@ -271,12 +271,16 @@ fun PantallaComunidad(
             guardando = estado.guardando,
             error = estado.error,
             onCerrar = { formularioAbierto = false },
-            onPublicar = { texto, visibilidad, idAcademia, idEquipo ->
+            onPublicar = { texto, visibilidad, idAcademia, idEquipo, imagen ->
                 viewModel.publicar(
-                    texto, visibilidad, idAcademia, idEquipo,
+                    texto, visibilidad, idAcademia, idEquipo, imagen,
                     alTerminar = { formularioAbierto = false }
                 )
             },
+            // HU21: subida de imagen
+            progresoImagen = estado.progresoImagen,
+            falloImagen = estado.falloImagen,
+            onDescartarErrorImagen = viewModel::limpiarErrorImagen,
             onGuardarEdicion = { texto ->
                 enEdicion?.let {
                     viewModel.editar(it.id, texto, alTerminar = { formularioAbierto = false })
@@ -506,7 +510,13 @@ private fun TarjetaPublicacion(
                 color = SportProTextoPrincipal,
                 fontSize = 14.sp
             )
-
+            // HU21: imagen guardada en Supabase Storage
+            if (publicacion.imagenUrl.isNotBlank()) {
+                ImagenRemota(
+                    url = publicacion.imagenUrl,
+                    descripcion = "Imagen de la publicación de ${publicacion.nombreAutor}"
+                )
+            }
             HorizontalDivider(color = SportProBorde)
 
             Row(

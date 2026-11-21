@@ -30,7 +30,17 @@ import com.example.projectsportpro2026_2.ui.partidos.SportProSuperficie
 import com.example.projectsportpro2026_2.ui.partidos.SportProTextoSecundario
 import com.example.projectsportpro2026_2.ui.partidos.SportProVerde
 import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
-
+import android.graphics.BitmapFactory
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import com.example.projectsportpro2026_2.datos.repositorio.ProcesadorImagen
+import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormularioPublicacion(
@@ -45,22 +55,56 @@ fun FormularioPublicacion(
         texto: String,
         visibilidad: VisibilidadPublicacion,
         idAcademia: String,
-        idEquipo: String
+        idEquipo: String,
+        imagen: ByteArray?          // HU21: JPEG ya comprimido (null = solo texto)
     ) -> Unit,
-    onGuardarEdicion: (texto: String) -> Unit
+    onGuardarEdicion: (texto: String) -> Unit,
+    // HU21: progreso de subida (null = no se sube) y fallo de la imagen
+    progresoImagen: Float? = null,
+    falloImagen: Boolean = false,
+    onDescartarErrorImagen: () -> Unit = {}
 ) {
     val esEdicion = publicacionEnEdicion != null
+    val contexto = LocalContext.current
+    val alcance = rememberCoroutineScope()
+
+    // HU21: imagen elegida, ya reducida y sin metadatos EXIF
+    var imagen by remember { mutableStateOf<ByteArray?>(null) }
+    val vistaPrevia = remember(imagen) {
+        imagen?.let { BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() }
+    }
+    var procesandoImagen by remember { mutableStateOf(false) }
+    var errorImagenLocal by remember { mutableStateOf<String?>(null) }
+
+    // Selector de fotos del sistema: no necesita permisos de almacenamiento
+    val selectorFoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            procesandoImagen = true
+            errorImagenLocal = null
+            alcance.launch {
+                try {
+                    imagen = ProcesadorImagen.comprimir(contexto, uri)
+                    onDescartarErrorImagen()
+                } catch (e: Exception) {
+                    errorImagenLocal = e.message ?: "No se pudo leer la imagen"
+                } finally {
+                    procesandoImagen = false
+                }
+            }
+        }
+    }
     val estadoHoja = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var texto by remember { mutableStateOf(publicacionEnEdicion?.texto.orEmpty()) }
 
-    // Privacidad por defecto: si pertenece a una academia, empieza en "Academia"
-    var visibilidad by remember {
-        mutableStateOf(
-            if (opciones.academias.isNotEmpty()) VisibilidadPublicacion.ACADEMIA
-            else VisibilidadPublicacion.COMUNIDAD
-        )
-    }
+    // Lo que el usuario eligió a mano (null = todavía no eligió).
+    // Si no eligió, el valor por defecto se recalcula cuando llegan sus academias.
+    var visibilidadElegida by remember { mutableStateOf<VisibilidadPublicacion?>(null) }
+    val visibilidad = visibilidadElegida
+        ?: if (opciones.academias.isNotEmpty()) VisibilidadPublicacion.ACADEMIA
+        else VisibilidadPublicacion.COMUNIDAD
     // Lo que el usuario eligió a mano (vacío = todavía no eligió)
     var idAcademiaElegida by remember { mutableStateOf("") }
     var idEquipoElegido by remember { mutableStateOf("") }
@@ -149,18 +193,121 @@ fun FormularioPublicacion(
                     )
                 }
             } else {
-
-                // Imagen: se activa cuando el equipo habilite Cloud Storage
+                // HU21: imagen opcional, guardada en Supabase Storage
                 TituloCampoSportPro("MULTIMEDIA")
-                Surface(
-                    shape = FormaCampoSportPro,
-                    color = SportProFondo,
-                    border = BorderStroke(1.dp, SportProBorde),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text("📷 Añadir imagen", color = SportProTextoSecundario, fontWeight = FontWeight.SemiBold)
-                        Text("Disponible cuando se active Cloud Storage", color = SportProTextoSecundario, fontSize = 11.sp)
+                val previa = vistaPrevia
+                if (previa != null) {
+                    Box {
+                        Image(
+                            bitmap = previa,
+                            contentDescription = "Vista previa de la imagen",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 220.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                        )
+                        Surface(
+                            onClick = {
+                                imagen = null
+                                onDescartarErrorImagen()
+                            },
+                            enabled = !guardando,
+                            shape = RoundedCornerShape(50),
+                            color = SportProNavy.copy(alpha = 0.8f),
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                "✕ Quitar",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    progresoImagen?.let { p ->
+                        LinearProgressIndicator(
+                            progress = { p },
+                            color = SportProVerde,
+                            trackColor = SportProVerdeClaro,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            "Subiendo imagen… ${(p * 100).toInt()} %",
+                            color = SportProTextoSecundario,
+                            fontSize = 11.sp
+                        )
+                    }
+                } else {
+                    Surface(
+                        onClick = {
+                            selectorFoto.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        enabled = !procesandoImagen && !guardando,
+                        shape = FormaCampoSportPro,
+                        color = SportProFondo,
+                        border = BorderStroke(1.dp, SportProBorde),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (procesandoImagen) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = SportProVerde
+                                )
+                            } else {
+                                Text("📷", fontSize = 18.sp)
+                            }
+                            Column {
+                                Text("Añadir imagen", color = SportProNavy, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    "Opcional · se quitan los datos de ubicación de la foto",
+                                    color = SportProTextoSecundario,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+                }
+                errorImagenLocal?.let { Text(it, color = SportProRojo, fontSize = 12.sp) }
+
+                // Caso alterno HU21: la imagen no se pudo subir
+                if (falloImagen && imagen != null) {
+                    Surface(color = SportProRojo.copy(alpha = 0.08f), shape = FormaCampoSportPro) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "No se pudo subir la imagen. ¿Qué quieres hacer?",
+                                color = SportProRojo,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(
+                                    onClick = { onPublicar(texto, visibilidad, idAcademia, idEquipo, imagen) },
+                                    enabled = !guardando && formularioValido,
+                                    shape = FormaBotonSportPro,
+                                    modifier = Modifier.weight(1f)
+                                ) { Text("Reintentar", color = SportProNavy) }
+                                OutlinedButton(
+                                    onClick = {
+                                        imagen = null
+                                        onPublicar(texto, visibilidad, idAcademia, idEquipo, null)
+                                    },
+                                    enabled = !guardando && formularioValido,
+                                    shape = FormaBotonSportPro,
+                                    modifier = Modifier.weight(1f)
+                                ) { Text("Solo texto", color = SportProNavy) }
+                            }
+                        }
                     }
                 }
 
@@ -174,28 +321,33 @@ fun FormularioPublicacion(
                         seleccionado = visibilidad == VisibilidadPublicacion.EQUIPO,
                         habilitado = opciones.equipos.isNotEmpty(),
                         modifier = Modifier.weight(1f)
-                    ) { visibilidad = VisibilidadPublicacion.EQUIPO }
+                    ) { visibilidadElegida = VisibilidadPublicacion.EQUIPO }
 
                     OpcionVisibilidad(
                         emoji = "🏛", titulo = "Academia", subtitulo = "Todo el club",
                         seleccionado = visibilidad == VisibilidadPublicacion.ACADEMIA,
                         habilitado = opciones.academias.isNotEmpty(),
                         modifier = Modifier.weight(1f)
-                    ) { visibilidad = VisibilidadPublicacion.ACADEMIA }
+                    ) { visibilidadElegida = VisibilidadPublicacion.ACADEMIA }
 
                     OpcionVisibilidad(
                         emoji = "🌐", titulo = "Comunidad", subtitulo = "Red pública",
                         seleccionado = visibilidad == VisibilidadPublicacion.COMUNIDAD,
                         habilitado = true,
                         modifier = Modifier.weight(1f)
-                    ) { visibilidad = VisibilidadPublicacion.COMUNIDAD }
+                    ) { visibilidadElegida = VisibilidadPublicacion.COMUNIDAD }
                 }
-                // Muestra a dónde se publicará (útil cuando hay una sola opción y no aparecen chips)
+
+                // Muestra a dónde se publicará
                 val destinoTexto = when (visibilidad) {
                     VisibilidadPublicacion.EQUIPO ->
-                        opciones.equipos.find { it.id == idEquipo }?.let { "Se publicará solo para ${it.nombre}" }
+                        opciones.equipos.find { it.id == idEquipo }
+                            ?.let { "Se publicará solo para ${it.nombre}" }
+
                     VisibilidadPublicacion.ACADEMIA ->
-                        opciones.academias.find { it.id == idAcademia }?.let { "Se publicará para todo ${it.nombre}" }
+                        opciones.academias.find { it.id == idAcademia }
+                            ?.let { "Se publicará para todo ${it.nombre}" }
+
                     VisibilidadPublicacion.COMUNIDAD ->
                         "Se publicará para toda la Comunidad SportPro"
                 }
@@ -208,7 +360,10 @@ fun FormularioPublicacion(
                     TituloCampoSportPro("EQUIPO")
                     FilaDeChipsSportPro {
                         opciones.equipos.forEach { equipo ->
-                            ChipSportPro("${equipo.nombre} · ${equipo.categoria}", equipo.id == idEquipo) {
+                            ChipSportPro(
+                                "${equipo.nombre} · ${equipo.categoria}",
+                                equipo.id == idEquipo
+                            ) {
                                 idEquipoElegido = equipo.id
                             }
                         }
@@ -241,9 +396,9 @@ fun FormularioPublicacion(
                 Button(
                     onClick = {
                         if (esEdicion) onGuardarEdicion(texto)
-                        else onPublicar(texto, visibilidad, idAcademia, idEquipo)
+                        else onPublicar(texto, visibilidad, idAcademia, idEquipo, imagen)
                     },
-                    enabled = formularioValido && !guardando,
+                    enabled = formularioValido && !guardando && !procesandoImagen,
                     shape = FormaBotonSportPro,
                     colors = ButtonDefaults.buttonColors(containerColor = SportProVerde),
                     modifier = Modifier.weight(1f)
