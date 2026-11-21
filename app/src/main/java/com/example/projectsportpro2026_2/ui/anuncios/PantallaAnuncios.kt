@@ -299,6 +299,11 @@ private fun estiloAudiencia(anuncio: Anuncio): EstiloAudiencia =
             )
         TipoAudiencia.ROL ->
             EstiloAudiencia(textoRol(anuncio.rolDestino), "🎯", NaranjaEtiqueta, NaranjaEtiquetaFondo)
+        TipoAudiencia.PUBLICO ->
+            EstiloAudiencia(
+                "Público · ${anuncio.nombreAcademia}".trimEnd(' ', '·'),
+                "🌐", AzulEtiqueta, AzulEtiquetaFondo
+            )
     }
 
 internal fun textoRol(rol: Rol): String = when (rol) {

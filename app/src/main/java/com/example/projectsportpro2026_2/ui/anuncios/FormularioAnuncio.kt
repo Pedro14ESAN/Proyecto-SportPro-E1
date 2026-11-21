@@ -129,10 +129,22 @@ fun FormularioAnuncio(
                         ChipAnuncio("Por rol", tipo == TipoAudiencia.ROL) {
                             tipo = TipoAudiencia.ROL
                         }
+                        ChipAnuncio("Público", tipo == TipoAudiencia.PUBLICO) {
+                            tipo = TipoAudiencia.PUBLICO
+                        }
                     }
                     ChipAnuncio("Un equipo", tipo == TipoAudiencia.EQUIPO) {
                         tipo = TipoAudiencia.EQUIPO
                     }
+                }
+
+                if (tipo == TipoAudiencia.PUBLICO) {
+                    Text(
+                        text = "Lo verá toda la comunidad SportPro, incluso quien aún no pertenece a una academia. " +
+                                "Úsalo para torneos o convocatorias abiertas, nunca para datos internos.",
+                        color = SportProTextoSecundario,
+                        fontSize = 12.sp
+                    )
                 }
 
                 if (tipo == TipoAudiencia.EQUIPO) {
