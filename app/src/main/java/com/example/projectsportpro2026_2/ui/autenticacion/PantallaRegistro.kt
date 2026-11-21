@@ -82,6 +82,7 @@ fun PantallaRegistro(
         onContrasena = viewModel::cambiarContrasena,
         onRol = viewModel::cambiarRol,
         onFecha = viewModel::cambiarFechaNacimiento,
+        onDocumento = viewModel::cambiarDocumento,
         onRegistrar = viewModel::registrar,
         onIrALogin = onIrALogin
     )
@@ -162,6 +163,7 @@ fun ContenidoRegistro(
     onContrasena: (String) -> Unit,
     onRol: (Rol) -> Unit,
     onFecha: (String) -> Unit,
+    onDocumento: (String) -> Unit,
     onRegistrar: () -> Unit,
     onIrALogin: () -> Unit,
     modifier: Modifier = Modifier
@@ -333,6 +335,21 @@ fun ContenidoRegistro(
                 colors = coloresCampo,
                 modifier = Modifier.fillMaxWidth()
             )
+            Spacer(Modifier.height(4.dp))
+
+            EtiquetaCampo("DOCUMENTO DE IDENTIDAD")
+            OutlinedTextField(
+                value = estado.documento,
+                onValueChange = onDocumento,
+                placeholder = { Text("DNI o carné de extranjería") },
+                supportingText = {
+                    Text("Sirve para que la academia vincule tu cuenta con tu ficha.")
+                },
+                singleLine = true,
+                shape = formaCampo,
+                colors = coloresCampo,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         estado.error?.let {
@@ -402,6 +419,7 @@ fun VistaPreviaRegistro() {
             onContrasena = {},
             onRol = {},
             onFecha = {},
+            onDocumento = {},
             onRegistrar = {},
             onIrALogin = {}
         )

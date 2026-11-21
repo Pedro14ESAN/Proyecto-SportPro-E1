@@ -10,5 +10,6 @@ data class PerfilUsuario(
     val correo: String = "",
     val rol: Rol = Rol.JUG,
     val fechaNacimiento: String = "",   // formato aaaa-MM-dd (solo jugadores)
+    val documento: String = "",
     val estado: EstadoCuenta = EstadoCuenta.ACTIVA
 )

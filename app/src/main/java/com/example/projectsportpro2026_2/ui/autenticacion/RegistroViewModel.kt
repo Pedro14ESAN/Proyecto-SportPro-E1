@@ -21,6 +21,7 @@ data class EstadoRegistro(
     val contrasena: String = "",
     val rol: Rol = Rol.JUG,
     val fechaNacimiento: String = "",
+    val documento: String = "",
     val cargando: Boolean = false,
     val error: String? = null,
     val perfilCreado: PerfilUsuario? = null
@@ -39,6 +40,8 @@ class RegistroViewModel(
     fun cambiarRol(valor: Rol) = _estado.update { it.copy(rol = valor, error = null) }
     fun cambiarFechaNacimiento(valor: String) =
         _estado.update { it.copy(fechaNacimiento = valor, error = null) }
+    fun cambiarDocumento(valor: String) =
+        _estado.update { it.copy(documento = valor, error = null) }
 
     fun registrar() {
         val actual = _estado.value
@@ -55,7 +58,8 @@ class RegistroViewModel(
                 correo = actual.correo,
                 contrasena = actual.contrasena,
                 rol = actual.rol,
-                fechaNacimiento = actual.fechaNacimiento
+                fechaNacimiento = actual.fechaNacimiento,
+                documento = actual.documento
             ).onSuccess { perfil ->
                 _estado.update { it.copy(cargando = false, perfilCreado = perfil) }
             }.onFailure { excepcion ->
@@ -69,6 +73,7 @@ class RegistroViewModel(
         !e.correo.contains("@") -> "Escribe un correo válido"
         e.contrasena.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
         e.rol == Rol.JUG && e.fechaNacimiento.isBlank() -> "Escribe tu fecha de nacimiento"
+        e.rol == Rol.JUG && e.documento.isBlank() -> "Escribe tu documento de identidad"
         else -> null
     }
 
