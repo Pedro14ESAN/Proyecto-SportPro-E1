@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.projectsportpro2026_2.datos.remoto.ConfigSupabase
+import com.example.projectsportpro2026_2.datos.repositorio.RepositorioImagenes
 
 // Lo que escribe el usuario en el formulario (todo como texto)
 data class CamposJugador(
@@ -76,15 +78,31 @@ class JugadoresViewModel(
         }
     }
 
-    // jugadorActual == null  ->  crear; si no  ->  editar
-    fun guardar(jugadorActual: Jugador?, campos: CamposJugador, alTerminar: () -> Unit) {
+    fun guardar(
+        jugadorActual: Jugador?,
+        campos: CamposJugador,
+        foto: ByteArray?,
+        alTerminar: () -> Unit
+    ) {
         viewModelScope.launch {
             _estado.update { it.copy(cargando = true, error = null) }
-            val datos = try {
+            var datos = try {
                 aDatos(campos)
             } catch (e: IllegalArgumentException) {
                 _estado.update { it.copy(cargando = false, error = e.message) }
                 return@launch
+            }
+            if (foto != null) {
+                try {
+                    val url = RepositorioImagenes()
+                        .subirImagen(ConfigSupabase.CARPETA_JUGADORES, uid, foto)
+                    datos = datos.copy(fotoUrl = url)
+                } catch (e: Exception) {
+                    _estado.update {
+                        it.copy(cargando = false, error = e.message ?: "No se pudo subir la foto")
+                    }
+                    return@launch
+                }
             }
             val resultado = if (jugadorActual == null) {
                 repositorio.crearJugador(idEquipo, datos, uid).map { }

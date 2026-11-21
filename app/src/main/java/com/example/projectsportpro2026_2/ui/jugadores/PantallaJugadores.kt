@@ -58,6 +58,16 @@ import com.example.projectsportpro2026_2.datos.modelo.PiesHabiles
 import com.example.projectsportpro2026_2.datos.modelo.Posiciones
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.example.projectsportpro2026_2.ui.comun.CampoFecha
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import com.example.projectsportpro2026_2.datos.repositorio.ProcesadorImagen
+import com.example.projectsportpro2026_2.ui.comun.ImagenRemota
+import kotlinx.coroutines.launch
 
 // Colores locales de esta pantalla (no se modifica el tema global)
 private val VerdePrincipal = Color(0xFF1B9A5C)
@@ -187,8 +197,8 @@ fun PantallaJugadores(
             privados = privadosEdicion,
             cargando = estado.cargando,
             error = estado.error,
-            onGuardar = { campos ->
-                viewModel.guardar(enEdicion, campos) { mostrarFormulario = false }
+            onGuardar = { campos, foto ->
+                viewModel.guardar(enEdicion, campos, foto) { mostrarFormulario = false }
             },
             onCancelar = { mostrarFormulario = false }
         )
@@ -211,6 +221,13 @@ private fun TarjetaJugador(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            if (jugador.fotoUrl.isNotBlank()) {
+                ImagenRemota(
+                    url = jugador.fotoUrl,
+                    descripcion = "Foto de ${jugador.nombreCompleto()}",
+                    modifier = Modifier.size(72.dp)
+                )
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -334,7 +351,7 @@ private fun FormularioJugador(
     privados: DatosPrivadosJugador?,
     cargando: Boolean,
     error: String?,
-    onGuardar: (CamposJugador) -> Unit,
+    onGuardar: (CamposJugador, ByteArray?) -> Unit,
     onCancelar: () -> Unit
 ) {
     var nombres by remember { mutableStateOf(inicial?.nombres.orEmpty()) }
@@ -348,6 +365,13 @@ private fun FormularioJugador(
     var telefono by remember { mutableStateOf(privados?.telefono.orEmpty()) }
     var contactoNombre by remember { mutableStateOf(privados?.contactoEmergenciaNombre.orEmpty()) }
     var contactoTelefono by remember { mutableStateOf(privados?.contactoEmergenciaTelefono.orEmpty()) }
+    val contexto = LocalContext.current
+    val alcance = rememberCoroutineScope()
+    var fotoElegida by remember { mutableStateOf<Uri?>(null) }
+    var errorFoto by remember { mutableStateOf<String?>(null) }
+    val selectorFoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri -> if (uri != null) fotoElegida = uri }
 
     AlertDialog(
         onDismissRequest = onCancelar,
@@ -381,6 +405,29 @@ private fun FormularioJugador(
                     colors = coloresCampo()
                 )
                 Campo(documento, { documento = it }, "Documento de identidad")
+                if (inicial != null && inicial.fotoUrl.isNotBlank() && fotoElegida == null) {
+                    ImagenRemota(
+                        url = inicial.fotoUrl,
+                        descripcion = "Foto de ${inicial.nombreCompleto()}",
+                        modifier = Modifier.size(96.dp)
+                    )
+                }
+                OutlinedButton(
+                    onClick = {
+                        errorFoto = null
+                        selectorFoto.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        if (fotoElegida != null) "Foto elegida ✓ (cambiar)"
+                        else if (inicial != null && inicial.fotoUrl.isNotBlank()) "Cambiar foto"
+                        else "Elegir foto (opcional)"
+                    )
+                }
 
                 TituloSeccion("Datos deportivos")
                 Selector("Posición", posicion, Posiciones.lista) { posicion = it }
@@ -405,18 +452,27 @@ private fun FormularioJugador(
                     KeyboardOptions(keyboardType = KeyboardType.Phone)
                 )
 
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                (errorFoto ?: error)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    onGuardar(
-                        CamposJugador(
-                            nombres, apellidos, fecha, documento, posicion, pie,
-                            estatura, peso, telefono, contactoNombre, contactoTelefono
+                    alcance.launch {
+                        val bytes = try {
+                            fotoElegida?.let { ProcesadorImagen.comprimir(contexto, it) }
+                        } catch (e: Exception) {
+                            errorFoto = e.message ?: "No se pudo leer la foto"
+                            return@launch
+                        }
+                        onGuardar(
+                            CamposJugador(
+                                nombres, apellidos, fecha, documento, posicion, pie,
+                                estatura, peso, telefono, contactoNombre, contactoTelefono
+                            ),
+                            bytes
                         )
-                    )
+                    }
                 },
                 enabled = !cargando,
                 shape = RoundedCornerShape(12.dp),

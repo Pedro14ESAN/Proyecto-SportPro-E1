@@ -30,7 +30,8 @@ data class DatosJugador(
     val pesoKg: Double? = null,
     val telefono: String = "",
     val contactoEmergenciaNombre: String = "",
-    val contactoEmergenciaTelefono: String = ""
+    val contactoEmergenciaTelefono: String = "",
+    val fotoUrl: String = ""
 )
 
 class RepositorioJugadores(
@@ -127,6 +128,7 @@ class RepositorioJugadores(
             documento = datos.documento.trim(),
             posicion = datos.posicion,
             piePreferido = datos.piePreferido,
+            fotoUrl = datos.fotoUrl,
             idAcademia = equipo.idAcademia,
             idEquipo = equipo.id,
             categoria = equipo.categoria,
@@ -151,20 +153,21 @@ class RepositorioJugadores(
         academiaAutorizada(existente.idAcademia, uid)
         validarEdadParaCategoria(datos.fechaNacimiento, existente.categoria)
 
-        val lote = bd.batch()
-        lote.update(
-            documento,
-            mapOf(
-                "nombres" to datos.nombres.trim(),
-                "apellidos" to datos.apellidos.trim(),
-                "fechaNacimiento" to datos.fechaNacimiento.trim(),
-                "documento" to datos.documento.trim(),
-                "posicion" to datos.posicion,
-                "piePreferido" to datos.piePreferido,
-                "actualizadoPor" to uid,
-                "fechaActualizacion" to System.currentTimeMillis()
-            )
+        val cambios = mutableMapOf<String, Any>(
+            "nombres" to datos.nombres.trim(),
+            "apellidos" to datos.apellidos.trim(),
+            "fechaNacimiento" to datos.fechaNacimiento.trim(),
+            "documento" to datos.documento.trim(),
+            "posicion" to datos.posicion,
+            "piePreferido" to datos.piePreferido,
+            "actualizadoPor" to uid,
+            "fechaActualizacion" to System.currentTimeMillis()
         )
+        // Si no eligió una foto nueva, se conserva la anterior
+        if (datos.fotoUrl.isNotBlank()) cambios["fotoUrl"] = datos.fotoUrl
+
+        val lote = bd.batch()
+        lote.update(documento, cambios)
         lote.set(documento.collection("privado").document("datos"), privados(datos))
         lote.commit().await()
     }
