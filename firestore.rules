@@ -349,6 +349,27 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Comentarios de los DT sobre la narración aprobada (HU27).
+    // Solo los DT autorizados del equipo o la academia los leen y escriben;
+    // cada DT solo borra los suyos y no se editan.
+    match /comentariosResumen/{idComentario} {
+      allow read: if esDtRevisor(resource.data.idAcademia, resource.data.idEquipo);
+
+      allow create: if esDtRevisor(request.resource.data.idAcademia, request.resource.data.idEquipo)
+        && request.resource.data.autor == uid()
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() > 0
+        && request.resource.data.texto.size() <= 500
+        && get(/databases/$(database)/documents/resumenesPartido/$(request.resource.data.idPartido)).data.estado == 'APROBADO'
+        && partido(request.resource.data.idPartido).idEquipo == request.resource.data.idEquipo;
+
+      allow update: if false;
+      // El autor borra lo suyo; el DT titular del equipo puede retirar
+      // un comentario ofensivo de otro DT (queda en la auditoría).
+      allow delete: if esDtRevisor(resource.data.idAcademia, resource.data.idEquipo)
+        && (resource.data.autor == uid() || esDtDelEquipo(resource.data.idEquipo));
+    }
+
     // ---------------- Auditoría (HU25) ----------------
 
     match /auditoria/{idRegistro} {

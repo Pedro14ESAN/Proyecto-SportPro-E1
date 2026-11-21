@@ -5,6 +5,7 @@ import com.example.projectsportpro2026_2.datos.modelo.Rol
 import com.example.projectsportpro2026_2.datos.modelo.evento.EventoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.Partido
+import com.example.projectsportpro2026_2.datos.modelo.resumen.ComentarioNarracion
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EstadoResumen
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionNarracion
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionResumen
@@ -39,10 +40,16 @@ data class ContextoResumen(
     val acceso: ContextoAcceso,
     val puedeRevisar: Boolean,       // DT autorizado: genera, edita, aprueba
     val puedeVerBorrador: Boolean    // DT o ADM de la academia
-)
+) {
+    // El DT titular del equipo modera los comentarios de los otros DT
+    val puedeModerarComentarios: Boolean
+        get() = puedeRevisar && equipo.id in acceso.idsEquiposDirigidos
+}
 
 // El proveedor de IA no respondió (sin red, cuota agotada, modelo caído)
 class ServicioIANoDisponibleException(mensaje: String) : IllegalStateException(mensaje)
+
+const val MAX_COMENTARIO = 500
 
 class RepositorioResumenPartido(
     private val bd: FirebaseFirestore = FirebaseFirestore.getInstance(),
@@ -56,6 +63,9 @@ class RepositorioResumenPartido(
 
     // Nota de evaluación de cada narración aprobada (una por versión y partido)
     private val evaluaciones = bd.collection("evaluacionesResumen")
+
+    // Comentarios de los DT sobre la narración aprobada
+    private val comentarios = bd.collection("comentariosResumen")
 
     private suspend fun <T> intentar(bloque: suspend () -> T): Result<T> =
         try {
@@ -125,6 +135,96 @@ class RepositorioResumenPartido(
                 .documents.mapNotNull { d -> d.toObject(EvaluacionNarracion::class.java)?.copy(id = d.id) }
                 .sortedByDescending { it.version }
         }
+
+    /*
+     * Comentarios de los DT sobre la narración aprobada, en tiempo
+     * real. Se filtra por academia y equipo para que la consulta
+     * cumpla las reglas de Firestore (solo DT autorizados).
+     */
+    fun escucharComentarios(contexto: ContextoResumen): Flow<List<ComentarioNarracion>> = callbackFlow {
+        val registro = comentarios
+            .whereEqualTo("idPartido", contexto.partido.id)
+            .whereEqualTo("idAcademia", contexto.partido.idAcademia)
+            .whereEqualTo("idEquipo", contexto.equipo.id)
+            .addSnapshotListener { instantanea, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val lista = instantanea?.documents.orEmpty()
+                    .mapNotNull { d -> d.toObject(ComentarioNarracion::class.java)?.copy(id = d.id) }
+                    .sortedBy { it.fecha }
+                trySend(lista)
+            }
+        awaitClose { registro.remove() }
+    }
+
+    // Un DT comenta la narración ya aprobada
+    suspend fun comentar(
+        contexto: ContextoResumen,
+        actual: ResumenPartido,
+        texto: String
+    ): Result<Unit> = intentar {
+        exigirRevisor(contexto)
+        if (actual.estado != EstadoResumen.APROBADO) {
+            throw IllegalStateException("Solo se puede comentar una narración aprobada.")
+        }
+        val limpio = texto.trim()
+        if (limpio.isBlank()) throw IllegalArgumentException("Escribe un comentario.")
+        if (limpio.length > MAX_COMENTARIO) {
+            throw IllegalArgumentException("El comentario no puede pasar de $MAX_COMENTARIO caracteres.")
+        }
+
+        comentarios.document().set(
+            ComentarioNarracion(
+                idPartido = contexto.partido.id,
+                idAcademia = contexto.partido.idAcademia,
+                idEquipo = contexto.equipo.id,
+                version = actual.version,
+                texto = limpio,
+                autor = contexto.acceso.uid,
+                nombreAutor = contexto.acceso.perfil.nombre,
+                fecha = System.currentTimeMillis()
+            )
+        ).await()
+    }
+
+    /*
+     * Cada DT borra sus propios comentarios. Además, el DT titular
+     * del equipo puede eliminar un comentario ofensivo o negativo de
+     * otro DT indicando el motivo; queda registrado en la auditoría
+     * (autor, texto original y motivo) para que el ADM lo revise.
+     */
+    suspend fun eliminarComentario(
+        contexto: ContextoResumen,
+        comentario: ComentarioNarracion,
+        motivo: String = ""
+    ): Result<Unit> = intentar {
+        exigirRevisor(contexto)
+        val uid = contexto.acceso.uid
+        val propio = comentario.autor == uid
+        if (!propio && !contexto.puedeModerarComentarios) {
+            throw AccesoDenegadoException(
+                "Solo el DT titular del equipo puede eliminar comentarios de otros DT."
+            )
+        }
+        val razon = motivo.trim()
+        if (!propio && razon.length < 5) {
+            throw IllegalArgumentException("Indica el motivo para eliminar el comentario.")
+        }
+
+        val lote = bd.batch()
+        lote.delete(comentarios.document(comentario.id))
+        if (!propio) {
+            auditoria.agregarA(
+                lote, AccionesAuditoria.COMENTARIO_RESUMEN_ELIMINADO, uid, contexto.acceso.rol,
+                "comentariosResumen", comentario.id, contexto.partido.idAcademia,
+                "Motivo: $razon · Autor: ${comentario.nombreAutor.ifBlank { comentario.autor }} · " +
+                        "Texto: ${comentario.texto}"
+            )
+        }
+        lote.commit().await()
+    }
 
     private fun exigirRevisor(contexto: ContextoResumen) {
         if (!contexto.puedeRevisar) {
