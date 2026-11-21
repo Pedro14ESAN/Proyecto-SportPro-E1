@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projectsportpro2026_2.ui.comun.AvatarRemoto
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.convocatoria.EstadoDisponibilidad
 import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
@@ -320,6 +321,16 @@ private fun TarjetaJugadorConvocatoria(
             CheckConvocatoria(
                 marcado = seleccionado,
                 habilitado = habilitado
+            )
+
+            AvatarRemoto(
+                url = jugador.fotoUrl,
+                descripcion =
+                    "Foto de ${jugador.nombreCompleto()}",
+                iniciales =
+                    inicialesJugadorConvocatoria(jugador),
+                modifier =
+                    Modifier.size(46.dp)
             )
 
             Column(
@@ -707,4 +718,24 @@ private fun resumenPartido(
             append(hora)
         }
     }
+}
+private fun inicialesJugadorConvocatoria(
+    jugador: Jugador
+): String {
+
+    val nombre =
+        jugador.nombres
+            .trim()
+            .take(1)
+
+    val apellido =
+        jugador.apellidos
+            .trim()
+            .take(1)
+
+    return "$nombre$apellido"
+        .uppercase()
+        .ifBlank {
+            "?"
+        }
 }
