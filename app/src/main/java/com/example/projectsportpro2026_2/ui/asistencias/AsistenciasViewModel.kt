@@ -33,12 +33,9 @@ data class EstadoAsistenciasUi(
 )
 
 class AsistenciasViewModel(
-    private val repositorio:
-    RepositorioAsistencias =
+    private val repositorio: RepositorioAsistencias =
         RepositorioAsistencias(),
-
-    private val autenticacion:
-    RepositorioAutenticacion =
+    private val autenticacion: RepositorioAutenticacion =
         RepositorioAutenticacion()
 ) : ViewModel() {
 
@@ -47,22 +44,17 @@ class AsistenciasViewModel(
             EstadoAsistenciasUi()
         )
 
-    val estado:
-            StateFlow<EstadoAsistenciasUi> =
+    val estado: StateFlow<EstadoAsistenciasUi> =
         _estado.asStateFlow()
 
-    private var iniciado =
-        false
+    private var iniciado = false
 
     fun iniciar() {
-
         if (iniciado) return
 
-        iniciado =
-            true
+        iniciado = true
 
         viewModelScope.launch {
-
             val uid =
                 autenticacion.uidActual()
                     ?: return@launch
@@ -75,26 +67,19 @@ class AsistenciasViewModel(
             }
 
             try {
-
                 val perfil =
-                    autenticacion
-                        .obtenerPerfil(uid)
+                    autenticacion.obtenerPerfil(uid)
                         ?: throw IllegalStateException(
                             "Tu cuenta no tiene perfil"
                         )
 
                 if (
-                    perfil.rol ==
-                    Rol.DT ||
-                    perfil.rol ==
-                    Rol.ADM
+                    perfil.rol == Rol.DT ||
+                    perfil.rol == Rol.ADM
                 ) {
-
                     val sesiones =
                         repositorio
-                            .listarSesionesGestionables(
-                                uid
-                            )
+                            .listarSesionesGestionables(uid)
                             .getOrThrow()
 
                     val primera =
@@ -105,32 +90,20 @@ class AsistenciasViewModel(
 
                     _estado.update {
                         it.copy(
-                            rol =
-                                perfil.rol,
-                            sesiones =
-                                sesiones,
-                            idSesionSeleccionada =
-                                primera,
-                            cargando =
-                                false
+                            rol = perfil.rol,
+                            sesiones = sesiones,
+                            idSesionSeleccionada = primera,
+                            cargando = false
                         )
                     }
 
-                    if (
-                        primera.isNotBlank()
-                    ) {
-                        seleccionarSesion(
-                            primera
-                        )
+                    if (primera.isNotBlank()) {
+                        seleccionarSesion(primera)
                     }
-
                 } else {
-
                     val jugadores =
                         repositorio
-                            .listarJugadoresConsulta(
-                                uid
-                            )
+                            .listarJugadoresConsulta(uid)
                             .getOrThrow()
 
                     val primero =
@@ -141,36 +114,26 @@ class AsistenciasViewModel(
 
                     _estado.update {
                         it.copy(
-                            rol =
-                                perfil.rol,
-                            jugadoresConsulta =
-                                jugadores,
-                            idJugadorConsulta =
-                                primero,
-                            cargando =
-                                false
+                            rol = perfil.rol,
+                            jugadoresConsulta = jugadores,
+                            idJugadorConsulta = primero,
+                            cargando = false
                         )
                     }
 
-                    if (
-                        primero.isNotBlank()
-                    ) {
+                    if (primero.isNotBlank()) {
                         seleccionarJugadorConsulta(
                             primero
                         )
                     }
                 }
-
-            } catch (
-                e: Exception
-            ) {
-
+            } catch (e: Exception) {
                 _estado.update {
                     it.copy(
-                        cargando =
-                            false,
+                        cargando = false,
                         error =
                             e.message
+                                ?: "No se pudo cargar la información"
                     )
                 }
             }
@@ -180,30 +143,22 @@ class AsistenciasViewModel(
     fun seleccionarSesion(
         idSesion: String
     ) {
-
         _estado.update {
             it.copy(
-                idSesionSeleccionada =
-                    idSesion,
-                cargando =
-                    true,
-                modoCorreccion =
-                    false,
-                error =
-                    null,
-                mensaje =
-                    null
+                idSesionSeleccionada = idSesion,
+                cargando = true,
+                modoCorreccion = false,
+                error = null,
+                mensaje = null
             )
         }
 
         viewModelScope.launch {
-
             val uid =
                 autenticacion.uidActual()
                     ?: return@launch
 
             try {
-
                 val jugadores =
                     repositorio
                         .listarJugadoresSesion(
@@ -222,8 +177,7 @@ class AsistenciasViewModel(
 
                 _estado.update {
                     it.copy(
-                        jugadores =
-                            jugadores,
+                        jugadores = jugadores,
                         estados =
                             registros.associate {
                                     asistencia ->
@@ -233,23 +187,18 @@ class AsistenciasViewModel(
                             },
                         asistenciaRegistrada =
                             registros.isNotEmpty(),
-                        modoCorreccion =
-                            false,
-                        cargando =
-                            false
+                        modoCorreccion = false,
+                        cargando = false,
+                        error = null
                     )
                 }
-
-            } catch (
-                e: Exception
-            ) {
-
+            } catch (e: Exception) {
                 _estado.update {
                     it.copy(
-                        cargando =
-                            false,
+                        cargando = false,
                         error =
                             e.message
+                                ?: "No se pudo cargar la asistencia"
                     )
                 }
             }
@@ -260,7 +209,6 @@ class AsistenciasViewModel(
         idJugador: String,
         nuevoEstado: EstadoAsistencia
     ) {
-
         val actual =
             _estado.value
 
@@ -279,14 +227,66 @@ class AsistenciasViewModel(
                                     idJugador to
                                             nuevoEstado
                                     ),
-                error =
-                    null
+                error = null
+            )
+        }
+    }
+
+    fun marcarTodosPresentes() {
+        val actual =
+            _estado.value
+
+        if (
+            actual.asistenciaRegistrada &&
+            !actual.modoCorreccion
+        ) {
+            return
+        }
+
+        val nuevosEstados =
+            actual.jugadores.associate {
+                    jugador ->
+
+                jugador.id to
+                        EstadoAsistencia.PRESENTE
+            }
+
+        _estado.update {
+            it.copy(
+                estados = nuevosEstados,
+                error = null
+            )
+        }
+    }
+
+    fun marcarTodosAusentes() {
+        val actual =
+            _estado.value
+
+        if (
+            actual.asistenciaRegistrada &&
+            !actual.modoCorreccion
+        ) {
+            return
+        }
+
+        val nuevosEstados =
+            actual.jugadores.associate {
+                    jugador ->
+
+                jugador.id to
+                        EstadoAsistencia.AUSENTE
+            }
+
+        _estado.update {
+            it.copy(
+                estados = nuevosEstados,
+                error = null
             )
         }
     }
 
     fun iniciarCorreccion() {
-
         if (
             !_estado.value
                 .asistenciaRegistrada
@@ -296,31 +296,26 @@ class AsistenciasViewModel(
 
         _estado.update {
             it.copy(
-                modoCorreccion =
-                    true,
-                error =
-                    null,
-                mensaje =
-                    null
+                modoCorreccion = true,
+                error = null,
+                mensaje = null
             )
         }
     }
 
     fun cancelarCorreccion() {
-
-        val id =
+        val idSesion =
             _estado.value
                 .idSesionSeleccionada
 
-        if (
-            id.isNotBlank()
-        ) {
-            seleccionarSesion(id)
+        if (idSesion.isNotBlank()) {
+            seleccionarSesion(
+                idSesion
+            )
         }
     }
 
     fun guardar() {
-
         val actual =
             _estado.value
 
@@ -335,7 +330,6 @@ class AsistenciasViewModel(
             actual.asistenciaRegistrada &&
             !actual.modoCorreccion
         ) {
-
             _estado.update {
                 it.copy(
                     error =
@@ -350,7 +344,6 @@ class AsistenciasViewModel(
             actual.estados.size <
             actual.jugadores.size
         ) {
-
             _estado.update {
                 it.copy(
                     error =
@@ -362,17 +355,15 @@ class AsistenciasViewModel(
         }
 
         viewModelScope.launch {
-
             val uid =
                 autenticacion.uidActual()
                     ?: return@launch
 
             _estado.update {
                 it.copy(
-                    guardando =
-                        true,
-                    error =
-                        null
+                    guardando = true,
+                    error = null,
+                    mensaje = null
                 )
             }
 
@@ -382,13 +373,11 @@ class AsistenciasViewModel(
                         actual.idSesionSeleccionada,
                     estados =
                         actual.estados,
-                    uid =
-                        uid,
+                    uid = uid,
                     permitirCorreccion =
                         actual.modoCorreccion
                 )
                 .onSuccess {
-
                     val mensaje =
                         if (
                             actual.modoCorreccion
@@ -400,10 +389,8 @@ class AsistenciasViewModel(
 
                     _estado.update {
                         it.copy(
-                            guardando =
-                                false,
-                            mensaje =
-                                mensaje
+                            guardando = false,
+                            mensaje = mensaje
                         )
                     }
 
@@ -411,14 +398,15 @@ class AsistenciasViewModel(
                         actual.idSesionSeleccionada
                     )
                 }
-                .onFailure { error ->
+                .onFailure {
+                        error ->
 
                     _estado.update {
                         it.copy(
-                            guardando =
-                                false,
+                            guardando = false,
                             error =
                                 error.message
+                                    ?: "No se pudo guardar la asistencia"
                         )
                     }
                 }
@@ -428,50 +416,44 @@ class AsistenciasViewModel(
     fun seleccionarJugadorConsulta(
         idJugador: String
     ) {
-
         _estado.update {
             it.copy(
-                idJugadorConsulta =
-                    idJugador,
-                cargando =
-                    true
+                idJugadorConsulta = idJugador,
+                cargando = true,
+                error = null
             )
         }
 
         viewModelScope.launch {
-
             val uid =
                 autenticacion.uidActual()
                     ?: return@launch
 
             repositorio
                 .listarHistorialJugador(
-                    idJugador =
-                        idJugador,
-                    uid =
-                        uid
+                    idJugador = idJugador,
+                    uid = uid
                 )
-                .onSuccess { historial ->
+                .onSuccess {
+                        historial ->
 
                     _estado.update {
                         it.copy(
-                            historial =
-                                historial,
-                            cargando =
-                                false,
-                            error =
-                                null
+                            historial = historial,
+                            cargando = false,
+                            error = null
                         )
                     }
                 }
-                .onFailure { error ->
+                .onFailure {
+                        error ->
 
                     _estado.update {
                         it.copy(
-                            cargando =
-                                false,
+                            cargando = false,
                             error =
                                 error.message
+                                    ?: "No se pudo cargar el historial"
                         )
                     }
                 }

@@ -1,21 +1,22 @@
 package com.example.projectsportpro2026_2.ui.ejercicios
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,8 +25,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -49,23 +49,20 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.Ejercicio
 
-private val AzulSportPro =
+private val AzulEjercicios =
     Color(0xFF0B3547)
 
-private val VerdeSportPro =
-    Color(0xFF18A668)
+private val VerdeEjercicios =
+    Color(0xFF168F5B)
 
-private val VerdeClaro =
-    Color(0xFFE9FFD8)
+private val RojoEjercicios =
+    Color(0xFFB83232)
 
-private val FondoPantalla =
-    Color(0xFFF8FAF9)
+private val FondoEjercicios =
+    Color(0xFFF7F9F8)
 
-private enum class FiltroEstadoEjercicio {
-    TODOS,
-    ACTIVOS,
-    INACTIVOS
-}
+private val GrisEjercicios =
+    Color(0xFF5F666A)
 
 @Composable
 fun PantallaEjercicios(
@@ -73,30 +70,18 @@ fun PantallaEjercicios(
     viewModel: EjerciciosViewModel =
         viewModel()
 ) {
-
     val estado by
-    viewModel.estado
-        .collectAsState()
+    viewModel.estado.collectAsState()
 
     var busqueda by remember {
         mutableStateOf("")
     }
 
-    var filtroEstado by remember {
-        mutableStateOf(
-            FiltroEstadoEjercicio.TODOS
-        )
-    }
-
-    var objetivoSeleccionado by remember {
-        mutableStateOf("TODOS")
+    var filtroActivo by remember {
+        mutableStateOf<Boolean?>(null)
     }
 
     var menuAcademia by remember {
-        mutableStateOf(false)
-    }
-
-    var menuObjetivo by remember {
         mutableStateOf(false)
     }
 
@@ -105,202 +90,193 @@ fun PantallaEjercicios(
     }
 
     var ejercicioEditar by remember {
-        mutableStateOf<Ejercicio?>(
-            null
-        )
+        mutableStateOf<Ejercicio?>(null)
     }
 
     LaunchedEffect(Unit) {
         viewModel.iniciar()
     }
 
-    val academiaSeleccionada =
+    val academia =
         estado.academias
             .firstOrNull {
                 it.id ==
                         estado.idAcademiaSeleccionada
             }
 
-    val objetivos =
-        estado.ejercicios
-            .map {
-                it.objetivo.trim()
-            }
-            .filter {
-                it.isNotBlank()
-            }
-            .distinct()
-            .sorted()
-
     val ejerciciosFiltrados =
-        estado.ejercicios
-            .filter { ejercicio ->
+        estado.ejercicios.filter {
+                ejercicio ->
 
-                val coincideBusqueda =
-                    ejercicio.nombre.contains(
-                        busqueda,
-                        ignoreCase = true
-                    ) ||
-                            ejercicio.objetivo.contains(
-                                busqueda,
-                                ignoreCase = true
-                            )
+            val textoCoincide =
+                ejercicio.nombre.contains(
+                    busqueda,
+                    ignoreCase = true
+                ) ||
+                        ejercicio.objetivo.contains(
+                            busqueda,
+                            ignoreCase = true
+                        )
 
-                val coincideEstado =
-                    when (
-                        filtroEstado
-                    ) {
+            val estadoCoincide =
+                filtroActivo == null ||
+                        ejercicio.activo ==
+                        filtroActivo
 
-                        FiltroEstadoEjercicio.TODOS ->
-                            true
-
-                        FiltroEstadoEjercicio.ACTIVOS ->
-                            ejercicio.activo
-
-                        FiltroEstadoEjercicio.INACTIVOS ->
-                            !ejercicio.activo
-                    }
-
-                val coincideObjetivo =
-                    objetivoSeleccionado ==
-                            "TODOS" ||
-                            ejercicio.objetivo ==
-                            objetivoSeleccionado
-
-                coincideBusqueda &&
-                        coincideEstado &&
-                        coincideObjetivo
-            }
+            textoCoincide &&
+                    estadoCoincide
+        }
 
     Scaffold(
         containerColor =
-            FondoPantalla
-    ) { padding ->
+            FondoEjercicios,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    ejercicioEditar = null
+                    mostrarFormulario = true
+                },
+                containerColor =
+                    VerdeEjercicios,
+                contentColor =
+                    Color.White
+            ) {
+                Text(
+                    "+",
+                    fontSize = 25.sp,
+                    fontWeight =
+                        FontWeight.Bold
+                )
+            }
+        }
+    ) {
+            padding ->
 
-        Column(
+        LazyColumn(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .padding(padding)
                     .padding(
-                        horizontal =
-                            18.dp
-                    )
+                        horizontal = 16.dp
+                    ),
+            verticalArrangement =
+                Arrangement.spacedBy(8.dp),
+            contentPadding =
+                PaddingValues(
+                    bottom = 90.dp
+                )
         ) {
 
-            Spacer(
-                Modifier.height(
-                    12.dp
-                )
-            )
-
-            Row(
-                modifier =
-                    Modifier.fillMaxWidth(),
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-
-                TextButton(
-                    onClick =
-                        onVolver
+            item {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(46.dp),
+                    horizontalArrangement =
+                        Arrangement.SpaceBetween,
+                    verticalAlignment =
+                        Alignment.CenterVertically
                 ) {
+                    TextButton(
+                        onClick = onVolver
+                    ) {
+                        Text(
+                            "← Volver",
+                            color =
+                                AzulEjercicios,
+                            fontWeight =
+                                FontWeight.SemiBold
+                        )
+                    }
+
                     Text(
-                        "← Entrenamientos",
+                        "SPORTPRO",
                         color =
-                            VerdeSportPro
+                            AzulEjercicios,
+                        fontWeight =
+                            FontWeight.Bold
                     )
                 }
-
-                Spacer(
-                    Modifier.weight(1f)
-                )
-
-                Text(
-                    text =
-                        "SPORTPRO",
-                    fontWeight =
-                        FontWeight.Bold,
-                    color =
-                        AzulSportPro
-                )
             }
 
-            Spacer(
-                Modifier.height(
-                    12.dp
-                )
-            )
+            item {
+                Column {
+                    Text(
+                        "ENTRENAMIENTOS",
+                        color =
+                            VerdeEjercicios,
+                        fontSize = 11.sp,
+                        fontWeight =
+                            FontWeight.Bold
+                    )
 
-            Box(
-                modifier =
-                    Modifier.fillMaxWidth()
-            ) {
+                    Text(
+                        "Biblioteca de ejercicios",
+                        color =
+                            AzulEjercicios,
+                        fontSize = 26.sp,
+                        fontWeight =
+                            FontWeight.Bold
+                    )
+                }
+            }
 
-                OutlinedButton(
-                    onClick = {
-                        menuAcademia =
-                            true
-                    },
+            item {
+                Box(
                     modifier =
                         Modifier.fillMaxWidth()
                 ) {
-
-                    Text(
-                        academiaSeleccionada
-                            ?.nombre
-                            ?: "Seleccionar academia"
-                    )
-                }
-
-                DropdownMenu(
-                    expanded =
-                        menuAcademia,
-                    onDismissRequest = {
-                        menuAcademia =
-                            false
-                    }
-                ) {
-
-                    if (
-                        estado.academias
-                            .isEmpty()
-                    ) {
-
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "No hay academias disponibles"
+                    OutlinedButton(
+                        onClick = {
+                            menuAcademia = true
+                        },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(
+                                    min = 48.dp
+                                ),
+                        colors =
+                            ButtonDefaults
+                                .outlinedButtonColors(
+                                    contentColor =
+                                        AzulEjercicios
                                 )
-                            },
-                            enabled =
-                                false,
-                            onClick = {}
+                    ) {
+                        Text(
+                            academia?.nombre
+                                ?: "Seleccionar academia"
                         )
+                    }
 
-                    } else {
-
+                    DropdownMenu(
+                        expanded =
+                            menuAcademia,
+                        onDismissRequest = {
+                            menuAcademia =
+                                false
+                        }
+                    ) {
                         estado.academias
-                            .forEach { academia ->
+                            .forEach {
+                                    item ->
 
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            academia.nombre
+                                            item.nombre
                                         )
                                     },
                                     onClick = {
-
                                         viewModel
                                             .seleccionarAcademia(
-                                                academia.id
+                                                item.id
                                             )
 
                                         menuAcademia =
                                             false
-
-                                        objetivoSeleccionado =
-                                            "TODOS"
                                     }
                                 )
                             }
@@ -308,435 +284,179 @@ fun PantallaEjercicios(
                 }
             }
 
-            Spacer(
-                Modifier.height(
-                    16.dp
-                )
-            )
-
-            Row(
-                modifier =
-                    Modifier.fillMaxWidth(),
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-
-                Column(
-                    modifier =
-                        Modifier.weight(
-                            1f
-                        )
-                ) {
-
-                    Text(
-                        text =
-                            "BIBLIOTECA",
-                        color =
-                            VerdeSportPro,
-                        fontSize =
-                            11.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-
-                    Text(
-                        text =
-                            "Biblioteca",
-                        color =
-                            AzulSportPro,
-                        fontSize =
-                            30.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-                }
-
-                Button(
-                    onClick = {
-
-                        ejercicioEditar =
-                            null
-
-                        viewModel
-                            .limpiarError()
-
-                        mostrarFormulario =
-                            true
+            item {
+                OutlinedTextField(
+                    value = busqueda,
+                    onValueChange = {
+                        busqueda = it
                     },
                     modifier =
-                        Modifier.size(
-                            48.dp
-                        ),
-                    contentPadding =
-                        PaddingValues(0.dp),
-                    shape =
-                        RoundedCornerShape(
-                            14.dp
-                        ),
-                    colors =
-                        ButtonDefaults
-                            .buttonColors(
-                                containerColor =
-                                    VerdeSportPro
-                            )
-                ) {
-
-                    Text(
-                        text =
-                            "+",
-                        fontSize =
-                            25.sp
-                    )
-                }
-            }
-
-            Spacer(
-                Modifier.height(
-                    14.dp
-                )
-            )
-
-            OutlinedTextField(
-                value =
-                    busqueda,
-                onValueChange = {
-                    busqueda = it
-                },
-                modifier =
-                    Modifier.fillMaxWidth(),
-                placeholder = {
-                    Text(
-                        "Buscar por nombre u objetivo..."
-                    )
-                },
-                singleLine =
-                    true,
-                shape =
-                    RoundedCornerShape(
-                        14.dp
-                    )
-            )
-
-            Spacer(
-                Modifier.height(
-                    10.dp
-                )
-            )
-
-            Row(
-                modifier =
-                    Modifier.fillMaxWidth(),
-                horizontalArrangement =
-                    Arrangement.spacedBy(
-                        6.dp
-                    )
-            ) {
-
-                FilterChip(
-                    selected =
-                        filtroEstado ==
-                                FiltroEstadoEjercicio.TODOS,
-                    onClick = {
-                        filtroEstado =
-                            FiltroEstadoEjercicio.TODOS
-                    },
-                    label = {
+                        Modifier.fillMaxWidth(),
+                    placeholder = {
                         Text(
-                            "Todos"
+                            "Buscar por nombre u objetivo"
                         )
-                    }
-                )
-
-                FilterChip(
-                    selected =
-                        filtroEstado ==
-                                FiltroEstadoEjercicio.ACTIVOS,
-                    onClick = {
-                        filtroEstado =
-                            FiltroEstadoEjercicio.ACTIVOS
                     },
-                    label = {
-                        Text(
-                            "Activos"
-                        )
-                    }
-                )
-
-                FilterChip(
-                    selected =
-                        filtroEstado ==
-                                FiltroEstadoEjercicio.INACTIVOS,
-                    onClick = {
-                        filtroEstado =
-                            FiltroEstadoEjercicio.INACTIVOS
-                    },
-                    label = {
-                        Text(
-                            "Inactivos"
-                        )
-                    }
+                    singleLine = true
                 )
             }
 
-            Spacer(
-                Modifier.height(
-                    6.dp
-                )
-            )
-
-            Box(
-                modifier =
-                    Modifier.fillMaxWidth()
-            ) {
-
-                OutlinedButton(
-                    onClick = {
-                        menuObjetivo =
-                            true
-                    },
+            item {
+                Row(
                     modifier =
-                        Modifier.fillMaxWidth()
+                        Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(
+                                rememberScrollState()
+                            ),
+                    horizontalArrangement =
+                        Arrangement.spacedBy(
+                            6.dp
+                        )
                 ) {
-
-                    Text(
-                        if (
-                            objetivoSeleccionado ==
-                            "TODOS"
-                        ) {
-                            "Todos los objetivos"
-                        } else {
-                            objetivoSeleccionado
-                        }
-                    )
-                }
-
-                DropdownMenu(
-                    expanded =
-                        menuObjetivo,
-                    onDismissRequest = {
-                        menuObjetivo =
-                            false
+                    FiltroEjercicio(
+                        texto = "Todos",
+                        seleccionado =
+                            filtroActivo == null
+                    ) {
+                        filtroActivo = null
                     }
-                ) {
 
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                "Todos los objetivos"
-                            )
-                        },
-                        onClick = {
-                            objetivoSeleccionado =
-                                "TODOS"
+                    FiltroEjercicio(
+                        texto = "Activos",
+                        seleccionado =
+                            filtroActivo == true
+                    ) {
+                        filtroActivo = true
+                    }
 
-                            menuObjetivo =
-                                false
-                        }
-                    )
-
-                    objetivos
-                        .forEach { objetivo ->
-
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        objetivo
-                                    )
-                                },
-                                onClick = {
-                                    objetivoSeleccionado =
-                                        objetivo
-
-                                    menuObjetivo =
-                                        false
-                                }
-                            )
-                        }
+                    FiltroEjercicio(
+                        texto = "Inactivos",
+                        seleccionado =
+                            filtroActivo == false
+                    ) {
+                        filtroActivo = false
+                    }
                 }
             }
 
             estado.error?.let {
+                    error ->
 
-                Spacer(
-                    Modifier.height(
-                        8.dp
+                item {
+                    MensajeEjercicio(
+                        texto = error,
+                        fondo =
+                            Color(0xFFFFE8E8),
+                        color =
+                            RojoEjercicios
                     )
-                )
-
-                Text(
-                    text =
-                        it,
-                    color =
-                        MaterialTheme
-                            .colorScheme
-                            .error,
-                    fontSize =
-                        13.sp
-                )
+                }
             }
 
             estado.mensaje?.let {
+                    mensaje ->
 
-                Spacer(
-                    Modifier.height(
-                        8.dp
+                item {
+                    MensajeEjercicio(
+                        texto = mensaje,
+                        fondo =
+                            Color(0xFFE5F5EB),
+                        color =
+                            VerdeEjercicios
                     )
-                )
-
-                Text(
-                    text =
-                        it,
-                    color =
-                        VerdeSportPro,
-                    fontSize =
-                        13.sp
-                )
+                }
             }
 
-            Spacer(
-                Modifier.height(
-                    12.dp
-                )
-            )
-
-            when {
-
-                estado.cargando -> {
-
+            if (estado.cargando) {
+                item {
                     Box(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .weight(1f),
+                                .height(150.dp),
                         contentAlignment =
                             Alignment.Center
                     ) {
-
                         CircularProgressIndicator(
                             color =
-                                VerdeSportPro
+                                VerdeEjercicios
                         )
                     }
                 }
-
-                estado.academias
-                    .isEmpty() -> {
-
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                        contentAlignment =
-                            Alignment.Center
-                    ) {
-
-                        Text(
-                            text =
-                                "No tienes academias disponibles.",
-                            color =
-                                Color.Gray
-                        )
-                    }
-                }
-
+            } else if (
                 ejerciciosFiltrados
-                    .isEmpty() -> {
-
-                    Box(
+                    .isEmpty()
+            ) {
+                item {
+                    Surface(
                         modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                        contentAlignment =
-                            Alignment.Center
+                            Modifier.fillMaxWidth(),
+                        color =
+                            Color.White,
+                        shape =
+                            RoundedCornerShape(
+                                12.dp
+                            )
                     ) {
-
                         Text(
-                            text =
-                                "No hay ejercicios para mostrar.",
+                            "No hay ejercicios para mostrar.",
+                            modifier =
+                                Modifier.padding(
+                                    16.dp
+                                ),
                             color =
-                                Color.Gray
+                                GrisEjercicios
                         )
                     }
                 }
+            } else {
+                itemsIndexed(
+                    items =
+                        ejerciciosFiltrados,
+                    key = {
+                            _,
+                            ejercicio ->
 
-                else -> {
-
-                    LazyColumn(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                        verticalArrangement =
-                            Arrangement.spacedBy(
-                                10.dp
-                            ),
-                        contentPadding =
-                            PaddingValues(
-                                bottom =
-                                    24.dp
-                            )
-                    ) {
-
-                        itemsIndexed(
-                            items =
-                                ejerciciosFiltrados,
-                            key = {
-                                    _,
-                                    ejercicio ->
-                                ejercicio.id
-                            }
-                        ) {
-                                index,
-                                ejercicio ->
-
-                            TarjetaEjercicio(
-                                numero =
-                                    index + 1,
-                                ejercicio =
-                                    ejercicio,
-                                onEditar = {
-
-                                    ejercicioEditar =
-                                        ejercicio
-
-                                    mostrarFormulario =
-                                        true
-                                },
-                                onCambiarEstado = {
-
-                                    viewModel
-                                        .cambiarEstado(
-                                            ejercicio
-                                        )
-                                }
-                            )
-                        }
+                        ejercicio.id
                     }
+                ) {
+                        indice,
+                        ejercicio ->
+
+                    TarjetaEjercicio(
+                        numero =
+                            indice + 1,
+                        ejercicio =
+                            ejercicio,
+                        onEditar = {
+                            ejercicioEditar =
+                                ejercicio
+
+                            mostrarFormulario =
+                                true
+                        },
+                        onCambiarEstado = {
+                            viewModel
+                                .cambiarEstado(
+                                    ejercicio
+                                )
+                        }
+                    )
                 }
             }
         }
     }
 
-    if (
-        mostrarFormulario
-    ) {
-
+    if (mostrarFormulario) {
         FormularioEjercicio(
             ejercicio =
                 ejercicioEditar,
             guardando =
                 estado.guardando,
-            error =
-                estado.error,
-            onCancelar = {
-
+            onCerrar = {
                 mostrarFormulario =
                     false
-
-                viewModel
-                    .limpiarError()
             },
             onGuardar = {
                     nombre,
@@ -766,141 +486,108 @@ fun PantallaEjercicios(
 }
 
 @Composable
+private fun FiltroEjercicio(
+    texto: String,
+    seleccionado: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier =
+            Modifier.height(40.dp),
+        shape =
+            RoundedCornerShape(
+                10.dp
+            ),
+        contentPadding =
+            PaddingValues(
+                horizontal = 16.dp
+            ),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor =
+                    if (seleccionado) {
+                        AzulEjercicios
+                    } else {
+                        Color(0xFFEDEFF0)
+                    },
+                contentColor =
+                    if (seleccionado) {
+                        Color.White
+                    } else {
+                        AzulEjercicios
+                    }
+            )
+    ) {
+        Text(
+            texto,
+            fontSize = 11.sp,
+            fontWeight =
+                FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
 private fun TarjetaEjercicio(
     numero: Int,
     ejercicio: Ejercicio,
     onEditar: () -> Unit,
     onCambiarEstado: () -> Unit
 ) {
-
     Card(
         modifier =
             Modifier.fillMaxWidth(),
         shape =
             RoundedCornerShape(
-                16.dp
+                14.dp
             ),
         colors =
-            CardDefaults
-                .cardColors(
-                    containerColor =
-                        if (
-                            ejercicio.activo
-                        ) {
-                            Color.White
-                        } else {
-                            Color(
-                                0xFFF2F2F2
-                            )
-                        }
-                )
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White,
+                contentColor =
+                    AzulEjercicios
+            )
     ) {
-
         Column(
             modifier =
                 Modifier.padding(
-                    14.dp
+                    13.dp
+                ),
+            verticalArrangement =
+                Arrangement.spacedBy(
+                    6.dp
                 )
         ) {
-
             Row(
                 modifier =
                     Modifier.fillMaxWidth(),
+                horizontalArrangement =
+                    Arrangement.SpaceBetween,
                 verticalAlignment =
                     Alignment.CenterVertically
             ) {
-
-                Surface(
-                    modifier =
-                        Modifier.size(
-                            48.dp
-                        ),
+                Text(
+                    "$numero. ${ejercicio.nombre}",
                     color =
-                        if (
-                            ejercicio.activo
-                        ) {
-                            VerdeClaro
-                        } else {
-                            Color(
-                                0xFFE5E5E5
-                            )
-                        },
-                    shape =
-                        RoundedCornerShape(
-                            14.dp
-                        )
-                ) {
-
-                    Box(
-                        contentAlignment =
-                            Alignment.Center
-                    ) {
-
-                        Text(
-                            text =
-                                numero.toString(),
-                            fontWeight =
-                                FontWeight.Bold,
-                            fontSize =
-                                18.sp,
-                            color =
-                                AzulSportPro
-                        )
-                    }
-                }
-
-                Spacer(
-                    Modifier.width(
-                        12.dp
-                    )
+                        AzulEjercicios,
+                    fontSize = 15.sp,
+                    fontWeight =
+                        FontWeight.Bold
                 )
 
-                Column(
-                    modifier =
-                        Modifier.weight(
-                            1f
-                        )
-                ) {
-
-                    Text(
-                        text =
-                            ejercicio.nombre,
-                        fontWeight =
-                            FontWeight.Bold,
-                        color =
-                            AzulSportPro,
-                        fontSize =
-                            15.sp
-                    )
-
-                    Text(
-                        text =
-                            ejercicio.objetivo,
-                        color =
-                            Color.Gray,
-                        fontSize =
-                            12.sp
-                    )
-
-                    Text(
-                        text =
-                            "${ejercicio.duracionMinutos} min",
-                        color =
-                            Color.Gray,
-                        fontSize =
-                            11.sp
-                    )
-                }
-
                 Surface(
                     color =
                         if (
                             ejercicio.activo
                         ) {
-                            VerdeClaro
+                            Color(
+                                0xFFE5F5EB
+                            )
                         } else {
                             Color(
-                                0xFFFFE7E7
+                                0xFFFFE8E8
                             )
                         },
                     shape =
@@ -908,80 +595,123 @@ private fun TarjetaEjercicio(
                             50.dp
                         )
                 ) {
-
                     Text(
-                        text =
-                            if (
-                                ejercicio.activo
-                            ) {
-                                "Activo"
-                            } else {
-                                "Inactivo"
-                            },
+                        if (
+                            ejercicio.activo
+                        ) {
+                            "Activo"
+                        } else {
+                            "Inactivo"
+                        },
                         modifier =
                             Modifier.padding(
                                 horizontal =
-                                    10.dp,
+                                    9.dp,
                                 vertical =
-                                    5.dp
+                                    4.dp
                             ),
+                        color =
+                            if (
+                                ejercicio.activo
+                            ) {
+                                VerdeEjercicios
+                            } else {
+                                RojoEjercicios
+                            },
                         fontSize =
-                            11.sp,
+                            10.sp,
                         fontWeight =
                             FontWeight.Bold
                     )
                 }
             }
 
+            Text(
+                ejercicio.objetivo,
+                color =
+                    AzulEjercicios,
+                fontSize = 12.sp,
+                fontWeight =
+                    FontWeight.SemiBold
+            )
+
             if (
                 ejercicio.descripcion
                     .isNotBlank()
             ) {
-
-                Spacer(
-                    Modifier.height(
-                        8.dp
-                    )
-                )
-
                 Text(
-                    text =
-                        ejercicio.descripcion,
+                    ejercicio.descripcion,
                     color =
-                        Color.DarkGray,
-                    fontSize =
-                        12.sp
+                        GrisEjercicios,
+                    fontSize = 11.sp,
+                    maxLines = 2
                 )
             }
 
-            Spacer(
-                Modifier.height(
-                    8.dp
-                )
+            Text(
+                "${ejercicio.duracionMinutos} minutos",
+                color =
+                    GrisEjercicios,
+                fontSize = 11.sp
             )
 
             Row(
                 modifier =
                     Modifier.fillMaxWidth(),
                 horizontalArrangement =
-                    Arrangement.End
+                    Arrangement.spacedBy(
+                        8.dp
+                    )
             ) {
-
-                TextButton(
-                    onClick =
-                        onEditar
+                OutlinedButton(
+                    onClick = onEditar,
+                    modifier =
+                        Modifier
+                            .width(120.dp)
+                            .height(42.dp),
+                    contentPadding =
+                        PaddingValues(
+                            horizontal = 4.dp
+                        ),
+                    colors =
+                        ButtonDefaults
+                            .outlinedButtonColors(
+                                contentColor =
+                                    AzulEjercicios
+                            )
                 ) {
-
                     Text(
-                        "Editar"
+                        "Editar",
+                        fontSize = 11.sp
                     )
                 }
 
-                TextButton(
+                Button(
                     onClick =
-                        onCambiarEstado
+                        onCambiarEstado,
+                    modifier =
+                        Modifier
+                            .width(130.dp)
+                            .height(42.dp),
+                    contentPadding =
+                        PaddingValues(
+                            horizontal = 4.dp
+                        ),
+                    colors =
+                        ButtonDefaults
+                            .buttonColors(
+                                containerColor =
+                                    if (
+                                        ejercicio.activo
+                                    ) {
+                                        RojoEjercicios
+                                    } else {
+                                        VerdeEjercicios
+                                    },
+                                contentColor =
+                                    Color.White
+                            )
                 ) {
-
                     Text(
                         if (
                             ejercicio.activo
@@ -989,7 +719,8 @@ private fun TarjetaEjercicio(
                             "Inactivar"
                         } else {
                             "Activar"
-                        }
+                        },
+                        fontSize = 11.sp
                     )
                 }
             }
@@ -1001,19 +732,16 @@ private fun TarjetaEjercicio(
 private fun FormularioEjercicio(
     ejercicio: Ejercicio?,
     guardando: Boolean,
-    error: String?,
-    onCancelar: () -> Unit,
-    onGuardar: (
+    onCerrar: () -> Unit,
+    onGuardar:
+        (
         String,
         String,
         String,
         String
     ) -> Unit
 ) {
-
-    var nombre by remember(
-        ejercicio
-    ) {
+    var nombre by remember(ejercicio) {
         mutableStateOf(
             ejercicio
                 ?.nombre
@@ -1021,9 +749,7 @@ private fun FormularioEjercicio(
         )
     }
 
-    var objetivo by remember(
-        ejercicio
-    ) {
+    var objetivo by remember(ejercicio) {
         mutableStateOf(
             ejercicio
                 ?.objetivo
@@ -1031,9 +757,7 @@ private fun FormularioEjercicio(
         )
     }
 
-    var descripcion by remember(
-        ejercicio
-    ) {
+    var descripcion by remember(ejercicio) {
         mutableStateOf(
             ejercicio
                 ?.descripcion
@@ -1041,9 +765,7 @@ private fun FormularioEjercicio(
         )
     }
 
-    var duracion by remember(
-        ejercicio
-    ) {
+    var duracion by remember(ejercicio) {
         mutableStateOf(
             ejercicio
                 ?.duracionMinutos
@@ -1053,67 +775,52 @@ private fun FormularioEjercicio(
     }
 
     AlertDialog(
-        onDismissRequest =
-            onCancelar,
+        onDismissRequest = onCerrar,
         title = {
-
             Text(
-                if (
-                    ejercicio ==
-                    null
-                ) {
+                if (ejercicio == null) {
                     "Crear ejercicio"
                 } else {
                     "Editar ejercicio"
-                }
+                },
+                color = AzulEjercicios
             )
         },
         text = {
-
             Column(
                 verticalArrangement =
                     Arrangement.spacedBy(
-                        10.dp
+                        8.dp
                     )
             ) {
-
                 OutlinedTextField(
-                    value =
-                        nombre,
+                    value = nombre,
                     onValueChange = {
                         nombre = it
                     },
                     modifier =
                         Modifier.fillMaxWidth(),
                     label = {
-                        Text(
-                            "Nombre *"
-                        )
+                        Text("Nombre")
                     },
-                    singleLine =
-                        true
+                    singleLine = true
                 )
 
                 OutlinedTextField(
-                    value =
-                        objetivo,
+                    value = objetivo,
                     onValueChange = {
                         objetivo = it
                     },
                     modifier =
                         Modifier.fillMaxWidth(),
                     label = {
-                        Text(
-                            "Objetivo *"
-                        )
+                        Text("Objetivo")
                     },
-                    singleLine =
-                        true
+                    singleLine = true
                 )
 
                 OutlinedTextField(
-                    value =
-                        descripcion,
+                    value = descripcion,
                     onValueChange = {
                         descripcion = it
                     },
@@ -1124,66 +831,41 @@ private fun FormularioEjercicio(
                             "Descripción"
                         )
                     },
-                    minLines =
-                        3
+                    minLines = 2,
+                    maxLines = 3
                 )
 
                 OutlinedTextField(
-                    value =
-                        duracion,
+                    value = duracion,
                     onValueChange = {
-
                         if (
                             it.all {
                                     caracter ->
                                 caracter.isDigit()
                             }
                         ) {
-                            duracion =
-                                it
+                            duracion = it
                         }
                     },
                     modifier =
                         Modifier.fillMaxWidth(),
                     label = {
                         Text(
-                            "Duración estimada (minutos) *"
+                            "Duración en minutos"
                         )
                     },
-                    singleLine =
-                        true,
                     keyboardOptions =
                         KeyboardOptions(
                             keyboardType =
                                 KeyboardType.Number
-                        )
+                        ),
+                    singleLine = true
                 )
-
-                error?.let {
-
-                    Text(
-                        text =
-                            it,
-                        color =
-                            MaterialTheme
-                                .colorScheme
-                                .error,
-                        fontSize =
-                            12.sp
-                    )
-                }
             }
         },
         confirmButton = {
-
             Button(
-                enabled =
-                    !guardando &&
-                            nombre.isNotBlank() &&
-                            objetivo.isNotBlank() &&
-                            duracion.isNotBlank(),
                 onClick = {
-
                     onGuardar(
                         nombre,
                         objetivo,
@@ -1191,41 +873,68 @@ private fun FormularioEjercicio(
                         duracion
                     )
                 },
+                enabled =
+                    nombre.isNotBlank() &&
+                            objetivo.isNotBlank() &&
+                            duracion.isNotBlank() &&
+                            !guardando,
                 colors =
                     ButtonDefaults
                         .buttonColors(
                             containerColor =
-                                AzulSportPro
+                                VerdeEjercicios,
+                            contentColor =
+                                Color.White
                         )
             ) {
-
                 Text(
-                    if (
-                        guardando
-                    ) {
+                    if (guardando) {
                         "Guardando..."
-                    } else if (
-                        ejercicio ==
-                        null
-                    ) {
-                        "Crear ejercicio"
                     } else {
-                        "Guardar cambios"
+                        "Guardar"
                     }
                 )
             }
         },
         dismissButton = {
-
             TextButton(
-                onClick =
-                    onCancelar
+                onClick = onCerrar
             ) {
-
                 Text(
-                    "Cancelar"
+                    "Cancelar",
+                    color =
+                        AzulEjercicios
                 )
             }
         }
     )
+}
+
+@Composable
+private fun MensajeEjercicio(
+    texto: String,
+    fondo: Color,
+    color: Color
+) {
+    Surface(
+        modifier =
+            Modifier.fillMaxWidth(),
+        color = fondo,
+        shape =
+            RoundedCornerShape(
+                10.dp
+            )
+    ) {
+        Text(
+            texto,
+            modifier =
+                Modifier.padding(
+                    10.dp
+                ),
+            color = color,
+            fontSize = 12.sp,
+            fontWeight =
+                FontWeight.Medium
+        )
+    }
 }
