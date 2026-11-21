@@ -29,6 +29,7 @@ data class EstadoComunidad(
     val publicaciones: List<Publicacion> = emptyList(),
     val pestana: PestanaComunidad = PestanaComunidad.PARA_TI,
     val opciones: OpcionesComunidad = OpcionesComunidad(),
+    val opcionesCargadas: Boolean = false,      // para no mostrar "sin academia" mientras carga
     val cargando: Boolean = false,
     val guardando: Boolean = false,
     val error: String? = null,
@@ -90,7 +91,7 @@ class ComunidadViewModel(
             _estado.update { it.copy(uid = uid, rol = perfil?.rol, nombre = perfil?.nombre.orEmpty()) }
 
             repositorio.opcionesPublicacion(uid)
-                .onSuccess { opciones -> _estado.update { it.copy(opciones = opciones) } }
+                .onSuccess { opciones -> _estado.update { it.copy(opciones = opciones, opcionesCargadas = true) } }
 
             cargar()
         }

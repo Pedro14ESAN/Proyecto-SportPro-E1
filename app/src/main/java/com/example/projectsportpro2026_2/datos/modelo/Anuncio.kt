@@ -1,7 +1,9 @@
 package com.example.projectsportpro2026_2.datos.modelo
 
-// A quién va dirigido el anuncio (criterio HU19: academia, equipo o rol)
-enum class TipoAudiencia { ACADEMIA, EQUIPO, ROL }
+// A quién va dirigido el anuncio (criterio HU19: academia, equipo o rol).
+// PUBLICO: comunicado oficial abierto a toda SportPro (torneos, convocatorias
+// abiertas), visible también para usuarios que aún no pertenecen a una academia.
+enum class TipoAudiencia { ACADEMIA, EQUIPO, ROL, PUBLICO }
 
 // Un anuncio no se borra: se archiva (criterio HU19)
 enum class EstadoAnuncio { ACTIVO, ARCHIVADO }
@@ -14,6 +16,7 @@ data class Anuncio(
 
     // Audiencia
     val idAcademia: String = "",                  // siempre: a qué academia pertenece
+    val nombreAcademia: String = "",              // para mostrar quién publica un anuncio PUBLICO
     val tipoAudiencia: TipoAudiencia = TipoAudiencia.ACADEMIA,
     val idEquipo: String = "",                    // solo si tipoAudiencia == EQUIPO
     val nombreEquipo: String = "",

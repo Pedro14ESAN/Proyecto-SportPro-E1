@@ -86,7 +86,8 @@ class RepositorioNotificaciones(
     suspend fun notificarAnuncio(anuncio: Anuncio) {
         val lista = runCatching {
             when (anuncio.tipoAudiencia) {
-                TipoAudiencia.ACADEMIA -> destinatarios.deAcademia(anuncio.idAcademia)
+                // PUBLICO: solo se avisa a la propia academia, no a toda SportPro (sin envíos masivos)
+                TipoAudiencia.ACADEMIA, TipoAudiencia.PUBLICO -> destinatarios.deAcademia(anuncio.idAcademia)
                 TipoAudiencia.EQUIPO -> destinatarios.deEquipo(anuncio.idEquipo)
                 TipoAudiencia.ROL -> destinatarios.deAcademia(anuncio.idAcademia, anuncio.rolDestino)
             }
