@@ -24,7 +24,8 @@ class RepositorioAutenticacion(
         correo: String,
         contrasena: String,
         rol: Rol,
-        fechaNacimiento: String
+        fechaNacimiento: String,
+        documento: String
     ): Result<PerfilUsuario> {
         if (rol == Rol.ADM) {
             return Result.failure(
@@ -44,6 +45,11 @@ class RepositorioAutenticacion(
             if (fecha.isAfter(LocalDate.now())) {
                 return Result.failure(
                     IllegalArgumentException("La fecha de nacimiento no puede ser futura")
+                )
+            }
+            if (documento.isBlank()) {
+                return Result.failure(
+                    IllegalArgumentException("Escribe tu documento de identidad")
                 )
             }
             when (PoliticaEdad.reglaPara(PoliticaEdad.calcularEdad(fecha))) {
@@ -67,6 +73,7 @@ class RepositorioAutenticacion(
                 correo = correo.trim().lowercase(),
                 rol = rol,
                 fechaNacimiento = if (rol == Rol.JUG) fechaNacimiento else "",
+                documento = if (rol == Rol.JUG) documento.trim() else "",
                 estado = estado
             )
             try {
