@@ -15,14 +15,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class EstadoMensualidades(
-    val mensualidades: List<Mensualidad> = emptyList(),
-    val jugadoresAdministrables: List<Jugador> = emptyList(),
-
+    val mensualidades: List<Mensualidad> =
+        emptyList(),
+    val jugadoresAdministrables: List<Jugador> =
+        emptyList(),
     val rol: Rol? = null,
-
     val cargando: Boolean = false,
     val guardando: Boolean = false,
-
     val error: String? = null,
     val mensaje: String? = null
 )
@@ -46,11 +45,10 @@ class MensualidadesViewModel(
             StateFlow<EstadoMensualidades> =
         _estado.asStateFlow()
 
-    private var iniciado = false
-
+    private var iniciado =
+        false
 
     fun iniciar() {
-
         if (iniciado) return
 
         iniciado = true
@@ -58,9 +56,7 @@ class MensualidadesViewModel(
         cargar()
     }
 
-
     fun cargar() {
-
         viewModelScope.launch {
 
             _estado.update {
@@ -74,8 +70,9 @@ class MensualidadesViewModel(
                 autenticacion
                     .uidActual()
 
-            if (uid.isNullOrBlank()) {
-
+            if (
+                uid.isNullOrBlank()
+            ) {
                 _estado.update {
                     it.copy(
                         cargando = false,
@@ -88,53 +85,57 @@ class MensualidadesViewModel(
             }
 
             try {
-
                 val perfil =
                     autenticacion
-                        .obtenerPerfil(uid)
+                        .obtenerPerfil(
+                            uid
+                        )
                         ?: throw IllegalStateException(
                             "Tu cuenta no tiene perfil"
                         )
 
+                if (
+                    perfil.rol ==
+                    Rol.ADM
+                ) {
+                    repositorio
+                        .generarMensualidadesMesActual(
+                            uid
+                        )
+                        .getOrThrow()
+                }
 
                 val mensualidades =
                     repositorio
-                        .listarParaUsuario(uid)
+                        .listarParaUsuario(
+                            uid
+                        )
                         .getOrThrow()
-
 
                 val jugadores =
                     if (
                         perfil.rol ==
                         Rol.ADM
                     ) {
-
                         repositorio
                             .listarJugadoresAdministrables(
                                 uid
                             )
                             .getOrThrow()
-
                     } else {
-
                         emptyList()
                     }
-
 
                 _estado.update {
                     it.copy(
                         mensualidades =
                             mensualidades,
-
                         jugadoresAdministrables =
                             jugadores,
-
                         rol =
                             perfil.rol,
-
                         cargando =
                             false,
-
                         error =
                             null
                     )
@@ -143,20 +144,19 @@ class MensualidadesViewModel(
             } catch (
                 e: Exception
             ) {
-
                 _estado.update {
                     it.copy(
                         cargando =
                             false,
-
                         error =
-                            mensajeError(e)
+                            mensajeError(
+                                e
+                            )
                     )
                 }
             }
         }
     }
-
 
     fun guardarMensualidad(
         idJugador: String,
@@ -164,15 +164,15 @@ class MensualidadesViewModel(
         estadoMensualidad:
         EstadoMensualidad
     ) {
-
         viewModelScope.launch {
 
             val uid =
                 autenticacion
                     .uidActual()
 
-            if (uid.isNullOrBlank()) {
-
+            if (
+                uid.isNullOrBlank()
+            ) {
                 _estado.update {
                     it.copy(
                         error =
@@ -183,9 +183,9 @@ class MensualidadesViewModel(
                 return@launch
             }
 
-
-            if (idJugador.isBlank()) {
-
+            if (
+                idJugador.isBlank()
+            ) {
                 _estado.update {
                     it.copy(
                         error =
@@ -196,37 +196,33 @@ class MensualidadesViewModel(
                 return@launch
             }
 
-
             _estado.update {
                 it.copy(
-                    guardando = true,
-                    error = null,
-                    mensaje = null
+                    guardando =
+                        true,
+                    error =
+                        null,
+                    mensaje =
+                        null
                 )
             }
-
 
             repositorio
                 .registrarOActualizar(
                     idJugador =
                         idJugador,
-
                     periodo =
                         periodo,
-
                     estado =
                         estadoMensualidad,
-
                     uid =
                         uid
                 )
                 .onSuccess {
-
                     _estado.update {
                         it.copy(
                             guardando =
                                 false,
-
                             mensaje =
                                 "Mensualidad guardada correctamente"
                         )
@@ -234,24 +230,24 @@ class MensualidadesViewModel(
 
                     cargar()
                 }
-                .onFailure { e ->
+                .onFailure {
+                        e ->
 
                     _estado.update {
                         it.copy(
                             guardando =
                                 false,
-
                             error =
-                                mensajeError(e)
+                                mensajeError(
+                                    e
+                                )
                         )
                     }
                 }
         }
     }
 
-
     fun limpiarError() {
-
         _estado.update {
             it.copy(
                 error = null
@@ -259,9 +255,7 @@ class MensualidadesViewModel(
         }
     }
 
-
     fun limpiarMensaje() {
-
         _estado.update {
             it.copy(
                 mensaje = null
@@ -269,11 +263,9 @@ class MensualidadesViewModel(
         }
     }
 
-
     private fun mensajeError(
         e: Throwable
     ): String {
-
         return when (e) {
 
             is IllegalArgumentException,

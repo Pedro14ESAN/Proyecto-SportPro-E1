@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,7 +22,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -49,28 +50,35 @@ private val AzulSportPro =
     Color(0xFF0B3547)
 
 private val VerdeSportPro =
-    Color(0xFF18A668)
+    Color(0xFF168F5B)
+
+private val RojoSportPro =
+    Color(0xFFB83232)
+
+private val AmarilloSportPro =
+    Color(0xFF8A6814)
 
 private val VerdeClaro =
-    Color(0xFFE8F8E9)
+    Color(0xFFE6F5EC)
 
 private val RojoClaro =
-    Color(0xFFFFE7E7)
+    Color(0xFFFFE9E9)
 
 private val AmarilloClaro =
-    Color(0xFFFFF5D6)
+    Color(0xFFFFF4D6)
+
+private val GrisClaro =
+    Color(0xFFF0F2F3)
 
 private val FondoSportPro =
-    Color(0xFFF8FAF9)
+    Color(0xFFF7F9F8)
 
 @Composable
 fun PantallaAsistencias(
     onVolver: () -> Unit,
-    viewModel:
-    AsistenciasViewModel =
+    viewModel: AsistenciasViewModel =
         viewModel()
 ) {
-
     val estado by
     viewModel.estado
         .collectAsState()
@@ -89,314 +97,249 @@ fun PantallaAsistencias(
         viewModel.iniciar()
     }
 
-    val presentes =
-        estado.estados.values.count {
-            it ==
-                    EstadoAsistencia.PRESENTE
-        }
-
-    val ausentes =
-        estado.estados.values.count {
-            it ==
-                    EstadoAsistencia.AUSENTE
-        }
-
-    val justificados =
-        estado.estados.values.count {
-            it ==
-                    EstadoAsistencia.JUSTIFICADO
-        }
+    val puedeGestionar =
+        estado.rol == Rol.DT ||
+                estado.rol == Rol.ADM
 
     Scaffold(
         containerColor =
             FondoSportPro
-    ) { padding ->
+    ) {
+            padding ->
 
-        Column(
+        LazyColumn(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .padding(padding)
                     .padding(
-                        horizontal =
-                            18.dp
-                    )
-        ) {
-
-            Spacer(
-                Modifier.height(
-                    10.dp
+                        horizontal = 16.dp
+                    ),
+            verticalArrangement =
+                Arrangement.spacedBy(
+                    8.dp
+                ),
+            contentPadding =
+                PaddingValues(
+                    bottom = 20.dp
                 )
-            )
-
-            Row(
-                modifier =
-                    Modifier.fillMaxWidth(),
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-
-                TextButton(
-                    onClick =
-                        onVolver
+        ) {
+            item {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(46.dp),
+                    verticalAlignment =
+                        Alignment.CenterVertically,
+                    horizontalArrangement =
+                        Arrangement.SpaceBetween
                 ) {
+                    TextButton(
+                        onClick =
+                            onVolver
+                    ) {
+                        Text(
+                            "← Volver",
+                            color =
+                                AzulSportPro,
+                            fontWeight =
+                                FontWeight.SemiBold
+                        )
+                    }
 
                     Text(
-                        "← Entrenamientos",
+                        "SPORTPRO",
                         color =
-                            VerdeSportPro
+                            AzulSportPro,
+                        fontWeight =
+                            FontWeight.Bold
                     )
                 }
-
-                Spacer(
-                    Modifier.weight(1f)
-                )
-
-                Text(
-                    text =
-                        "SPORTPRO",
-                    color =
-                        AzulSportPro,
-                    fontWeight =
-                        FontWeight.Bold
-                )
             }
 
-            Spacer(
-                Modifier.height(
-                    12.dp
-                )
-            )
+            item {
+                Column {
+                    Text(
+                        "ASISTENCIA",
+                        color =
+                            VerdeSportPro,
+                        fontSize = 11.sp,
+                        fontWeight =
+                            FontWeight.Bold
+                    )
 
-            Text(
-                text =
-                    "ASISTENCIA",
-                color =
-                    VerdeSportPro,
-                fontSize =
-                    11.sp,
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-            Text(
-                text =
-                    if (
-                        estado.rol ==
-                        Rol.DT ||
-                        estado.rol ==
-                        Rol.ADM
-                    ) {
-                        "Asistencia"
-                    } else {
-                        "Historial de asistencia"
-                    },
-                color =
-                    AzulSportPro,
-                fontSize =
-                    28.sp,
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-            Spacer(
-                Modifier.height(
-                    16.dp
-                )
-            )
-
-            if (
-                estado.rol ==
-                Rol.DT ||
-                estado.rol ==
-                Rol.ADM
-            ) {
-
-                Box(
-                    modifier =
-                        Modifier.fillMaxWidth()
-                ) {
-
-                    OutlinedButton(
-                        onClick = {
-                            menuSesion =
-                                true
+                    Text(
+                        if (
+                            puedeGestionar
+                        ) {
+                            "Registro de asistencia"
+                        } else {
+                            "Historial de asistencia"
                         },
+                        color =
+                            AzulSportPro,
+                        fontSize = 26.sp,
+                        fontWeight =
+                            FontWeight.Bold
+                    )
+                }
+            }
+
+            if (puedeGestionar) {
+                item {
+                    Box(
                         modifier =
                             Modifier.fillMaxWidth()
                     ) {
-
-                        val sesion =
-                            estado.sesiones
-                                .firstOrNull {
-                                    it.id ==
-                                            estado.idSesionSeleccionada
-                                }
-
-                        Text(
-                            text =
-                                sesion
-                                    ?.let {
-                                        "${it.nombreEquipo} · ${it.fecha} ${it.hora}"
-                                    }
-                                    ?: "Seleccionar entrenamiento"
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded =
-                            menuSesion,
-                        onDismissRequest = {
-                            menuSesion =
-                                false
-                        }
-                    ) {
-
-                        if (
-                            estado.sesiones
-                                .isEmpty()
-                        ) {
-
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        "No hay entrenamientos disponibles"
-                                    )
-                                },
-                                enabled =
-                                    false,
-                                onClick = {}
-                            )
-
-                        } else {
-
-                            estado.sesiones
-                                .forEach {
-                                        sesion ->
-
-                                    DropdownMenuItem(
-                                        text = {
-
-                                            Text(
-                                                "${sesion.nombreEquipo} · ${sesion.fecha} ${sesion.hora}"
-                                            )
-                                        },
-                                        onClick = {
-
-                                            viewModel
-                                                .seleccionarSesion(
-                                                    sesion.id
-                                                )
-
-                                            menuSesion =
-                                                false
-                                        }
-                                    )
-                                }
-                        }
-                    }
-                }
-
-                Spacer(
-                    Modifier.height(
-                        14.dp
-                    )
-                )
-
-                estado.error?.let {
-
-                    Text(
-                        text =
-                            it,
-                        color =
-                            Color.Red,
-                        fontSize =
-                            12.sp
-                    )
-
-                    Spacer(
-                        Modifier.height(
-                            8.dp
-                        )
-                    )
-                }
-
-                estado.mensaje?.let {
-
-                    Text(
-                        text =
-                            it,
-                        color =
-                            VerdeSportPro,
-                        fontSize =
-                            12.sp
-                    )
-
-                    Spacer(
-                        Modifier.height(
-                            8.dp
-                        )
-                    )
-                }
-
-                when {
-
-                    estado.cargando -> {
-
-                        Box(
+                        OutlinedButton(
+                            onClick = {
+                                menuSesion =
+                                    true
+                            },
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .weight(1f),
-                            contentAlignment =
-                                Alignment.Center
+                                    .heightIn(
+                                        min = 48.dp
+                                    ),
+                            colors =
+                                ButtonDefaults
+                                    .outlinedButtonColors(
+                                        contentColor =
+                                            AzulSportPro
+                                    )
                         ) {
+                            val sesion =
+                                estado.sesiones
+                                    .firstOrNull {
+                                        it.id ==
+                                                estado
+                                                    .idSesionSeleccionada
+                                    }
 
-                            CircularProgressIndicator(
-                                color =
-                                    VerdeSportPro
+                            Text(
+                                sesion?.let {
+                                    "${it.nombreEquipo} · ${it.fecha} · ${it.hora}"
+                                }
+                                    ?: "Seleccionar entrenamiento"
                             )
+                        }
+
+                        DropdownMenu(
+                            expanded =
+                                menuSesion,
+                            onDismissRequest = {
+                                menuSesion =
+                                    false
+                            }
+                        ) {
+                            if (
+                                estado.sesiones
+                                    .isEmpty()
+                            ) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            "No hay entrenamientos disponibles"
+                                        )
+                                    },
+                                    enabled =
+                                        false,
+                                    onClick = {}
+                                )
+                            } else {
+                                estado.sesiones
+                                    .forEach {
+                                            sesion ->
+
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    "${sesion.nombreEquipo} · ${sesion.fecha} · ${sesion.hora}",
+                                                    color =
+                                                        AzulSportPro
+                                                )
+                                            },
+                                            onClick = {
+                                                viewModel
+                                                    .seleccionarSesion(
+                                                        sesion.id
+                                                    )
+
+                                                menuSesion =
+                                                    false
+                                            }
+                                        )
+                                    }
+                            }
+                        }
+                    }
+                }
+
+                estado.error?.let {
+                        error ->
+
+                    item {
+                        MensajeAsistencia(
+                            texto =
+                                error,
+                            fondo =
+                                RojoClaro,
+                            color =
+                                RojoSportPro
+                        )
+                    }
+                }
+
+                estado.mensaje?.let {
+                        mensaje ->
+
+                    item {
+                        MensajeAsistencia(
+                            texto =
+                                mensaje,
+                            fondo =
+                                VerdeClaro,
+                            color =
+                                VerdeSportPro
+                        )
+                    }
+                }
+
+                when {
+                    estado.cargando -> {
+                        item {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(140.dp),
+                                contentAlignment =
+                                    Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    color =
+                                        VerdeSportPro
+                                )
+                            }
                         }
                     }
 
                     estado.idSesionSeleccionada
                         .isBlank() -> {
-
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                            contentAlignment =
-                                Alignment.Center
-                        ) {
-
-                            Text(
-                                text =
-                                    "Selecciona un entrenamiento.",
-                                color =
-                                    Color.Gray
+                        item {
+                            TextoVacio(
+                                "Selecciona un entrenamiento."
                             )
                         }
                     }
 
                     estado.jugadores
                         .isEmpty() -> {
-
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                            contentAlignment =
-                                Alignment.Center
-                        ) {
-
-                            Text(
-                                text =
-                                    "No hay jugadores en este equipo.",
-                                color =
-                                    Color.Gray
+                        item {
+                            TextoVacio(
+                                "No hay jugadores en este equipo."
                             )
                         }
                     }
@@ -404,268 +347,270 @@ fun PantallaAsistencias(
                     estado.asistenciaRegistrada &&
                             !estado.modoCorreccion -> {
 
-                        Text(
-                            text =
-                                "ASISTENCIA REGISTRADA",
-                            color =
-                                VerdeSportPro,
-                            fontSize =
-                                11.sp,
-                            fontWeight =
-                                FontWeight.Bold
-                        )
-
-                        Spacer(
-                            Modifier.height(
-                                10.dp
-                            )
-                        )
-
-                        Row(
-                            modifier =
-                                Modifier.fillMaxWidth(),
-                            horizontalArrangement =
-                                Arrangement.spacedBy(
-                                    8.dp
-                                )
-                        ) {
-
-                            TarjetaResumenAsistencia(
-                                cantidad =
-                                    presentes,
-                                texto =
-                                    "Presente",
-                                fondo =
-                                    VerdeClaro,
-                                modifier =
-                                    Modifier.weight(
-                                        1f
-                                    )
-                            )
-
-                            TarjetaResumenAsistencia(
-                                cantidad =
-                                    ausentes,
-                                texto =
-                                    "Ausente",
-                                fondo =
-                                    RojoClaro,
-                                modifier =
-                                    Modifier.weight(
-                                        1f
-                                    )
-                            )
-
-                            TarjetaResumenAsistencia(
-                                cantidad =
-                                    justificados,
-                                texto =
-                                    "Justificado",
-                                fondo =
-                                    AmarilloClaro,
-                                modifier =
-                                    Modifier.weight(
-                                        1f
-                                    )
-                            )
-                        }
-
-                        Spacer(
-                            Modifier.height(
-                                18.dp
-                            )
-                        )
-
-                        Text(
-                            text =
-                                "Jugadores",
-                            color =
-                                AzulSportPro,
-                            fontWeight =
-                                FontWeight.Bold,
-                            fontSize =
-                                16.sp
-                        )
-
-                        Spacer(
-                            Modifier.height(
-                                8.dp
-                            )
-                        )
-
-                        LazyColumn(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                            verticalArrangement =
-                                Arrangement.spacedBy(
-                                    8.dp
-                                ),
-                            contentPadding =
-                                PaddingValues(
-                                    bottom =
-                                        16.dp
-                                )
-                        ) {
-
-                            items(
-                                items =
-                                    estado.jugadores,
-                                key = {
-                                    it.id
-                                }
-                            ) {
-                                    jugador ->
-
-                                TarjetaJugadorRegistrado(
-                                    jugador =
-                                        jugador,
-                                    estado =
-                                        estado.estados[
-                                            jugador.id
-                                        ]
-                                )
-                            }
-                        }
-
-                        OutlinedButton(
-                            onClick = {
-                                viewModel
-                                    .iniciarCorreccion()
-                            },
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(
-                                        50.dp
-                                    )
-                        ) {
-
+                        item {
                             Text(
-                                text =
-                                    "Corregir asistencia",
+                                "ASISTENCIA REGISTRADA",
+                                color =
+                                    VerdeSportPro,
+                                fontSize = 12.sp,
                                 fontWeight =
                                     FontWeight.Bold
                             )
                         }
 
-                        Spacer(
-                            Modifier.height(
-                                12.dp
+                        item {
+                            val presentes =
+                                estado.estados.values
+                                    .count {
+                                        it ==
+                                                EstadoAsistencia.PRESENTE
+                                    }
+
+                            val ausentes =
+                                estado.estados.values
+                                    .count {
+                                        it ==
+                                                EstadoAsistencia.AUSENTE
+                                    }
+
+                            val justificados =
+                                estado.estados.values
+                                    .count {
+                                        it ==
+                                                EstadoAsistencia.JUSTIFICADO
+                                    }
+
+                            Row(
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                horizontalArrangement =
+                                    Arrangement.SpaceBetween
+                            ) {
+                                TarjetaResumen(
+                                    cantidad =
+                                        presentes,
+                                    texto =
+                                        "Presentes",
+                                    fondo =
+                                        VerdeClaro,
+                                    color =
+                                        VerdeSportPro
+                                )
+
+                                TarjetaResumen(
+                                    cantidad =
+                                        ausentes,
+                                    texto =
+                                        "Ausentes",
+                                    fondo =
+                                        RojoClaro,
+                                    color =
+                                        RojoSportPro
+                                )
+
+                                TarjetaResumen(
+                                    cantidad =
+                                        justificados,
+                                    texto =
+                                        "Justificados",
+                                    fondo =
+                                        AmarilloClaro,
+                                    color =
+                                        AmarilloSportPro
+                                )
+                            }
+                        }
+
+                        items(
+                            items =
+                                estado.jugadores,
+                            key = {
+                                it.id
+                            }
+                        ) {
+                                jugador ->
+
+                            TarjetaJugadorRegistrado(
+                                jugador =
+                                    jugador,
+                                estado =
+                                    estado.estados[
+                                        jugador.id
+                                    ]
                             )
-                        )
+                        }
+
+                        item {
+                            Button(
+                                onClick = {
+                                    viewModel
+                                        .iniciarCorreccion()
+                                },
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(50.dp),
+                                colors =
+                                    ButtonDefaults
+                                        .buttonColors(
+                                            containerColor =
+                                                AzulSportPro,
+                                            contentColor =
+                                                Color.White
+                                        )
+                            ) {
+                                Text(
+                                    "Corregir asistencia",
+                                    fontWeight =
+                                        FontWeight.Bold
+                                )
+                            }
+                        }
                     }
 
                     else -> {
-
                         if (
                             estado.modoCorreccion
                         ) {
-
-                            Surface(
-                                modifier =
-                                    Modifier.fillMaxWidth(),
-                                color =
-                                    AmarilloClaro,
-                                shape =
-                                    RoundedCornerShape(
-                                        12.dp
-                                    )
-                            ) {
-
-                                Text(
-                                    text =
-                                        "Modo corrección: modifica únicamente los estados necesarios y guarda los cambios.",
-                                    modifier =
-                                        Modifier.padding(
-                                            12.dp
-                                        ),
+                            item {
+                                MensajeAsistencia(
+                                    texto =
+                                        "Modo corrección: modifica únicamente los jugadores necesarios.",
+                                    fondo =
+                                        AmarilloClaro,
                                     color =
-                                        Color(
-                                            0xFF775D15
-                                        ),
-                                    fontSize =
-                                        12.sp
+                                        AmarilloSportPro
                                 )
                             }
+                        }
 
-                            Spacer(
-                                Modifier.height(
-                                    12.dp
-                                )
+                        item {
+                            Text(
+                                "Registro rápido",
+                                color =
+                                    AzulSportPro,
+                                fontWeight =
+                                    FontWeight.Bold,
+                                fontSize = 15.sp
                             )
                         }
 
-                        LazyColumn(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                            verticalArrangement =
-                                Arrangement.spacedBy(
-                                    10.dp
-                                ),
-                            contentPadding =
-                                PaddingValues(
-                                    bottom =
-                                        16.dp
-                                )
-                        ) {
-
-                            items(
-                                items =
-                                    estado.jugadores,
-                                key = {
-                                    it.id
-                                }
+                        item {
+                            Button(
+                                onClick = {
+                                    viewModel
+                                        .marcarTodosPresentes()
+                                },
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
+                                colors =
+                                    ButtonDefaults
+                                        .buttonColors(
+                                            containerColor =
+                                                VerdeSportPro,
+                                            contentColor =
+                                                Color.White
+                                        )
                             ) {
-                                    jugador ->
-
-                                FilaJugadorAsistencia(
-                                    jugador =
-                                        jugador,
-                                    estado =
-                                        estado.estados[
-                                            jugador.id
-                                        ],
-                                    onCambiar = {
-                                            nuevo ->
-
-                                        viewModel
-                                            .cambiarEstado(
-                                                jugador.id,
-                                                nuevo
-                                            )
-                                    }
+                                Text(
+                                    "Marcar todos presentes",
+                                    fontWeight =
+                                        FontWeight.Bold
                                 )
                             }
                         }
 
-                        Button(
-                            onClick = {
-                                viewModel.guardar()
-                            },
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(
-                                        50.dp
-                                    ),
-                            enabled =
-                                !estado.guardando,
-                            colors =
-                                ButtonDefaults
-                                    .buttonColors(
-                                        containerColor =
-                                            AzulSportPro
-                                    )
-                        ) {
+                        item {
+                            Button(
+                                onClick = {
+                                    viewModel
+                                        .marcarTodosAusentes()
+                                },
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
+                                colors =
+                                    ButtonDefaults
+                                        .buttonColors(
+                                            containerColor =
+                                                RojoSportPro,
+                                            contentColor =
+                                                Color.White
+                                        )
+                            ) {
+                                Text(
+                                    "Marcar todos ausentes",
+                                    fontWeight =
+                                        FontWeight.Bold
+                                )
+                            }
+                        }
 
+                        item {
                             Text(
-                                text =
-                                    when {
+                                "Jugadores",
+                                color =
+                                    AzulSportPro,
+                                fontSize = 15.sp,
+                                fontWeight =
+                                    FontWeight.Bold
+                            )
+                        }
 
+                        items(
+                            items =
+                                estado.jugadores,
+                            key = {
+                                it.id
+                            }
+                        ) {
+                                jugador ->
+
+                            TarjetaJugadorEditable(
+                                jugador =
+                                    jugador,
+                                estado =
+                                    estado.estados[
+                                        jugador.id
+                                    ],
+                                onCambiar = {
+                                        nuevoEstado ->
+
+                                    viewModel
+                                        .cambiarEstado(
+                                            jugador.id,
+                                            nuevoEstado
+                                        )
+                                }
+                            )
+                        }
+
+                        item {
+                            Button(
+                                onClick = {
+                                    viewModel
+                                        .guardar()
+                                },
+                                enabled =
+                                    !estado.guardando,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(52.dp),
+                                colors =
+                                    ButtonDefaults
+                                        .buttonColors(
+                                            containerColor =
+                                                AzulSportPro,
+                                            contentColor =
+                                                Color.White
+                                        )
+                            ) {
+                                Text(
+                                    when {
                                         estado.guardando ->
                                             "Guardando..."
 
@@ -674,105 +619,88 @@ fun PantallaAsistencias(
 
                                         else ->
                                             "Guardar asistencia"
-                                    }
-                            )
+                                    },
+                                    fontWeight =
+                                        FontWeight.Bold
+                                )
+                            }
                         }
 
                         if (
                             estado.modoCorreccion
                         ) {
-
-                            Spacer(
-                                Modifier.height(
-                                    6.dp
-                                )
-                            )
-
-                            TextButton(
-                                onClick = {
-                                    viewModel
-                                        .cancelarCorreccion()
-                                },
-                                modifier =
-                                    Modifier.fillMaxWidth()
-                            ) {
-
-                                Text(
-                                    "Cancelar corrección"
-                                )
+                            item {
+                                OutlinedButton(
+                                    onClick = {
+                                        viewModel
+                                            .cancelarCorreccion()
+                                    },
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp),
+                                    colors =
+                                        ButtonDefaults
+                                            .outlinedButtonColors(
+                                                contentColor =
+                                                    RojoSportPro
+                                            )
+                                ) {
+                                    Text(
+                                        "Cancelar corrección"
+                                    )
+                                }
                             }
                         }
-
-                        Spacer(
-                            Modifier.height(
-                                12.dp
-                            )
-                        )
                     }
                 }
-
             } else {
-
-                Box(
-                    modifier =
-                        Modifier.fillMaxWidth()
-                ) {
-
-                    OutlinedButton(
-                        onClick = {
-                            menuJugador =
-                                true
-                        },
+                item {
+                    Box(
                         modifier =
                             Modifier.fillMaxWidth()
                     ) {
+                        OutlinedButton(
+                            onClick = {
+                                menuJugador =
+                                    true
+                            },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                            colors =
+                                ButtonDefaults
+                                    .outlinedButtonColors(
+                                        contentColor =
+                                            AzulSportPro
+                                    )
+                        ) {
+                            val jugador =
+                                estado
+                                    .jugadoresConsulta
+                                    .firstOrNull {
+                                        it.id ==
+                                                estado
+                                                    .idJugadorConsulta
+                                    }
 
-                        val jugador =
-                            estado
-                                .jugadoresConsulta
-                                .firstOrNull {
-                                    it.id ==
-                                            estado.idJugadorConsulta
-                                }
-
-                        Text(
-                            text =
+                            Text(
                                 jugador
                                     ?.nombreCompleto()
                                     ?: "Seleccionar jugador"
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded =
-                            menuJugador,
-                        onDismissRequest = {
-                            menuJugador =
-                                false
-                        }
-                    ) {
-
-                        if (
-                            estado
-                                .jugadoresConsulta
-                                .isEmpty()
-                        ) {
-
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        "No hay jugadores disponibles"
-                                    )
-                                },
-                                enabled =
-                                    false,
-                                onClick = {}
                             )
+                        }
 
-                        } else {
-
-                            estado
-                                .jugadoresConsulta
+                        DropdownMenu(
+                            expanded =
+                                menuJugador,
+                            onDismissRequest = {
+                                menuJugador =
+                                    false
+                            }
+                        ) {
+                            estado.jugadoresConsulta
                                 .forEach {
                                         jugador ->
 
@@ -780,11 +708,12 @@ fun PantallaAsistencias(
                                         text = {
                                             Text(
                                                 jugador
-                                                    .nombreCompleto()
+                                                    .nombreCompleto(),
+                                                color =
+                                                    AzulSportPro
                                             )
                                         },
                                         onClick = {
-
                                             viewModel
                                                 .seleccionarJugadorConsulta(
                                                     jugador.id
@@ -799,104 +728,62 @@ fun PantallaAsistencias(
                     }
                 }
 
-                Spacer(
-                    Modifier.height(
-                        14.dp
-                    )
-                )
-
                 estado.error?.let {
+                        error ->
 
-                    Text(
-                        text =
-                            it,
-                        color =
-                            Color.Red,
-                        fontSize =
-                            12.sp
-                    )
-
-                    Spacer(
-                        Modifier.height(
-                            8.dp
+                    item {
+                        MensajeAsistencia(
+                            texto =
+                                error,
+                            fondo =
+                                RojoClaro,
+                            color =
+                                RojoSportPro
                         )
-                    )
+                    }
                 }
 
-                when {
-
-                    estado.cargando -> {
-
+                if (
+                    estado.cargando
+                ) {
+                    item {
                         Box(
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .weight(1f),
+                                    .height(140.dp),
                             contentAlignment =
                                 Alignment.Center
                         ) {
-
                             CircularProgressIndicator(
                                 color =
                                     VerdeSportPro
                             )
                         }
                     }
-
+                } else if (
                     estado.historial
-                        .isEmpty() -> {
-
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                            contentAlignment =
-                                Alignment.Center
-                        ) {
-
-                            Text(
-                                text =
-                                    "No hay registros de asistencia.",
-                                color =
-                                    Color.Gray
-                            )
-                        }
+                        .isEmpty()
+                ) {
+                    item {
+                        TextoVacio(
+                            "No hay registros de asistencia."
+                        )
                     }
-
-                    else -> {
-
-                        LazyColumn(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                            verticalArrangement =
-                                Arrangement.spacedBy(
-                                    10.dp
-                                ),
-                            contentPadding =
-                                PaddingValues(
-                                    bottom =
-                                        20.dp
-                                )
-                        ) {
-
-                            items(
-                                items =
-                                    estado.historial,
-                                key = {
-                                    it.id
-                                }
-                            ) {
-                                    asistencia ->
-
-                                TarjetaHistorial(
-                                    asistencia =
-                                        asistencia
-                                )
-                            }
+                } else {
+                    items(
+                        items =
+                            estado.historial,
+                        key = {
+                            it.id
                         }
+                    ) {
+                            asistencia ->
+
+                        TarjetaHistorial(
+                            asistencia =
+                                asistencia
+                        )
                     }
                 }
             }
@@ -905,13 +792,12 @@ fun PantallaAsistencias(
 }
 
 @Composable
-private fun FilaJugadorAsistencia(
+private fun TarjetaJugadorEditable(
     jugador: Jugador,
     estado: EstadoAsistencia?,
     onCambiar:
         (EstadoAsistencia) -> Unit
 ) {
-
     Card(
         modifier =
             Modifier.fillMaxWidth(),
@@ -920,41 +806,37 @@ private fun FilaJugadorAsistencia(
                 14.dp
             ),
         colors =
-            CardDefaults
-                .cardColors(
-                    containerColor =
-                        Color.White
-                )
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White,
+                contentColor =
+                    AzulSportPro
+            )
     ) {
-
         Column(
             modifier =
                 Modifier.padding(
-                    14.dp
+                    12.dp
                 )
         ) {
-
             Text(
-                text =
-                    jugador.nombreCompleto(),
+                jugador.nombreCompleto(),
+                color =
+                    AzulSportPro,
                 fontWeight =
                     FontWeight.Bold,
-                color =
-                    AzulSportPro
+                fontSize = 15.sp
             )
 
             if (
                 jugador.categoria
                     .isNotBlank()
             ) {
-
                 Text(
-                    text =
-                        jugador.categoria,
+                    jugador.categoria,
                     color =
-                        Color.Gray,
-                    fontSize =
-                        11.sp
+                        Color(0xFF5B6266),
+                    fontSize = 11.sp
                 )
             }
 
@@ -968,55 +850,55 @@ private fun FilaJugadorAsistencia(
                 modifier =
                     Modifier.fillMaxWidth(),
                 horizontalArrangement =
-                    Arrangement.spacedBy(
-                        8.dp
-                    )
+                    Arrangement.SpaceBetween
             ) {
-
-                FilterChip(
-                    selected =
+                BotonEstado(
+                    texto =
+                        "Presente",
+                    seleccionado =
                         estado ==
                                 EstadoAsistencia.PRESENTE,
+                    colorSeleccionado =
+                        VerdeSportPro,
+                    ancho =
+                        96.dp,
                     onClick = {
                         onCambiar(
                             EstadoAsistencia.PRESENTE
                         )
-                    },
-                    label = {
-                        Text(
-                            "P"
-                        )
                     }
                 )
 
-                FilterChip(
-                    selected =
+                BotonEstado(
+                    texto =
+                        "Ausente",
+                    seleccionado =
                         estado ==
                                 EstadoAsistencia.AUSENTE,
+                    colorSeleccionado =
+                        RojoSportPro,
+                    ancho =
+                        96.dp,
                     onClick = {
                         onCambiar(
                             EstadoAsistencia.AUSENTE
                         )
-                    },
-                    label = {
-                        Text(
-                            "A"
-                        )
                     }
                 )
 
-                FilterChip(
-                    selected =
+                BotonEstado(
+                    texto =
+                        "Justificado",
+                    seleccionado =
                         estado ==
                                 EstadoAsistencia.JUSTIFICADO,
+                    colorSeleccionado =
+                        AmarilloSportPro,
+                    ancho =
+                        112.dp,
                     onClick = {
                         onCambiar(
                             EstadoAsistencia.JUSTIFICADO
-                        )
-                    },
-                    label = {
-                        Text(
-                            "J"
                         )
                     }
                 )
@@ -1026,11 +908,63 @@ private fun FilaJugadorAsistencia(
 }
 
 @Composable
+private fun BotonEstado(
+    texto: String,
+    seleccionado: Boolean,
+    colorSeleccionado: Color,
+    ancho: androidx.compose.ui.unit.Dp,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick =
+            onClick,
+        modifier =
+            Modifier
+                .width(ancho)
+                .height(46.dp),
+        shape =
+            RoundedCornerShape(
+                10.dp
+            ),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor =
+                    if (
+                        seleccionado
+                    ) {
+                        colorSeleccionado
+                    } else {
+                        GrisClaro
+                    },
+                contentColor =
+                    if (
+                        seleccionado
+                    ) {
+                        Color.White
+                    } else {
+                        AzulSportPro
+                    }
+            ),
+        contentPadding =
+            PaddingValues(
+                horizontal = 2.dp
+            )
+    ) {
+        Text(
+            texto,
+            fontSize = 10.sp,
+            maxLines = 1,
+            fontWeight =
+                FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
 private fun TarjetaJugadorRegistrado(
     jugador: Jugador,
     estado: EstadoAsistencia?
 ) {
-
     Card(
         modifier =
             Modifier.fillMaxWidth(),
@@ -1039,34 +973,31 @@ private fun TarjetaJugadorRegistrado(
                 14.dp
             ),
         colors =
-            CardDefaults
-                .cardColors(
-                    containerColor =
-                        Color.White
-                )
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White
+            )
     ) {
-
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(
-                        14.dp
+                        12.dp
                     ),
             verticalAlignment =
-                Alignment.CenterVertically
+                Alignment.CenterVertically,
+            horizontalArrangement =
+                Arrangement.SpaceBetween
         ) {
-
             Column(
                 modifier =
-                    Modifier.weight(
-                        1f
+                    Modifier.width(
+                        190.dp
                     )
             ) {
-
                 Text(
-                    text =
-                        jugador.nombreCompleto(),
+                    jugador.nombreCompleto(),
                     color =
                         AzulSportPro,
                     fontWeight =
@@ -1077,36 +1008,77 @@ private fun TarjetaJugadorRegistrado(
                     jugador.categoria
                         .isNotBlank()
                 ) {
-
                     Text(
-                        text =
-                            jugador.categoria,
+                        jugador.categoria,
                         color =
-                            Color.Gray,
-                        fontSize =
-                            11.sp
+                            Color(0xFF5B6266),
+                        fontSize = 11.sp
                     )
                 }
             }
 
-            EtiquetaEstadoAsistencia(
-                estado =
-                    estado
+            EtiquetaEstado(
+                estado
             )
         }
     }
 }
 
 @Composable
-private fun EtiquetaEstadoAsistencia(
+private fun TarjetaResumen(
+    cantidad: Int,
+    texto: String,
+    fondo: Color,
+    color: Color
+) {
+    Surface(
+        modifier =
+            Modifier
+                .width(102.dp)
+                .height(72.dp),
+        color =
+            fondo,
+        shape =
+            RoundedCornerShape(
+                12.dp
+            )
+    ) {
+        Column(
+            modifier =
+                Modifier.padding(
+                    vertical = 8.dp
+                ),
+            horizontalAlignment =
+                Alignment.CenterHorizontally,
+            verticalArrangement =
+                Arrangement.Center
+        ) {
+            Text(
+                cantidad.toString(),
+                color =
+                    color,
+                fontSize = 21.sp,
+                fontWeight =
+                    FontWeight.Bold
+            )
+
+            Text(
+                texto,
+                color =
+                    Color(0xFF454B4E),
+                fontSize = 9.sp,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+private fun EtiquetaEstado(
     estado: EstadoAsistencia?
 ) {
-
     val texto =
-        when (
-            estado
-        ) {
-
+        when (estado) {
             EstadoAsistencia.PRESENTE ->
                 "Presente"
 
@@ -1121,10 +1093,7 @@ private fun EtiquetaEstadoAsistencia(
         }
 
     val fondo =
-        when (
-            estado
-        ) {
-
+        when (estado) {
             EstadoAsistencia.PRESENTE ->
                 VerdeClaro
 
@@ -1135,33 +1104,22 @@ private fun EtiquetaEstadoAsistencia(
                 AmarilloClaro
 
             null ->
-                Color(
-                    0xFFEDEDED
-                )
+                GrisClaro
         }
 
     val color =
-        when (
-            estado
-        ) {
-
+        when (estado) {
             EstadoAsistencia.PRESENTE ->
-                Color(
-                    0xFF278A48
-                )
+                VerdeSportPro
 
             EstadoAsistencia.AUSENTE ->
-                Color(
-                    0xFFC43D3D
-                )
+                RojoSportPro
 
             EstadoAsistencia.JUSTIFICADO ->
-                Color(
-                    0xFF9A741D
-                )
+                AmarilloSportPro
 
             null ->
-                Color.Gray
+                Color(0xFF555555)
         }
 
     Surface(
@@ -1172,21 +1130,16 @@ private fun EtiquetaEstadoAsistencia(
                 50.dp
             )
     ) {
-
         Text(
-            text =
-                texto,
+            texto,
             modifier =
                 Modifier.padding(
-                    horizontal =
-                        10.dp,
-                    vertical =
-                        5.dp
+                    horizontal = 10.dp,
+                    vertical = 5.dp
                 ),
             color =
                 color,
-            fontSize =
-                11.sp,
+            fontSize = 11.sp,
             fontWeight =
                 FontWeight.Bold
         )
@@ -1194,61 +1147,9 @@ private fun EtiquetaEstadoAsistencia(
 }
 
 @Composable
-private fun TarjetaResumenAsistencia(
-    cantidad: Int,
-    texto: String,
-    fondo: Color,
-    modifier: Modifier = Modifier
-) {
-
-    Surface(
-        modifier =
-            modifier,
-        color =
-            fondo,
-        shape =
-            RoundedCornerShape(
-                14.dp
-            )
-    ) {
-
-        Column(
-            modifier =
-                Modifier.padding(
-                    14.dp
-                ),
-            horizontalAlignment =
-                Alignment.CenterHorizontally
-        ) {
-
-            Text(
-                text =
-                    cantidad.toString(),
-                color =
-                    AzulSportPro,
-                fontSize =
-                    25.sp,
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-            Text(
-                text =
-                    texto,
-                fontSize =
-                    11.sp,
-                color =
-                    Color.DarkGray
-            )
-        }
-    }
-}
-
-@Composable
 private fun TarjetaHistorial(
     asistencia: Asistencia
 ) {
-
     Card(
         modifier =
             Modifier.fillMaxWidth(),
@@ -1257,34 +1158,31 @@ private fun TarjetaHistorial(
                 14.dp
             ),
         colors =
-            CardDefaults
-                .cardColors(
-                    containerColor =
-                        Color.White
-                )
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White
+            )
     ) {
-
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(
-                        14.dp
+                        12.dp
                     ),
             verticalAlignment =
-                Alignment.CenterVertically
+                Alignment.CenterVertically,
+            horizontalArrangement =
+                Arrangement.SpaceBetween
         ) {
-
             Column(
                 modifier =
-                    Modifier.weight(
-                        1f
+                    Modifier.width(
+                        190.dp
                     )
             ) {
-
                 Text(
-                    text =
-                        asistencia.nombreEquipo,
+                    asistencia.nombreEquipo,
                     color =
                         AzulSportPro,
                     fontWeight =
@@ -1292,19 +1190,74 @@ private fun TarjetaHistorial(
                 )
 
                 Text(
-                    text =
-                        asistencia.fechaEntrenamiento,
+                    asistencia.fechaEntrenamiento,
                     color =
-                        Color.Gray,
-                    fontSize =
-                        12.sp
+                        Color(0xFF5B6266),
+                    fontSize = 11.sp
                 )
             }
 
-            EtiquetaEstadoAsistencia(
-                estado =
-                    asistencia.estado
+            EtiquetaEstado(
+                asistencia.estado
             )
         }
+    }
+}
+
+@Composable
+private fun MensajeAsistencia(
+    texto: String,
+    fondo: Color,
+    color: Color
+) {
+    Surface(
+        modifier =
+            Modifier.fillMaxWidth(),
+        color =
+            fondo,
+        shape =
+            RoundedCornerShape(
+                10.dp
+            )
+    ) {
+        Text(
+            texto,
+            modifier =
+                Modifier.padding(
+                    10.dp
+                ),
+            color =
+                color,
+            fontSize = 12.sp,
+            fontWeight =
+                FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun TextoVacio(
+    texto: String
+) {
+    Surface(
+        modifier =
+            Modifier.fillMaxWidth(),
+        color =
+            Color.White,
+        shape =
+            RoundedCornerShape(
+                12.dp
+            )
+    ) {
+        Text(
+            texto,
+            modifier =
+                Modifier.padding(
+                    16.dp
+                ),
+            color =
+                Color(0xFF5B6266),
+            fontSize = 13.sp
+        )
     }
 }

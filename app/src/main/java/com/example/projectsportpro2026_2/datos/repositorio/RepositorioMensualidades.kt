@@ -12,6 +12,7 @@ import com.example.projectsportpro2026_2.datos.modelo.Vinculacion
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import java.time.YearMonth
 
 class RepositorioMensualidades(
     private val bd: FirebaseFirestore =
@@ -40,9 +41,13 @@ class RepositorioMensualidades(
         bloque: suspend () -> T
     ): Result<T> {
         return try {
-            Result.success(bloque())
+            Result.success(
+                bloque()
+            )
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(
+                e
+            )
         }
     }
 
@@ -135,9 +140,14 @@ class RepositorioMensualidades(
     ): Academia {
 
         val perfil =
-            obtenerPerfil(uid)
+            obtenerPerfil(
+                uid
+            )
 
-        if (perfil.rol != Rol.ADM) {
+        if (
+            perfil.rol !=
+            Rol.ADM
+        ) {
             throw IllegalStateException(
                 "Solo un administrador puede modificar mensualidades"
             )
@@ -145,7 +155,9 @@ class RepositorioMensualidades(
 
         val documento =
             academias
-                .document(idAcademia)
+                .document(
+                    idAcademia
+                )
                 .get()
                 .await()
 
@@ -155,7 +167,8 @@ class RepositorioMensualidades(
                     Academia::class.java
                 )
                 ?.copy(
-                    id = documento.id
+                    id =
+                        documento.id
                 )
                 ?: throw IllegalStateException(
                     "La academia no existe"
@@ -164,7 +177,8 @@ class RepositorioMensualidades(
         val tienePermiso =
             academia.idAdministrador ==
                     uid ||
-                    uid in academia.idsAutorizados
+                    uid in
+                    academia.idsAutorizados
 
         if (!tienePermiso) {
             throw IllegalStateException(
@@ -190,7 +204,11 @@ class RepositorioMensualidades(
                 """^\d{4}-(0[1-9]|1[0-2])$"""
             )
 
-        if (!formato.matches(periodo)) {
+        if (
+            !formato.matches(
+                periodo
+            )
+        ) {
             throw IllegalArgumentException(
                 "El periodo debe tener formato yyyy-MM"
             )
@@ -205,6 +223,180 @@ class RepositorioMensualidades(
         return "${idJugador}_$periodo"
     }
 
+    suspend fun generarMensualidadesMesActual(
+        uid: String
+    ): Result<Unit> = intentar {
+
+        val perfil =
+            obtenerPerfil(
+                uid
+            )
+
+        if (
+            perfil.rol !=
+            Rol.ADM
+        ) {
+            return@intentar
+        }
+
+        val periodoActual =
+            YearMonth
+                .now()
+                .toString()
+
+        val jugadoresAdministrables =
+            listarJugadoresAdministrables(
+                uid
+            )
+                .getOrThrow()
+
+        if (
+            jugadoresAdministrables
+                .isEmpty()
+        ) {
+            return@intentar
+        }
+
+        val academiasPermitidas =
+            obtenerAcademiasAdministrables(
+                uid
+            )
+                .filter {
+                    it.activa
+                }
+                .associateBy {
+                    it.id
+                }
+
+        val registrosExistentes =
+            listarParaAdministrador(
+                uid
+            )
+                .filter {
+                    it.periodo ==
+                            periodoActual
+                }
+
+        val idsExistentes =
+            registrosExistentes
+                .map {
+                    obtenerIdMensualidad(
+                        idJugador =
+                            it.idJugador,
+                        periodo =
+                            periodoActual
+                    )
+                }
+                .toSet()
+
+        val lote =
+            bd.batch()
+
+        var hayNuevos =
+            false
+
+        for (
+        jugador in
+        jugadoresAdministrables
+        ) {
+
+            val idMensualidad =
+                obtenerIdMensualidad(
+                    idJugador =
+                        jugador.id,
+                    periodo =
+                        periodoActual
+                )
+
+            if (
+                idMensualidad in
+                idsExistentes
+            ) {
+                continue
+            }
+
+            var idAcademia =
+                jugador.idAcademia
+
+            if (
+                idAcademia.isBlank() &&
+                jugador.idEquipo
+                    .isNotBlank()
+            ) {
+
+                val equipo =
+                    equipos
+                        .document(
+                            jugador.idEquipo
+                        )
+                        .get()
+                        .await()
+                        .toObject(
+                            Equipo::class.java
+                        )
+
+                idAcademia =
+                    equipo
+                        ?.idAcademia
+                        .orEmpty()
+            }
+
+            if (
+                idAcademia.isBlank()
+            ) {
+                continue
+            }
+
+            val academia =
+                academiasPermitidas[
+                    idAcademia
+                ]
+                    ?: continue
+
+            val mensualidad =
+                Mensualidad(
+                    id =
+                        idMensualidad,
+                    idJugador =
+                        jugador.id,
+                    nombreJugador =
+                        jugador
+                            .nombreCompleto(),
+                    idAcademia =
+                        idAcademia,
+                    nombreAcademia =
+                        academia.nombre,
+                    idEquipo =
+                        jugador.idEquipo,
+                    periodo =
+                        periodoActual,
+                    estado =
+                        EstadoMensualidad.PENDIENTE,
+                    actualizadoPor =
+                        uid,
+                    fechaActualizacion =
+                        System.currentTimeMillis()
+                )
+
+            lote.set(
+                mensualidades
+                    .document(
+                        idMensualidad
+                    ),
+                mensualidad
+            )
+
+            hayNuevos =
+                true
+        }
+
+        if (hayNuevos) {
+            lote
+                .commit()
+                .await()
+        }
+    }
+
     suspend fun registrarOActualizar(
         idJugador: String,
         periodo: String,
@@ -212,11 +404,15 @@ class RepositorioMensualidades(
         uid: String
     ): Result<Mensualidad> = intentar {
 
-        validarPeriodo(periodo)
+        validarPeriodo(
+            periodo
+        )
 
         val documentoJugador =
             jugadores
-                .document(idJugador)
+                .document(
+                    idJugador
+                )
                 .get()
                 .await()
 
@@ -228,7 +424,9 @@ class RepositorioMensualidades(
                     "El jugador no existe"
                 )
 
-        if (!jugador.activo) {
+        if (
+            !jugador.activo
+        ) {
             throw IllegalStateException(
                 "El jugador está inactivo"
             )
@@ -237,8 +435,10 @@ class RepositorioMensualidades(
         var idAcademia =
             jugador.idAcademia
 
-        if (idAcademia.isBlank() &&
-            jugador.idEquipo.isNotBlank()
+        if (
+            idAcademia.isBlank() &&
+            jugador.idEquipo
+                .isNotBlank()
         ) {
 
             val equipo =
@@ -258,7 +458,9 @@ class RepositorioMensualidades(
                     .orEmpty()
         }
 
-        if (idAcademia.isBlank()) {
+        if (
+            idAcademia.isBlank()
+        ) {
             throw IllegalStateException(
                 "El jugador no pertenece a una academia"
             )
@@ -287,7 +489,8 @@ class RepositorioMensualidades(
                 idJugador =
                     jugador.id,
                 nombreJugador =
-                    jugador.nombreCompleto(),
+                    jugador
+                        .nombreCompleto(),
                 idAcademia =
                     idAcademia,
                 nombreAcademia =
@@ -306,7 +509,9 @@ class RepositorioMensualidades(
 
         mensualidades
             .document(id)
-            .set(mensualidad)
+            .set(
+                mensualidad
+            )
             .await()
 
         mensualidad
@@ -317,9 +522,14 @@ class RepositorioMensualidades(
     ): Result<List<Jugador>> = intentar {
 
         val perfil =
-            obtenerPerfil(uid)
+            obtenerPerfil(
+                uid
+            )
 
-        if (perfil.rol != Rol.ADM) {
+        if (
+            perfil.rol !=
+            Rol.ADM
+        ) {
             throw IllegalStateException(
                 "Solo el administrador puede gestionar mensualidades"
             )
@@ -343,14 +553,17 @@ class RepositorioMensualidades(
                 }
                 .distinct()
 
-        if (idsAcademias.isEmpty()) {
+        if (
+            idsAcademias.isEmpty()
+        ) {
             return@intentar emptyList()
         }
 
         val jugadoresPorAcademia =
             idsAcademias
                 .chunked(10)
-                .flatMap { grupo ->
+                .flatMap {
+                        grupo ->
 
                     jugadores
                         .whereIn(
@@ -361,14 +574,17 @@ class RepositorioMensualidades(
                         .await()
                         .documents
                         .mapNotNull {
-                            convertirJugador(it)
+                            convertirJugador(
+                                it
+                            )
                         }
                 }
 
         val equiposPermitidos =
             idsAcademias
                 .chunked(10)
-                .flatMap { grupo ->
+                .flatMap {
+                        grupo ->
 
                     equipos
                         .whereIn(
@@ -378,14 +594,16 @@ class RepositorioMensualidades(
                         .get()
                         .await()
                         .documents
-                        .mapNotNull { documento ->
+                        .mapNotNull {
+                                documento ->
 
                             documento
                                 .toObject(
                                     Equipo::class.java
                                 )
                                 ?.copy(
-                                    id = documento.id
+                                    id =
+                                        documento.id
                                 )
                         }
                 }
@@ -401,15 +619,15 @@ class RepositorioMensualidades(
                 .distinct()
 
         val jugadoresPorEquipo =
-            if (idsEquipos.isEmpty()) {
-
+            if (
+                idsEquipos.isEmpty()
+            ) {
                 emptyList()
-
             } else {
-
                 idsEquipos
                     .chunked(10)
-                    .flatMap { grupo ->
+                    .flatMap {
+                            grupo ->
 
                         jugadores
                             .whereIn(
@@ -420,7 +638,9 @@ class RepositorioMensualidades(
                             .await()
                             .documents
                             .mapNotNull {
-                                convertirJugador(it)
+                                convertirJugador(
+                                    it
+                                )
                             }
                     }
             }
@@ -446,10 +666,14 @@ class RepositorioMensualidades(
     ): Result<List<Mensualidad>> = intentar {
 
         val perfil =
-            obtenerPerfil(uid)
+            obtenerPerfil(
+                uid
+            )
 
         val resultado =
-            when (perfil.rol) {
+            when (
+                perfil.rol
+            ) {
 
                 Rol.ADM ->
                     listarParaAdministrador(
@@ -479,9 +703,10 @@ class RepositorioMensualidades(
             .sortedWith(
                 compareByDescending<Mensualidad> {
                     it.periodo
-                }.thenBy {
-                    it.nombreJugador
                 }
+                    .thenBy {
+                        it.nombreJugador
+                    }
             )
     }
 
@@ -501,13 +726,16 @@ class RepositorioMensualidades(
                 }
                 .distinct()
 
-        if (idsAcademias.isEmpty()) {
+        if (
+            idsAcademias.isEmpty()
+        ) {
             return emptyList()
         }
 
         return idsAcademias
             .chunked(10)
-            .flatMap { grupo ->
+            .flatMap {
+                    grupo ->
 
                 mensualidades
                     .whereIn(
@@ -539,7 +767,9 @@ class RepositorioMensualidades(
                 .await()
                 .documents
                 .mapNotNull {
-                    convertirJugador(it)
+                    convertirJugador(
+                        it
+                    )
                 }
 
         val idsJugadores =
@@ -593,13 +823,16 @@ class RepositorioMensualidades(
         idsJugadores: List<String>
     ): List<Mensualidad> {
 
-        if (idsJugadores.isEmpty()) {
+        if (
+            idsJugadores.isEmpty()
+        ) {
             return emptyList()
         }
 
         return idsJugadores
             .chunked(10)
-            .flatMap { grupo ->
+            .flatMap {
+                    grupo ->
 
                 mensualidades
                     .whereIn(
