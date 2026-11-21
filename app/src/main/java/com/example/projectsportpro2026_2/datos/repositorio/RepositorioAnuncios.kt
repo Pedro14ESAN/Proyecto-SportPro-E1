@@ -51,12 +51,14 @@ class RepositorioAnuncios(
         if (anuncio.idAcademia in p.idsAcademiasGestionadas) return true // el ADM ve todo, incluso archivados
         if (anuncio.idAutor == uid) return true                         // el autor ve los suyos
         if (anuncio.estado != EstadoAnuncio.ACTIVO) return false          // los demás solo ven activos
+        if (anuncio.tipoAudiencia == TipoAudiencia.PUBLICO) return true    // abierto a toda SportPro
         if (anuncio.idAcademia !in p.idsAcademias) return false
 
         return when (anuncio.tipoAudiencia) {
             TipoAudiencia.ACADEMIA -> true
             TipoAudiencia.EQUIPO -> anuncio.idEquipo in p.idsEquipos
             TipoAudiencia.ROL -> anuncio.rolDestino == rol
+            TipoAudiencia.PUBLICO -> true
         }
     }
 
@@ -66,11 +68,21 @@ class RepositorioAnuncios(
         val perfil = obtenerPerfil(uid)
         val p = resolutor.obtener(uid, perfil.rol)
 
-        p.idsAcademias.toList().chunked(10)
+        // 1) Anuncios internos de sus academias
+        val internos = p.idsAcademias.toList().chunked(10)
             .flatMap { grupo ->
                 anuncios.whereIn("idAcademia", grupo).get().await().documents
                     .mapNotNull { convertirAnuncio(it) }
             }
+
+        // 2) Anuncios públicos de cualquier academia (también para quien no tiene academia)
+        val publicos = anuncios
+            .whereEqualTo("tipoAudiencia", TipoAudiencia.PUBLICO.name)
+            .get().await().documents
+            .mapNotNull { convertirAnuncio(it) }
+
+        (internos + publicos)
+            .distinctBy { it.id }
             .filter { puedeVer(it, uid, perfil.rol, p) }
             .sortedByDescending { it.fechaCreacion }
     }
@@ -135,7 +147,7 @@ class RepositorioAnuncios(
 
         val equipo = opciones.equipos.find { it.id == idEquipo }
         when (tipoAudiencia) {
-            TipoAudiencia.ACADEMIA, TipoAudiencia.ROL ->
+            TipoAudiencia.ACADEMIA, TipoAudiencia.ROL, TipoAudiencia.PUBLICO ->
                 if (!opciones.puedePublicarATodos)
                     throw IllegalStateException("Solo puedes publicar anuncios para tus equipos")
             TipoAudiencia.EQUIPO ->
@@ -149,6 +161,7 @@ class RepositorioAnuncios(
             titulo = titulo.trim(),
             contenido = contenido.trim(),
             idAcademia = idAcademia,
+            nombreAcademia = opciones.academia.nombre,
             tipoAudiencia = tipoAudiencia,
             idEquipo = if (tipoAudiencia == TipoAudiencia.EQUIPO) idEquipo else "",
             nombreEquipo = if (tipoAudiencia == TipoAudiencia.EQUIPO) equipo?.nombre.orEmpty() else "",

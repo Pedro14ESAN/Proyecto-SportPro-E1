@@ -196,6 +196,36 @@ fun PantallaComunidad(
                 }
             }
 
+            // Usuario que aún no pertenece a una academia: lo orientamos a lo que le sirve
+            // (pruebas abiertas para captar jugadores y contenido público). No es una red
+            // social: solo ve contenido oficial y lo publicado en Comunidad SportPro.
+            if (estado.opcionesCargadas && estado.opciones.academias.isEmpty() &&
+                estado.pestana != PestanaComunidad.PRUEBAS
+            ) {
+                item {
+                    Surface(
+                        color = EtiquetaAzulFondo,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Aún no perteneces a una academia. Explora las pruebas abiertas para unirte a un equipo.",
+                                color = EtiquetaAzul,
+                                fontSize = 12.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(onClick = { viewModel.cambiarPestana(PestanaComunidad.PRUEBAS) }) {
+                                Text("Ver pruebas", color = EtiquetaAzul, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
             estado.error?.takeIf { !formularioAbierto && estado.pestana != PestanaComunidad.PRUEBAS }?.let { texto ->
                 item { MensajeErrorSportPro(texto) { viewModel.recargar() } }
             }
