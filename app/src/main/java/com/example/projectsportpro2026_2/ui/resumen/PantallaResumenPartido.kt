@@ -41,6 +41,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.evento.EquipoEvento
 import com.example.projectsportpro2026_2.datos.modelo.evento.EventoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
+import com.example.projectsportpro2026_2.datos.modelo.resumen.ComentarioNarracion
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EstadoResumen
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionNarracion
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionResumen
@@ -234,6 +238,17 @@ fun PantallaResumenPartido(
                 // ---------- DT: aprobado ----------
                 resumen.estado == EstadoResumen.APROBADO -> {
                     item { TarjetaAprobado(resumen, lector) }
+                    item {
+                        TarjetaComentarios(
+                            comentarios = estado.comentariosVigentes,
+                            uidActual = estado.uidActual,
+                            nuevo = estado.nuevoComentario,
+                            enviando = estado.enviandoComentario,
+                            onEscribir = viewModel::editarComentario,
+                            onEnviar = viewModel::comentar,
+                            onEliminar = viewModel::eliminarComentario
+                        )
+                    }
                     item { TarjetaNotaEvaluacion(estado.evaluacionVigente, resumen) }
                     item {
                         Text(
@@ -276,6 +291,8 @@ fun PantallaResumenPartido(
                                 value = estado.textoEditado,
                                 onValueChange = { if (it.length <= 4000) viewModel.editarTexto(it) },
                                 minLines = 8,
+                                // Mismo resaltado que la narración publicada
+                                visualTransformation = TransformacionResaltado,
                                 shape = FormaCampoSportPro,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -474,7 +491,7 @@ private fun TarjetaBorrador(
                 )
             }
             Text(
-                resumen.textoOriginalIA,
+                remember(resumen.textoOriginalIA) { ResaltadoNarracion.resaltar(resumen.textoOriginalIA) },
                 color = SportProNavy, fontSize = 14.sp, lineHeight = 20.sp
             )
             Text(
@@ -502,7 +519,10 @@ private fun TarjetaAprobado(resumen: ResumenPartido, lector: LectorNarracion) {
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("✓ Resumen aprobado", color = VerdeFigma, fontWeight = FontWeight.ExtraBold)
-            Text(resumen.textoFinal, color = SportProNavy, fontSize = 14.sp, lineHeight = 20.sp)
+            Text(
+                remember(resumen.textoFinal) { ResaltadoNarracion.resaltar(resumen.textoFinal) },
+                color = SportProNavy, fontSize = 14.sp, lineHeight = 20.sp
+            )
             Text(
                 "Aprobado por ${resumen.nombreAprobador.ifBlank { "el DT" }} · " +
                         formatearFecha(resumen.fechaAprobacion) +
@@ -511,6 +531,111 @@ private fun TarjetaAprobado(resumen: ResumenPartido, lector: LectorNarracion) {
             )
             BotonEscuchar(resumen.textoFinal, lector)
         }
+    }
+}
+
+// Resalta minutos, goles y tarjetas mientras el DT edita (sin cambiar el texto)
+private val TransformacionResaltado = VisualTransformation { texto ->
+    TransformedText(ResaltadoNarracion.resaltar(texto.text), OffsetMapping.Identity)
+}
+
+/*
+ * Comentarios de los DT sobre la narración aprobada. Solo esta
+ * pantalla del DT los muestra; jugadores, padres y ADM no los ven.
+ */
+@Composable
+private fun TarjetaComentarios(
+    comentarios: List<ComentarioNarracion>,
+    uidActual: String,
+    nuevo: String,
+    enviando: Boolean,
+    onEscribir: (String) -> Unit,
+    onEnviar: () -> Unit,
+    onEliminar: (ComentarioNarracion) -> Unit
+) {
+    var porEliminar by remember { mutableStateOf<ComentarioNarracion?>(null) }
+
+    TarjetaBlanca {
+        Text("COMENTARIOS DE LOS DT (${comentarios.size})", color = SportProTextoSecundario,
+            fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Text("🔒 Solo los directores técnicos ven estos comentarios.",
+            color = SportProTextoSecundario, fontSize = 11.sp)
+        Spacer(Modifier.height(8.dp))
+
+        if (comentarios.isEmpty()) {
+            Text("Aún no hay comentarios sobre esta narración.",
+                color = SportProTextoSecundario, fontSize = 13.sp)
+        }
+        comentarios.forEach { c ->
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = SportProFondo
+            ) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            c.nombreAutor.ifBlank { "DT" } + if (c.autor == uidActual) " (tú)" else "",
+                            color = SportProNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp
+                        )
+                        Text(formatearFecha(c.fecha), color = SportProTextoSecundario, fontSize = 11.sp)
+                    }
+                    Text(c.texto, color = SportProNavy, fontSize = 13.sp, lineHeight = 18.sp)
+                    if (c.autor == uidActual) {
+                        Text(
+                            "Eliminar", color = SportProRojo, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(top = 4.dp).clickable { porEliminar = c }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = nuevo,
+            onValueChange = onEscribir,
+            placeholder = { Text("Escribe un comentario para los otros DT", fontSize = 13.sp) },
+            minLines = 2,
+            shape = FormaCampoSportPro,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
+        Button(
+            onClick = onEnviar,
+            enabled = nuevo.isNotBlank() && !enviando,
+            shape = FormaBotonSportPro,
+            colors = ButtonDefaults.buttonColors(containerColor = SportProNavy),
+            modifier = Modifier.fillMaxWidth().height(46.dp)
+        ) {
+            if (enviando) {
+                CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp,
+                    modifier = Modifier.size(18.dp))
+            } else {
+                Text("Comentar", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+
+    porEliminar?.let { c ->
+        AlertDialog(
+            onDismissRequest = { porEliminar = null },
+            title = { Text("Eliminar comentario") },
+            text = { Text("Se borrará tu comentario para todos los DT.", fontSize = 13.sp) },
+            confirmButton = {
+                TextButton(onClick = {
+                    onEliminar(c)
+                    porEliminar = null
+                }) { Text("Eliminar", color = SportProRojo, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { porEliminar = null }) { Text("Cancelar") }
+            }
+        )
     }
 }
 

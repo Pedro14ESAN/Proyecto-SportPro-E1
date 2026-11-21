@@ -130,3 +130,23 @@ data class EvaluacionNarracion(
     val nombreEvaluador: String = "",
     val fechaEvaluacion: Long = 0L
 )
+
+/*
+ * Comentario de un DT sobre la narración aprobada (HU27).
+ *
+ * Colección: comentariosResumen/{id}
+ * Solo lo escriben y lo ven los DT autorizados del equipo o de la
+ * academia del partido (ni jugadores, ni padres, ni ADM).
+ */
+data class ComentarioNarracion(
+    val id: String = "",
+    val idPartido: String = "",
+    val idAcademia: String = "",
+    val idEquipo: String = "",
+    // Versión de la narración aprobada que se comenta
+    val version: Int = 1,
+    val texto: String = "",
+    val autor: String = "",
+    val nombreAutor: String = "",
+    val fecha: Long = 0L
+)

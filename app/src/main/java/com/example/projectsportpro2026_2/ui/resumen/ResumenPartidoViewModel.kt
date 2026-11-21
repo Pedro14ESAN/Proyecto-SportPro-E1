@@ -3,6 +3,7 @@ package com.example.projectsportpro2026_2.ui.resumen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projectsportpro2026_2.datos.modelo.evento.EventoPartido
+import com.example.projectsportpro2026_2.datos.modelo.resumen.ComentarioNarracion
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EstadoResumen
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionNarracion
 import com.example.projectsportpro2026_2.datos.modelo.resumen.EvaluacionResumen
@@ -12,6 +13,7 @@ import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAutenticac
 import com.example.projectsportpro2026_2.datos.repositorio.sincronizacion.RepositorioSincronizacion
 import com.example.projectsportpro2026_2.datos.resumen.ContextoResumen
 import com.example.projectsportpro2026_2.datos.resumen.FuenteResumen
+import com.example.projectsportpro2026_2.datos.resumen.MAX_COMENTARIO
 import com.example.projectsportpro2026_2.datos.resumen.RepositorioResumenPartido
 import com.example.projectsportpro2026_2.datos.resumen.ServicioIANoDisponibleException
 import com.example.projectsportpro2026_2.datos.seguridad.MensajesPermiso
@@ -36,6 +38,11 @@ data class EstadoResumenPartido(
 
     // Nota de evaluación de cada narración aprobada (evaluacionesResumen)
     val evaluaciones: List<EvaluacionNarracion> = emptyList(),
+
+    // Comentarios de los DT sobre la narración aprobada
+    val comentarios: List<ComentarioNarracion> = emptyList(),
+    val nuevoComentario: String = "",
+    val enviandoComentario: Boolean = false,
 
     // Todos los eventos (activos y anulados) en tiempo real
     val eventos: List<EventoPartido> = emptyList(),
@@ -66,6 +73,14 @@ data class EstadoResumenPartido(
     val evaluacionVigente: EvaluacionNarracion?
         get() = resumen?.takeIf { it.estado == EstadoResumen.APROBADO }
             ?.let { r -> evaluaciones.firstOrNull { it.version == r.version } }
+
+    // Comentarios de la narración aprobada que se muestra ahora
+    val comentariosVigentes: List<ComentarioNarracion>
+        get() = resumen?.takeIf { it.estado == EstadoResumen.APROBADO }
+            ?.let { r -> comentarios.filter { it.version == r.version } }
+            .orEmpty()
+
+    val uidActual: String get() = contexto?.acceso?.uid.orEmpty()
 
     val hayCambiosSinGuardar: Boolean
         get() = resumen?.estado == EstadoResumen.BORRADOR &&
@@ -111,7 +126,17 @@ class ResumenPartidoViewModel : ViewModel() {
     }
 
     private fun suscribirse() {
-        trabajos = listOf(
+        val contexto = _estado.value.contexto
+        trabajos = listOfNotNull(
+            // Solo los DT autorizados leen y escriben comentarios
+            contexto?.takeIf { it.puedeRevisar }?.let { ctx ->
+                viewModelScope.launch {
+                    // Si falla (sin permisos o sin red) no se bloquea el resumen
+                    repositorio.escucharComentarios(ctx)
+                        .catch { _estado.update { it.copy(comentarios = emptyList()) } }
+                        .collect { lista -> _estado.update { it.copy(comentarios = lista) } }
+                }
+            },
             viewModelScope.launch {
                 tiempoReal.escucharEventos(idPartido)
                     .catch { e -> _estado.update { it.copy(error = MensajesPermiso.traducir(e)) } }
@@ -288,6 +313,37 @@ class ResumenPartidoViewModel : ViewModel() {
                 .onFailure { error ->
                     _estado.update { it.copy(procesando = false, error = MensajesPermiso.traducir(error)) }
                 }
+        }
+    }
+
+    fun editarComentario(texto: String) =
+        _estado.update { it.copy(nuevoComentario = texto.take(MAX_COMENTARIO)) }
+
+    fun comentar() {
+        val e = _estado.value
+        val contexto = e.contexto ?: return
+        val resumen = e.resumen ?: return
+        if (e.nuevoComentario.isBlank() || e.enviandoComentario) return
+        viewModelScope.launch {
+            _estado.update { it.copy(enviandoComentario = true, error = null) }
+            repositorio.comentar(contexto, resumen, e.nuevoComentario)
+                .onSuccess {
+                    _estado.update { it.copy(enviandoComentario = false, nuevoComentario = "") }
+                }
+                .onFailure { error ->
+                    _estado.update {
+                        it.copy(enviandoComentario = false, mensaje = MensajesPermiso.traducir(error))
+                    }
+                }
+        }
+    }
+
+    fun eliminarComentario(comentario: ComentarioNarracion) {
+        val contexto = _estado.value.contexto ?: return
+        viewModelScope.launch {
+            repositorio.eliminarComentario(contexto, comentario)
+                .onSuccess { _estado.update { it.copy(mensaje = "Comentario eliminado") } }
+                .onFailure { error -> _estado.update { it.copy(mensaje = MensajesPermiso.traducir(error)) } }
         }
     }
 
