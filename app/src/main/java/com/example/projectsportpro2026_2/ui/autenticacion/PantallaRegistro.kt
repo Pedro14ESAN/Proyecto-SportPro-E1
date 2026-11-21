@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.PerfilUsuario
 import com.example.projectsportpro2026_2.datos.modelo.Rol
+import com.example.projectsportpro2026_2.ui.comun.CampoFecha
 import com.example.projectsportpro2026_2.ui.theme.ProjectSportPro2026_2Theme
 
 // Colores locales de esta pantalla (no se modifica el tema global)
@@ -323,17 +324,12 @@ fun ContenidoRegistro(
             Spacer(Modifier.height(4.dp))
 
             EtiquetaCampo("FECHA DE NACIMIENTO")
-            OutlinedTextField(
-                value = estado.fechaNacimiento,
-                onValueChange = onFecha,
-                placeholder = { Text("aaaa-MM-dd") },
-                supportingText = {
-                    Text("Menores de 12 años no crean cuenta. De 12 a 17 requieren autorización del apoderado.")
-                },
-                singleLine = true,
+            CampoFecha(
+                valor = estado.fechaNacimiento,
+                onCambio = onFecha,
+                textoAyuda = "Menores de 12 años no crean cuenta. De 12 a 17 requieren autorización del apoderado.",
                 shape = formaCampo,
-                colors = coloresCampo,
-                modifier = Modifier.fillMaxWidth()
+                colors = coloresCampo
             )
             Spacer(Modifier.height(4.dp))
 

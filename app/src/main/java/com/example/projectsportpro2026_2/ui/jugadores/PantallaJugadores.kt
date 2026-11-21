@@ -57,6 +57,7 @@ import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.PiesHabiles
 import com.example.projectsportpro2026_2.datos.modelo.Posiciones
 import androidx.compose.foundation.lazy.itemsIndexed
+import com.example.projectsportpro2026_2.ui.comun.CampoFecha
 
 // Colores locales de esta pantalla (no se modifica el tema global)
 private val VerdePrincipal = Color(0xFF1B9A5C)
@@ -371,7 +372,14 @@ private fun FormularioJugador(
                 TituloSeccion("Datos personales")
                 Campo(nombres, { nombres = it }, "Nombres *")
                 Campo(apellidos, { apellidos = it }, "Apellidos *")
-                Campo(fecha, { fecha = it }, "Fecha de nacimiento (aaaa-MM-dd)")
+                CampoFecha(
+                    valor = fecha,
+                    onCambio = { fecha = it },
+                    etiqueta = "Fecha de nacimiento",
+                    permitirQuitar = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = coloresCampo()
+                )
                 Campo(documento, { documento = it }, "Documento de identidad")
 
                 TituloSeccion("Datos deportivos")
