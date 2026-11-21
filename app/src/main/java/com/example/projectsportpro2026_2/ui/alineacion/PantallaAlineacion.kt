@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projectsportpro2026_2.ui.comun.AvatarRemoto
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.alineacion.FormatoPartido
 import com.example.projectsportpro2026_2.datos.modelo.alineacion.JugadorAlineacion
@@ -771,11 +772,14 @@ private fun JugadorEnCancha(
                     Alignment.Center
             ) {
 
-                Text(
-                    text =
+                AvatarRemoto(
+                    url = jugador.fotoUrl,
+                    descripcion =
+                        "Foto de ${jugador.nombreCompleto()}",
+                    iniciales =
                         inicialesJugador(jugador),
-                    color = Color.White,
-                    fontWeight = FontWeight.Black
+                    modifier =
+                        Modifier.fillMaxSize()
                 )
             }
         }
@@ -1063,24 +1067,15 @@ private fun TarjetaTitular(
 private fun AvatarJugador(
     jugador: Jugador
 ) {
-    Surface(
-        modifier = Modifier.size(42.dp),
-        shape = CircleShape,
-        color = SportProNavy
-    ) {
-
-        Box(
-            contentAlignment = Alignment.Center
-        ) {
-
-            Text(
-                text =
-                    inicialesJugador(jugador),
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
+    AvatarRemoto(
+        url = jugador.fotoUrl,
+        descripcion =
+            "Foto de ${jugador.nombreCompleto()}",
+        iniciales =
+            inicialesJugador(jugador),
+        modifier =
+            Modifier.size(42.dp)
+    )
 }
 
 @Composable

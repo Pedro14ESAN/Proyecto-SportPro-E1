@@ -26,6 +26,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.projectsportpro2026_2.datos.repositorio.RepositorioImagenes
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavy
 import com.example.projectsportpro2026_2.ui.partidos.SportProTextoSecundario
 import com.example.projectsportpro2026_2.ui.partidos.SportProVerde
 import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
@@ -90,10 +95,124 @@ fun ImagenRemota(
             contentAlignment = Alignment.Center
         ) {
             if (fallo) {
-                Text("No se pudo cargar la imagen", color = SportProTextoSecundario, fontSize = 12.sp)
+                Text(
+                    "No se pudo cargar la imagen",
+                    color = SportProTextoSecundario,
+                    fontSize = 12.sp
+                )
             } else {
                 CircularProgressIndicator(color = SportProVerde, modifier = Modifier.size(28.dp))
             }
         }
     }
 }
+
+    @Composable
+    fun AvatarRemoto(
+        url: String,
+        descripcion: String,
+        iniciales: String,
+        modifier: Modifier = Modifier
+    ) {
+        var imagen by remember(url) {
+            mutableStateOf(
+                CacheImagenes.memoria.get(url)
+            )
+        }
+
+        var fallo by remember(url) {
+            mutableStateOf(false)
+        }
+
+        LaunchedEffect(url) {
+
+            if (
+                imagen != null ||
+                url.isBlank()
+            ) {
+                return@LaunchedEffect
+            }
+
+            try {
+
+                val bytes =
+                    RepositorioImagenes()
+                        .descargar(url)
+
+                val bitmap =
+                    withContext(
+                        Dispatchers.Default
+                    ) {
+                        BitmapFactory.decodeByteArray(
+                            bytes,
+                            0,
+                            bytes.size
+                        )
+                    }
+
+                if (bitmap != null) {
+
+                    CacheImagenes.memoria.put(
+                        url,
+                        bitmap
+                    )
+
+                    imagen = bitmap
+
+                } else {
+                    fallo = true
+                }
+
+            } catch (_: Exception) {
+                fallo = true
+            }
+        }
+
+        Box(
+            modifier = modifier
+                .clip(CircleShape)
+                .background(SportProNavy),
+            contentAlignment =
+                Alignment.Center
+        ) {
+
+            val actual = imagen
+
+            when {
+
+                actual != null -> {
+
+                    Image(
+                        bitmap =
+                            actual.asImageBitmap(),
+                        contentDescription =
+                            descripcion,
+                        contentScale =
+                            ContentScale.Crop,
+                        modifier =
+                            Modifier.fillMaxSize()
+                    )
+                }
+
+                url.isBlank() || fallo -> {
+
+                    Text(
+                        text = iniciales,
+                        color = Color.White,
+                        fontWeight =
+                            FontWeight.Bold
+                    )
+                }
+
+                else -> {
+
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier =
+                            Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
+        }
+    }
