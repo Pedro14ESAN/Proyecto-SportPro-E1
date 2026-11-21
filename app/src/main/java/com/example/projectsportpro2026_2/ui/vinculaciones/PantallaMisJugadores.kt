@@ -49,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.EstadoVinculacion
 import com.example.projectsportpro2026_2.datos.modelo.Vinculacion
 import com.example.projectsportpro2026_2.datos.repositorio.DatosSensiblesVinculo
+import com.example.projectsportpro2026_2.ui.comun.fechaLatina
 
 // Colores locales de esta pantalla (no se modifica el tema global)
 private val VerdePrincipal = Color(0xFF1B9A5C)
@@ -339,7 +340,7 @@ private fun TarjetaVinculacion(
                         ) {
                             FilaDato(
                                 "Fecha de nacimiento",
-                                datos.fechaNacimiento.ifBlank { "Pendiente" }
+                                fechaLatina(datos.fechaNacimiento).ifBlank { "Pendiente" }
                             )
                             FilaDato("Posición", datos.posicion.ifBlank { "Pendiente" })
                             FilaDato("Teléfono", datos.telefono.ifBlank { "Pendiente" })
