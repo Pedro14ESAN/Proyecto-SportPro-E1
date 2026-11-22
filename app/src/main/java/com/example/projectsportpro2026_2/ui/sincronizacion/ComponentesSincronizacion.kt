@@ -37,6 +37,9 @@ import com.example.projectsportpro2026_2.datos.modelo.sincronizacion.EstadoConex
 import com.example.projectsportpro2026_2.datos.modelo.sincronizacion.EstadoSincronizacionEvento
 import com.example.projectsportpro2026_2.datos.modelo.sincronizacion.EventoSincronizado
 import com.example.projectsportpro2026_2.datos.sincronizacion.EventoRechazado
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.example.projectsportpro2026_2.ui.partidos.FormaBotonSportPro
 import com.example.projectsportpro2026_2.ui.partidos.SportProBorde
 import com.example.projectsportpro2026_2.ui.partidos.SportProFondo
@@ -71,151 +74,73 @@ private fun coloresGenerales(
             ColoresEstado(SyncRojoFondo, SyncRojoBorde, SyncRojo, SyncRojoTexto)
     }
 
-/*
- * Banner superior: "SINCRONIZADO · TODOS LOS DISPOSITIVOS"
- * con el enlace "Simular sin conexión".
- */
+/** Estado secundario del partido. La simulación permanece disponible en la lógica de pruebas. */
 @Composable
 fun BannerSincronizacion(
     estado: EstadoSincronizacionUi,
-    onSimularConexion: () -> Unit,
     onReintentar: () -> Unit
 ) {
     val general = estado.estadoGeneral
-    val colores = coloresGenerales(general)
+    val color = when (general) {
+        EstadoConexionPartido.SINCRONIZADO -> SportProTextoSecundario
+        EstadoConexionPartido.SINCRONIZANDO -> SyncNaranjaTexto
+        EstadoConexionPartido.SIN_CONEXION -> SyncRojoTexto
+    }
+    val pendientes = if (estado.pendientes == 1) "1 pendiente" else "${estado.pendientes} pendientes"
+    val titulo = when (general) {
+        EstadoConexionPartido.SINCRONIZADO -> "✓ Sincronizado"
+        EstadoConexionPartido.SINCRONIZANDO ->
+            if (estado.pendientes > 0) "Sincronizando · $pendientes"
+            else "Conectando con el servidor…"
+        EstadoConexionPartido.SIN_CONEXION -> "Sin conexión · $pendientes"
+    }
+    val confirmacion = if (estado.ultimaSincronizacion > 0L) {
+        val hora = SimpleDateFormat("HH:mm", Locale.forLanguageTag("es-PE"))
+            .format(Date(estado.ultimaSincronizacion))
+        "Última confirmación $hora"
+    } else {
+        "Sin confirmación del servidor"
+    }
 
-    val titulo =
-        when (general) {
-            EstadoConexionPartido.SINCRONIZADO ->
-                "SINCRONIZADO · TODOS LOS DISPOSITIVOS"
-
-            EstadoConexionPartido.SINCRONIZANDO ->
-                if (estado.pendientes > 0) {
-                    "SINCRONIZANDO · ${estado.pendientes} " +
-                            if (estado.pendientes == 1) "PENDIENTE" else "PENDIENTES"
-                } else {
-                    "CONECTANDO CON EL SERVIDOR…"
-                }
-
-            EstadoConexionPartido.SIN_CONEXION ->
-                "SIN CONEXIÓN · ${estado.pendientes} " +
-                        if (estado.pendientes == 1) {
-                            "OPERACIÓN PENDIENTE"
-                        } else {
-                            "OPERACIONES PENDIENTES"
-                        }
-        }
-
-    val detalle =
-        when (general) {
-            EstadoConexionPartido.SINCRONIZADO ->
-                "Última confirmación: ${horaConSegundos(estado.ultimaSincronizacion)}"
-
-            EstadoConexionPartido.SINCRONIZANDO ->
-                "Enviando eventos guardados. Los demás dispositivos los verán al confirmarse."
-
-            EstadoConexionPartido.SIN_CONEXION ->
-                "Los eventos se guardan solo en este dispositivo. " +
-                        "Los demás dispositivos aún no los reciben."
-        }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = colores.fondo,
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(1.dp, colores.borde)
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    modifier = Modifier.size(10.dp),
-                    shape = CircleShape,
-                    color = colores.punto
-                ) {}
+        Text(
+            text = "$titulo · $confirmacion",
+            color = color,
+            fontSize = 11.sp,
+            lineHeight = 14.sp
+        )
 
-                Spacer(Modifier.width(10.dp))
-
-                Text(
-                    text = titulo,
-                    modifier = Modifier.weight(1f),
-                    color = colores.texto,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp
-                )
-
-                Spacer(Modifier.width(8.dp))
-
-                if (estado.cambiandoConexion) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = colores.texto
-                    )
-                } else {
-                    Text(
-                        text = if (estado.simulandoSinConexion) {
-                            "Reconectar"
-                        } else {
-                            "Simular sin conexión"
-                        },
-                        modifier = Modifier
-                            .clickable(onClick = onSimularConexion)
-                            .padding(4.dp),
-                        color = if (estado.simulandoSinConexion) {
-                            colores.texto
-                        } else {
-                            SportProTextoSecundario
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = if (estado.simulandoSinConexion) {
-                            FontWeight.Bold
-                        } else {
-                            FontWeight.Normal
-                        }
-                    )
-                }
-            }
-
-            Text(
-                text = detalle,
-                color = colores.texto.copy(alpha = 0.85f),
-                style = MaterialTheme.typography.bodySmall
+        when (general) {
+            EstadoConexionPartido.SINCRONIZANDO -> Text(
+                text = "Los eventos guardados se compartirán al confirmarse.",
+                color = SportProTextoSecundario,
+                fontSize = 11.sp,
+                lineHeight = 14.sp
             )
+            EstadoConexionPartido.SIN_CONEXION -> Text(
+                text = "Los eventos se guardan en este dispositivo; los demás aún no los reciben.",
+                color = SportProTextoSecundario,
+                fontSize = 11.sp,
+                lineHeight = 14.sp
+            )
+            EstadoConexionPartido.SINCRONIZADO -> Unit
+        }
 
-            // Acción clara de reintento cuando hay pendientes y red
-            if (
-                !estado.sinConexion &&
-                (estado.pendientes > 0 || estado.rechazados.isNotEmpty())
-            ) {
-                Text(
-                    text = if (estado.reintentando) {
-                        "Reintentando…"
-                    } else {
-                        "↻ Reintentar sincronización"
-                    },
-                    modifier = Modifier
-                        .clickable(
-                            enabled = !estado.reintentando,
-                            onClick = onReintentar
-                        )
-                        .padding(vertical = 2.dp),
-                    color = colores.texto,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+        if (!estado.sinConexion && (estado.pendientes > 0 || estado.rechazados.isNotEmpty())) {
+            Text(
+                text = if (estado.reintentando) "Reintentando…" else "↻ Reintentar sincronización",
+                modifier = Modifier
+                    .clickable(enabled = !estado.reintentando, onClick = onReintentar)
+                    .padding(vertical = 4.dp),
+                color = color,
+                style = MaterialTheme.typography.labelSmall
+            )
         }
     }
 }
-
 /*
  * Caso alterno HU16: el partido nunca se cargó en el
  * dispositivo, no se puede registrar offline.
@@ -443,99 +368,19 @@ fun TarjetaEventoSincronizado(
                 style = MaterialTheme.typography.labelLarge
             )
 
-            Text(
-                text = simboloEvento(
-                    codigo =
-                        evento.codigoTipoEvento,
-                    tipoTarjeta =
-                        evento.tipoTarjeta
-                ),
-                color = colorSimboloEvento(
-                    codigo =
-                        evento.codigoTipoEvento,
-                    tipoTarjeta =
-                        evento.tipoTarjeta
-                ),
-                style =
-                    MaterialTheme.typography.titleMedium,
-                fontWeight =
-                    FontWeight.Black
-            )
+            IconoEvento(evento.codigoTipoEvento, evento.tipoTarjeta)
 
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = evento.nombreTipoEvento,
-                        color = SportProTextoPrincipal,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    if (
-                        evento.codigoTipoEvento == "CAMBIO" &&
-                        (
-                                evento.nombreJugadorSale.isNotBlank() ||
-                                        evento.nombreJugadorEntra.isNotBlank()
-                                )
-                    ) {
-
-                        Column(
-                            verticalArrangement =
-                                Arrangement.spacedBy(2.dp)
-                        ) {
-
-                            if (
-                                evento.nombreJugadorSale
-                                    .isNotBlank()
-                            ) {
-                                Text(
-                                    text =
-                                        "↓ Sale: ${evento.nombreJugadorSale}",
-                                    color = SyncRojoTexto,
-                                    style =
-                                        MaterialTheme.typography.bodySmall,
-                                    fontWeight =
-                                        FontWeight.Medium
-                                )
-                            }
-
-                            if (
-                                evento.nombreJugadorEntra
-                                    .isNotBlank()
-                            ) {
-                                Text(
-                                    text =
-                                        "↑ Entra: ${evento.nombreJugadorEntra}",
-                                    color = SyncVerdeTexto,
-                                    style =
-                                        MaterialTheme.typography.bodySmall,
-                                    fontWeight =
-                                        FontWeight.Medium
-                                )
-                            }
-                        }
-
-                    } else if (
-                        evento.nombreJugador.isNotBlank()
-                    ) {
-
-                        Text(
-                            text =
-                                " · ${evento.nombreJugador}",
-                            color =
-                                SportProTextoSecundario,
-                            style =
-                                MaterialTheme.typography.bodySmall,
-                            maxLines = 1,
-                            overflow =
-                                TextOverflow.Ellipsis
-                        )
-                    }
-                }
-
+                Text(
+                    text = evento.nombreTipoEvento,
+                    color = SportProTextoPrincipal,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                JugadoresEvento(evento)
                 if (evento.observacion.isNotBlank()) {
                     Text(
                         text = evento.observacion,

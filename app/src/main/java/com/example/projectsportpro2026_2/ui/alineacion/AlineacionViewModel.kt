@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.alineacion
 
+import com.example.projectsportpro2026_2.datos.alineacion.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
@@ -17,13 +18,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-data class SlotCampo(
-    val id: String,
-    val x: Float,
-    val y: Float,
-    val etiqueta: String
-)
+typealias SlotCampo = com.example.projectsportpro2026_2.datos.alineacion.PosicionFormacion
 
 data class EstadoAlineacion(
     val partido: Partido? = null,
@@ -39,6 +37,8 @@ data class EstadoAlineacion(
 
     val formato: FormatoPartido = FormatoPartido.ONCE_VS_ONCE,
     val confirmada: Boolean = false,
+    val formacion: String = "",
+    val personalizada: Boolean = false,
 
     val cargando: Boolean = false,
     val guardando: Boolean = false,
@@ -74,6 +74,7 @@ class AlineacionViewModel(
         _estado.asStateFlow()
 
     private var idPartidoActual = ""
+    private val guardados = Mutex()
 
     private val idsAdvertenciasIgnoradas =
         mutableSetOf<String>()
@@ -98,15 +99,17 @@ class AlineacionViewModel(
 
         viewModelScope.launch {
 
-            repositorioAlineaciones
+            guardados.withLock { repositorioAlineaciones
                 .guardarAlineacion(
                     idPartido = idPartidoActual,
                     formato = actual.formato,
                     jugadoresAlineacion =
                         actual.jugadoresAlineacion,
                     confirmada = false,
-                    uid = uid
-                )
+                    uid = uid,
+                    formacion = actual.formacion,
+                    personalizada = actual.personalizada
+                ) }
                 .onFailure { e ->
 
                     _estado.update {
@@ -263,6 +266,8 @@ class AlineacionViewModel(
                         jugadoresAlineacion =
                             jugadoresAlineacion,
                         formato = formato,
+                        formacion = alineacionGuardada?.formacion.orEmpty(),
+                        personalizada = alineacionGuardada?.personalizada ?: false,
                         confirmada =
                             alineacionGuardada
                                 ?.confirmada == true,
@@ -392,8 +397,10 @@ class AlineacionViewModel(
         _estado.update {
             it.copy(
                 formato = nuevoFormato,
+                formacion = "",
+                personalizada = false,
                 jugadoresAlineacion =
-                    reajustados,
+                    reajustados.map { it.copy(xCampo = null, yCampo = null) },
                 confirmada = false,
                 error = null,
                 mensaje = null
@@ -402,6 +409,36 @@ class AlineacionViewModel(
         guardarBorrador()
     }
 
+    fun seleccionarFormacion(formacion: String?) {
+        if (!verificarEditable()) return
+        val actual = _estado.value
+        if (formacion == null) {
+            _estado.update { it.copy(personalizada = true, confirmada = false) }
+        } else {
+            if (formacion !in formacionesParaFormato(actual.formato)) return
+            _estado.update {
+                it.copy(
+                    formacion = formacion, personalizada = false, confirmada = false,
+                    jugadoresAlineacion = distribuirFormacion(
+                        actual.jugadoresAlineacion, actual.plantilla, actual.formato, formacion
+                    )
+                )
+            }
+        }
+        guardarBorrador()
+    }
+
+    fun moverJugador(idJugador: String, x: Float, y: Float) {
+        if (!verificarEditable() || !_estado.value.personalizada || !x.isFinite() || !y.isFinite()) return
+        _estado.update { actual ->
+            actual.copy(confirmada = false, jugadoresAlineacion = actual.jugadoresAlineacion.map {
+                if (it.idJugador == idJugador && it.tipo == TipoJugadorAlineacion.TITULAR)
+                    it.copy(xCampo = x.coerceIn(0f, 1f).toDouble(), yCampo = y.coerceIn(0f, 1f).toDouble())
+                else it
+            })
+        }
+        guardarBorrador()
+    }
     fun pasarATitular(
         jugador: Jugador
     ) {
@@ -460,7 +497,7 @@ class AlineacionViewModel(
 
         val slots =
             slotsParaFormato(
-                actual.formato
+                actual.formato, actual.formacion
             )
 
         val ocupados =
@@ -561,7 +598,7 @@ class AlineacionViewModel(
                             it.copy(
                                 tipo =
                                     TipoJugadorAlineacion.SUPLENTE,
-                                posicionCampo = ""
+                                posicionCampo = "", xCampo = null, yCampo = null
                             )
                         } else {
                             it
@@ -588,7 +625,7 @@ class AlineacionViewModel(
 
         val slotValido =
             slotsParaFormato(
-                actual.formato
+                actual.formato, actual.formacion
             ).any {
                 it.id == idSlot
             }
@@ -630,7 +667,8 @@ class AlineacionViewModel(
                         ) {
                             jugador.copy(
                                 posicionCampo =
-                                    idSlot
+                                    idSlot,
+                                xCampo = null, yCampo = null
                             )
                         } else {
                             jugador
@@ -762,7 +800,7 @@ class AlineacionViewModel(
 
         val posicionesRequeridas =
             slotsParaFormato(
-                actual.formato
+                actual.formato, actual.formacion
             )
                 .map {
                     it.id
@@ -792,7 +830,7 @@ class AlineacionViewModel(
                 )
             }
 
-            repositorioAlineaciones
+            guardados.withLock { repositorioAlineaciones
                 .guardarAlineacion(
                     idPartido =
                         idPartidoActual,
@@ -801,8 +839,10 @@ class AlineacionViewModel(
                     jugadoresAlineacion =
                         actual.jugadoresAlineacion,
                     confirmada = true,
-                    uid = uid
-                )
+                    uid = uid,
+                    formacion = actual.formacion,
+                    personalizada = actual.personalizada
+                ) }
                 .onSuccess {
 
                     _estado.update {
@@ -836,6 +876,7 @@ class AlineacionViewModel(
     }
 
     private fun verificarEditable(): Boolean {
+        if (_estado.value.guardando) return false
         val partido =
             _estado.value.partido
 
@@ -965,223 +1006,5 @@ class AlineacionViewModel(
         }
 }
 
-fun slotsParaFormato(
-    formato: FormatoPartido
-): List<SlotCampo> =
-    when (formato) {
-
-        FormatoPartido.ONCE_VS_ONCE ->
-            listOf(
-                SlotCampo(
-                    "ARQ",
-                    0.50f,
-                    0.88f,
-                    "Arquero"
-                ),
-
-                SlotCampo(
-                    "DEF_IZQ",
-                    0.18f,
-                    0.70f,
-                    "Defensa izquierdo"
-                ),
-                SlotCampo(
-                    "DEF_CEN_IZQ",
-                    0.38f,
-                    0.72f,
-                    "Defensa central"
-                ),
-                SlotCampo(
-                    "DEF_CEN_DER",
-                    0.62f,
-                    0.72f,
-                    "Defensa central"
-                ),
-                SlotCampo(
-                    "DEF_DER",
-                    0.82f,
-                    0.70f,
-                    "Defensa derecho"
-                ),
-
-                SlotCampo(
-                    "MED_IZQ",
-                    0.25f,
-                    0.48f,
-                    "Mediocampista izquierdo"
-                ),
-                SlotCampo(
-                    "MED_CEN",
-                    0.50f,
-                    0.52f,
-                    "Mediocampista central"
-                ),
-                SlotCampo(
-                    "MED_DER",
-                    0.75f,
-                    0.48f,
-                    "Mediocampista derecho"
-                ),
-
-                SlotCampo(
-                    "DEL_IZQ",
-                    0.25f,
-                    0.25f,
-                    "Delantero izquierdo"
-                ),
-                SlotCampo(
-                    "DEL_CEN",
-                    0.50f,
-                    0.18f,
-                    "Delantero centro"
-                ),
-                SlotCampo(
-                    "DEL_DER",
-                    0.75f,
-                    0.25f,
-                    "Delantero derecho"
-                )
-            )
-
-        FormatoPartido.OCHO_VS_OCHO ->
-            listOf(
-                SlotCampo(
-                    "ARQ",
-                    0.50f,
-                    0.88f,
-                    "Arquero"
-                ),
-
-                SlotCampo(
-                    "DEF_IZQ",
-                    0.25f,
-                    0.70f,
-                    "Defensa izquierdo"
-                ),
-                SlotCampo(
-                    "DEF_CEN",
-                    0.50f,
-                    0.68f,
-                    "Defensa central"
-                ),
-                SlotCampo(
-                    "DEF_DER",
-                    0.75f,
-                    0.70f,
-                    "Defensa derecho"
-                ),
-
-                SlotCampo(
-                    "MED_IZQ",
-                    0.32f,
-                    0.47f,
-                    "Mediocampista izquierdo"
-                ),
-                SlotCampo(
-                    "MED_DER",
-                    0.68f,
-                    0.47f,
-                    "Mediocampista derecho"
-                ),
-
-                SlotCampo(
-                    "DEL_IZQ",
-                    0.35f,
-                    0.23f,
-                    "Delantero izquierdo"
-                ),
-                SlotCampo(
-                    "DEL_DER",
-                    0.65f,
-                    0.23f,
-                    "Delantero derecho"
-                )
-            )
-
-        FormatoPartido.SIETE_VS_SIETE ->
-            listOf(
-                SlotCampo(
-                    "ARQ",
-                    0.50f,
-                    0.88f,
-                    "Arquero"
-                ),
-
-                SlotCampo(
-                    "DEF_IZQ",
-                    0.25f,
-                    0.70f,
-                    "Defensa izquierdo"
-                ),
-                SlotCampo(
-                    "DEF_CEN",
-                    0.50f,
-                    0.68f,
-                    "Defensa central"
-                ),
-                SlotCampo(
-                    "DEF_DER",
-                    0.75f,
-                    0.70f,
-                    "Defensa derecho"
-                ),
-
-                SlotCampo(
-                    "MED_IZQ",
-                    0.35f,
-                    0.45f,
-                    "Mediocampista izquierdo"
-                ),
-                SlotCampo(
-                    "MED_DER",
-                    0.65f,
-                    0.45f,
-                    "Mediocampista derecho"
-                ),
-
-                SlotCampo(
-                    "DEL_CEN",
-                    0.50f,
-                    0.20f,
-                    "Delantero centro"
-                )
-            )
-
-        FormatoPartido.CINCO_VS_CINCO ->
-            listOf(
-                SlotCampo(
-                    "ARQ",
-                    0.50f,
-                    0.88f,
-                    "Arquero"
-                ),
-
-                SlotCampo(
-                    "DEF_IZQ",
-                    0.30f,
-                    0.65f,
-                    "Defensa izquierdo"
-                ),
-                SlotCampo(
-                    "DEF_DER",
-                    0.70f,
-                    0.65f,
-                    "Defensa derecho"
-                ),
-
-                SlotCampo(
-                    "MED_CEN",
-                    0.50f,
-                    0.42f,
-                    "Mediocampista central"
-                ),
-
-                SlotCampo(
-                    "DEL_CEN",
-                    0.50f,
-                    0.18f,
-                    "Delantero centro"
-                )
-            )
-
-    }
+fun slotsParaFormato(formato: FormatoPartido, formacion: String = ""): List<SlotCampo> =
+    posicionesFormacion(formato, formacion)

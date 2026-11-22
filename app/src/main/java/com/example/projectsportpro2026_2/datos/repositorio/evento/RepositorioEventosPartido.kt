@@ -1,5 +1,9 @@
 package com.example.projectsportpro2026_2.datos.repositorio.evento
 
+import com.example.projectsportpro2026_2.datos.partido.eventosValidos
+
+import com.example.projectsportpro2026_2.datos.alineacion.calcularSustituciones
+import com.example.projectsportpro2026_2.datos.alineacion.opcionesSustitucion
 import com.example.projectsportpro2026_2.datos.modelo.Academia
 import com.example.projectsportpro2026_2.datos.modelo.Equipo
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
@@ -28,7 +32,8 @@ data class ContextoPartidoEnVivo(
     val partido: Partido,
     val equipo: Equipo,
     val tiposEvento: List<TipoEventoCatalogo>,
-    val jugadoresAlineados: List<Jugador>
+    val jugadoresAlineados: List<Jugador>,
+    val alineacionInicial: List<JugadorAlineacion> = emptyList()
 )
 
 data class MarcadorPartido(
@@ -187,23 +192,27 @@ class RepositorioEventosPartido(
         return alineacion
     }
 
-    private suspend fun obtenerIdsAlineados(
-        idPartido: String
-    ): Set<String> =
-        alineaciones.document(idPartido)
-            .collection("jugadores")
-            .get()
-            .await()
-            .toObjects(
-                JugadorAlineacion::class.java
-            )
-            .map {
-                it.idJugador
+    private suspend fun obtenerJugadoresAlineados(idPartido: String): List<JugadorAlineacion> =
+        alineaciones.document(idPartido).collection("jugadores").get().await().documents
+            .mapNotNull { doc ->
+                doc.toObject(JugadorAlineacion::class.java)?.let {
+                    it.copy(idJugador = it.idJugador.ifBlank { doc.id })
+                }
             }
-            .filter {
-                it.isNotBlank()
-            }
-            .toSet()
+
+    private suspend fun obtenerIdsAlineados(idPartido: String): Set<String> =
+        obtenerJugadoresAlineados(idPartido).map { it.idJugador }.toSet()
+
+    private suspend fun validarSustitucionPropia(evento: EventoPartido, nuevo: Boolean = false) {
+        if (evento.codigoTipoEvento != "CAMBIO" || evento.equipoEvento != EquipoEvento.PROPIO) return
+        val inicial = obtenerJugadoresAlineados(evento.idPartido)
+        val eventos = partidos.document(evento.idPartido).collection("eventos").get().await()
+            .documents.mapNotNull { doc -> doc.toObject(EventoPartido::class.java)?.copy(id = doc.id) }
+        if (nuevo) {
+            calcularSustituciones(inicial, eventos).validar(evento.idJugadorSale, evento.idJugadorEntra)
+        }
+        opcionesSustitucion(inicial, eventos, evento).validar(evento.idJugadorSale, evento.idJugadorEntra)
+    }
 
     suspend fun obtenerContexto(
         idPartido: String,
@@ -291,7 +300,7 @@ class RepositorioEventosPartido(
                             .await()
                             .toObject(
                                 Jugador::class.java
-                            )
+                            )?.copy(id = idJugador)
                     }
                     .filter {
                         it.activo &&
@@ -308,7 +317,8 @@ class RepositorioEventosPartido(
                 equipo = equipo,
                 tiposEvento = tiposEvento,
                 jugadoresAlineados =
-                    jugadoresAlineados
+                    jugadoresAlineados,
+                alineacionInicial = obtenerJugadoresAlineados(idPartido)
             )
         }
 
@@ -583,6 +593,8 @@ class RepositorioEventosPartido(
              * partido en el mismo batch para que ambas
              * escrituras ocurran juntas.
              */
+            validarSustitucionPropia(evento, nuevo = true)
+
             val lote =
                 bd.batch()
 
@@ -641,7 +653,7 @@ class RepositorioEventosPartido(
         equipoEvento: EquipoEvento
     ): EquipoEvento {
 
-        if (!tipo.requiereEquipo) {
+        if (!tipo.requiereEquipo && tipo.codigo != "CAMBIO") {
             return EquipoEvento.NINGUNO
         }
 
@@ -665,7 +677,7 @@ class RepositorioEventosPartido(
         nombreJugadorRival: String
     ): Pair<String, String> {
 
-        if (!tipo.requiereJugador) {
+        if (!tipo.requiereJugador && tipo.codigo != "CAMBIO") {
             return "" to ""
         }
 
@@ -746,7 +758,7 @@ class RepositorioEventosPartido(
             )
         }
 
-        return jugador.id to
+        return idJugador to
                 jugador.nombreCompleto()
     }
 
@@ -895,7 +907,7 @@ class RepositorioEventosPartido(
         nombreJugadorRival: String
     ): Pair<String, String> {
 
-        if (!tipo.requiereJugador) {
+        if (!tipo.requiereJugador && tipo.codigo != "CAMBIO") {
             return "" to ""
         }
 
@@ -956,7 +968,7 @@ class RepositorioEventosPartido(
          * La fuente histórica es la alineación del partido.
          * Un jugador podría cambiar de equipo después.
          */
-        return jugador.id to
+        return idJugador to
                 jugador.nombreCompleto()
     }
     suspend fun corregirEvento(
@@ -1226,6 +1238,16 @@ class RepositorioEventosPartido(
              *
              * Todo ocurre junto.
              */
+            validarSustitucionPropia(
+                eventoPrevio.copy(
+                    codigoTipoEvento = tipo.codigo,
+                    equipoEvento = equipoFinal,
+                    minuto = minuto,
+                    idJugadorSale = jugadorSale.first,
+                    idJugadorEntra = jugadorEntra.first
+                )
+            )
+
             bd.runTransaction {
                     transaccion ->
 
@@ -1686,8 +1708,9 @@ class RepositorioEventosPartido(
          * No dependemos del texto "Gol": usamos la regla
          * persistida en HU13/HU14.
          */
+        val validos = eventosValidos(eventos)
         val propio =
-            eventos.count {
+            validos.count {
                 it.estado ==
                         EstadoEventoPartido.ACTIVO &&
                         it.afectaMarcador &&
@@ -1696,7 +1719,7 @@ class RepositorioEventosPartido(
             }
 
         val rival =
-            eventos.count {
+            validos.count {
                 it.estado == EstadoEventoPartido.ACTIVO &&
                         it.afectaMarcador &&
                         it.equipoEvento ==

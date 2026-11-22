@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.seguimiento
 
+import com.example.projectsportpro2026_2.datos.partido.eventosValidos
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -46,9 +47,7 @@ data class EstadoSeguimiento(
     val error: String? = null
 ) {
     val activos: List<EventoPartido>
-        get() = eventos.filter {
-            it.estado == EstadoEventoPartido.ACTIVO
-        }
+        get() = eventosValidos(eventos)
 
     val anulados: Int
         get() = eventos.count {
@@ -78,14 +77,6 @@ data class EstadoSeguimiento(
     val minutoActual: Int?
         get() = activos.maxOfOrNull { it.minuto }
 
-    val totalGoles: Int
-        get() = activos.count { it.afectaMarcador }
-
-    val totalTarjetas: Int
-        get() = activos.count { it.codigoTipoEvento == "TARJETA" }
-
-    val totalCambios: Int
-        get() = activos.count { it.codigoTipoEvento == "CAMBIO" }
 
     /*
      * Sin conexión o con datos que el servidor aún no

@@ -42,6 +42,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.projectsportpro2026_2.ui.alineacion.AlineacionPartidoEnVivo
+import com.example.projectsportpro2026_2.ui.sincronizacion.ResumenEventosEnVivo
+import com.example.projectsportpro2026_2.ui.sincronizacion.IconoEvento
+import com.example.projectsportpro2026_2.ui.sincronizacion.JugadoresEvento
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -72,7 +76,6 @@ import com.example.projectsportpro2026_2.ui.sincronizacion.VivoFondoOscuroSuave
 import com.example.projectsportpro2026_2.ui.sincronizacion.VivoTextoTenue
 import com.example.projectsportpro2026_2.ui.sincronizacion.VivoVerdeBrillante
 import com.example.projectsportpro2026_2.ui.sincronizacion.horaConSegundos
-import com.example.projectsportpro2026_2.ui.sincronizacion.simboloEvento
 
 /*
  * HU17 - Actualización en tiempo real de marcador y cronología.
@@ -203,6 +206,25 @@ fun PantallaSeguimientoPartido(
             else -> Unit
         }
 
+        if (partido.estado == EstadoPartido.EN_CURSO) {
+            item {
+                AlineacionPartidoEnVivo(
+                    idPartido = idPartido,
+                    idEquipo = partido.idEquipo,
+                    nombreEquipo = info.nombreEquipo,
+                    eventos = estado.eventos,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                )
+            }
+        }
+
+        item {
+            ResumenEventosEnVivo(
+                eventos = estado.eventos,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+            )
+        }
+
         item {
             Row(
                 modifier = Modifier
@@ -256,7 +278,10 @@ fun PantallaSeguimientoPartido(
                 }
             }
         } else {
-            estado.eventos.forEachIndexed { indice, evento ->
+            estado.eventos.sortedWith(
+                compareByDescending<EventoPartido> { it.minuto }
+                    .thenByDescending { it.fechaCaptura }
+            ).forEachIndexed { indice, evento ->
                 item(key = evento.id) {
                     Column(
                         modifier = Modifier
@@ -285,13 +310,6 @@ fun PantallaSeguimientoPartido(
             }
         }
 
-        item {
-            TarjetaResumen(
-                goles = estado.totalGoles,
-                tarjetas = estado.totalTarjetas,
-                cambios = estado.totalCambios
-            )
-        }
 
         item {
             Text(
@@ -505,7 +523,7 @@ private fun EscudoEquipo(
                 text = nombre.trim().firstOrNull()?.uppercase() ?: "?",
                 color = colorInicial,
                 fontWeight = FontWeight.Black,
-                fontSize = 18.sp
+                fontSize = 28.sp
             )
         }
 
@@ -684,13 +702,7 @@ private fun TarjetaEventoVivo(
 
             Spacer(Modifier.width(12.dp))
 
-            Text(
-                text = simboloEvento(
-                    codigo = evento.codigoTipoEvento,
-                    tipoTarjeta = evento.tipoTarjeta
-                ),
-                fontSize = 18.sp
-            )
+            IconoEvento(evento.codigoTipoEvento, evento.tipoTarjeta)
 
             Spacer(Modifier.width(10.dp))
 
@@ -706,18 +718,9 @@ private fun TarjetaEventoVivo(
                     textDecoration = if (anulado) TextDecoration.LineThrough else null
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (evento.nombreJugador.isNotBlank()) {
-                        Text(
-                            text = evento.nombreJugador,
-                            color = SportProTextoSecundario,
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(Modifier.width(6.dp))
-                    }
+                JugadoresEvento(evento)
 
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     when (evento.equipoEvento) {
                         EquipoEvento.PROPIO ->
                             ChipEquipo(nombreEquipo, SyncVerdeFondo, SyncVerdeTexto)
@@ -805,68 +808,6 @@ private fun Insignia(
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
             fontSize = 9.sp
-        )
-    }
-}
-
-@Composable
-private fun TarjetaResumen(
-    goles: Int,
-    tarjetas: Int,
-    cambios: Int
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = 20.dp),
-        color = Color(0xFFF3F6F5),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFE2E8E6))
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = "RESUMEN",
-                color = SportProTextoSecundario,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                fontSize = 10.sp,
-                letterSpacing = 1.sp
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                CifraResumen(goles, "Goles", Modifier.weight(1f))
-                CifraResumen(tarjetas, "Tarjetas", Modifier.weight(1f))
-                CifraResumen(cambios, "Cambios", Modifier.weight(1f))
-            }
-        }
-    }
-}
-
-@Composable
-private fun CifraResumen(
-    valor: Int,
-    etiqueta: String,
-    modifier: Modifier
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "$valor",
-            color = SportProNavy,
-            fontWeight = FontWeight.Black,
-            fontSize = 26.sp
-        )
-
-        Text(
-            text = etiqueta,
-            color = SportProTextoSecundario,
-            style = MaterialTheme.typography.bodySmall
         )
     }
 }

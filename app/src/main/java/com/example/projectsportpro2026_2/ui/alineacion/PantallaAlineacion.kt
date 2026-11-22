@@ -35,6 +35,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.example.projectsportpro2026_2.datos.alineacion.IndicadoresJugadorEnVivo
+import androidx.compose.runtime.key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -87,7 +89,7 @@ fun PantallaAlineacion(
     val partido = estado.partido
 
     val editable =
-        partido?.estado == EstadoPartido.PROGRAMADO
+        partido?.estado == EstadoPartido.PROGRAMADO && !estado.guardando && !estado.cargando
 
     val titulares =
         estado.jugadoresAlineacion.filter {
@@ -100,7 +102,7 @@ fun PantallaAlineacion(
         }
 
     val slots =
-        slotsParaFormato(estado.formato)
+        slotsParaFormato(estado.formato, estado.formacion)
 
     val idsDisponibles =
         estado.disponibles.map {
@@ -120,6 +122,19 @@ fun PantallaAlineacion(
                     it.idJugador in idsDisponibles
                 }
 
+    var formatoPendiente by remember { mutableStateOf<FormatoPartido?>(null) }
+    if (formatoPendiente != null) {
+        AlertDialog(
+            onDismissRequest = { formatoPendiente = null },
+            title = { Text("¿Cambiar formato?") },
+            text = { Text("Se reemplazará la distribución personalizada de la cancha.") },
+            confirmButton = { TextButton(onClick = {
+                formatoPendiente?.let(viewModel::cambiarFormato)
+                formatoPendiente = null
+            }) { Text("Redistribuir") } },
+            dismissButton = { TextButton(onClick = { formatoPendiente = null }) { Text("Cancelar") } }
+        )
+    }
     Scaffold(
         containerColor = SportProFondo,
 
@@ -278,17 +293,32 @@ fun PantallaAlineacion(
                     SelectorFormato(
                         formatoActual = estado.formato,
                         editable = editable,
-                        onCambiar = viewModel::cambiarFormato
+                        onCambiar = { nuevo ->
+                            if (nuevo != estado.formato && estado.personalizada && titulares.isNotEmpty()) formatoPendiente = nuevo
+                            else viewModel.cambiarFormato(nuevo)
+                        }
                     )
                 }
 
+                item {
+                    SelectorFormacion(
+                        formato = estado.formato,
+                        formacion = estado.formacion,
+                        personalizada = estado.personalizada,
+                        tieneTitulares = titulares.isNotEmpty(),
+                        editable = editable,
+                        onSeleccionar = viewModel::seleccionarFormacion
+                    )
+                }
                 item {
                     CanchaAlineacion(
                         slots = slots,
                         titulares = titulares,
                         plantilla = estado.plantilla,
                         editable = editable,
-                        onQuitarTitular = viewModel::pasarASuplente
+                        onQuitarTitular = viewModel::pasarASuplente,
+                        personalizable = estado.personalizada && editable,
+                        onMover = viewModel::moverJugador
                     )
                 }
 
@@ -539,12 +569,15 @@ private fun SelectorFormato(
 }
 
 @Composable
-private fun CanchaAlineacion(
+internal fun CanchaAlineacion(
     slots: List<SlotCampo>,
     titulares: List<JugadorAlineacion>,
     plantilla: List<Jugador>,
-    editable: Boolean,
-    onQuitarTitular: (Jugador) -> Unit
+    indicadores: Map<String, IndicadoresJugadorEnVivo> = emptyMap(),
+    editable: Boolean = false,
+    onQuitarTitular: (Jugador) -> Unit = {},
+    personalizable: Boolean = false,
+    onMover: (String, Float, Float) -> Unit = { _, _, _ -> }
 ) {
     val titularesPorSlot =
         titulares.associateBy {
@@ -554,7 +587,7 @@ private fun CanchaAlineacion(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .height(390.dp)
+            .height(if (slots.any { it.id == "DEF_0_0" } && slots.map { it.y }.distinct().size > 4) 480.dp else 390.dp)
             .background(
                 VerdeCancha,
                 RoundedCornerShape(18.dp)
@@ -651,41 +684,36 @@ private fun CanchaAlineacion(
                     }
                 }
 
-            val x =
-                (maxWidth.value * slot.x).dp -
-                        27.dp
-
-            val y =
-                (390f * slot.y).dp -
-                        27.dp
-
-            Box(
-                modifier = Modifier.offset(
-                    x = x,
-                    y = y
-                )
+            UbicacionEnCancha(
+                slot = slot, alineado = alineado,
+                ancho = maxWidth, alto = maxHeight,
+                editable = personalizable && jugador != null,
+                onMover = onMover
             ) {
-
                 if (jugador == null) {
 
                     SlotVacio(
-                        etiqueta = slot.id
+                        etiqueta = slot.id,
+                        editable = editable
                     )
 
                 } else {
 
-                    JugadorEnCancha(
-                        jugador = jugador,
-                        etiqueta = slot.id,
-                        editable = editable,
-                        onClick = {
-                            if (editable) {
-                                onQuitarTitular(
-                                    jugador
-                                )
+                    key(jugador.id) {
+                        JugadorEnCancha(
+                            jugador = jugador,
+                            indicadores = indicadores[jugador.id],
+                            etiqueta = slot.id,
+                            editable = editable && !personalizable,
+                            onClick = {
+                                if (editable) {
+                                    onQuitarTitular(
+                                        jugador
+                                    )
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -694,7 +722,8 @@ private fun CanchaAlineacion(
 
 @Composable
 private fun SlotVacio(
-    etiqueta: String
+    etiqueta: String,
+    editable: Boolean
 ) {
     Column(
         horizontalAlignment =
@@ -720,7 +749,7 @@ private fun SlotVacio(
                     Alignment.Center
             ) {
                 Text(
-                    text = "+",
+                    text = if (editable) "+" else "–",
                     color = Color.White,
                     style =
                         MaterialTheme.typography.titleLarge,
@@ -743,6 +772,7 @@ private fun SlotVacio(
 @Composable
 private fun JugadorEnCancha(
     jugador: Jugador,
+    indicadores: IndicadoresJugadorEnVivo?,
     etiqueta: String,
     editable: Boolean,
     onClick: () -> Unit
@@ -756,30 +786,40 @@ private fun JugadorEnCancha(
             Alignment.CenterHorizontally
     ) {
 
-        Surface(
-            modifier = Modifier.size(54.dp),
-            shape = CircleShape,
-            color = SportProNavy,
-            border = BorderStroke(
-                2.dp,
-                Color.White
-            ),
-            shadowElevation = 4.dp
-        ) {
-
-            Box(
-                contentAlignment =
-                    Alignment.Center
+        Box(modifier = Modifier.size(54.dp)) {
+            Surface(
+                modifier = Modifier.size(54.dp),
+                shape = CircleShape,
+                color = SportProNavy,
+                border = BorderStroke(
+                    2.dp,
+                    Color.White
+                ),
+                shadowElevation = 4.dp
             ) {
 
-                AvatarRemoto(
-                    url = jugador.fotoUrl,
-                    descripcion =
-                        "Foto de ${jugador.nombreCompleto()}",
-                    iniciales =
-                        inicialesJugador(jugador),
-                    modifier =
-                        Modifier.fillMaxSize()
+                Box(
+                    contentAlignment =
+                        Alignment.Center
+                ) {
+
+                    AvatarRemoto(
+                        url = jugador.fotoUrl,
+                        descripcion =
+                            "Foto de ${jugador.nombreCompleto()}",
+                        iniciales =
+                            inicialesJugador(jugador),
+                        modifier =
+                            Modifier.fillMaxSize()
+                    )
+                }
+            }
+
+            if (indicadores != null) {
+                IndicadoresJugadorEnCancha(
+                    indicadores = indicadores,
+                    nombreJugador = jugador.nombreCompleto(),
+                    modifier = Modifier.align(Alignment.BottomCenter).offset(y = 3.dp)
                 )
             }
         }
