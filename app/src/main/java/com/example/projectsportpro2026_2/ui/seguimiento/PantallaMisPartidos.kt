@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.seguimiento
 
+import com.example.projectsportpro2026_2.datos.repositorio.evento.MarcadorPartido
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -197,14 +198,29 @@ fun PantallaMisPartidos(
             }
         }
 
-        estado.partidos.forEach { seguible ->
-            item(key = seguible.partido.id) {
-                TarjetaPartidoSeguible(
-                    seguible = seguible,
-                    onClick = {
-                        onAbrirPartido(seguible.partido.id)
+        listOf(
+            EstadoPartido.EN_CURSO to "En vivo",
+            EstadoPartido.PROGRAMADO to "Próximos partidos",
+            EstadoPartido.FINALIZADO to "Partidos anteriores",
+            EstadoPartido.CANCELADO to "Cancelados"
+        ).forEach { (tipo, titulo) ->
+            val partidos = estado.partidos.filter { it.partido.estado == tipo }
+            if (partidos.isNotEmpty()) {
+                item {
+                    Text(titulo, color = SportProNavy,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 16.dp))
+                }
+                partidos.forEach { seguible ->
+                    item(key = seguible.partido.id) {
+                        TarjetaPartidoSeguible(
+                            seguible = seguible,
+                            marcador = estado.marcadores[seguible.partido.id],
+                            onClick = { onAbrirPartido(seguible.partido.id) }
+                        )
                     }
-                )
+                }
             }
         }
     }
@@ -213,6 +229,7 @@ fun PantallaMisPartidos(
 @Composable
 private fun TarjetaPartidoSeguible(
     seguible: PartidoSeguible,
+    marcador: MarcadorPartido?,
     onClick: () -> Unit
 ) {
     val partido = seguible.partido
@@ -245,7 +262,7 @@ private fun TarjetaPartidoSeguible(
                     modifier = Modifier.weight(1f),
                     color = SportProTextoPrincipal,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
 
@@ -264,6 +281,14 @@ private fun TarjetaPartidoSeguible(
                 }
             }
 
+            if (enVivo) {
+                Text(
+                    text = marcador?.let { "${it.propio} – ${it.rival}" } ?: "Cargando marcador…",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black,
+                    color = SportProVerde
+                )
+            }
             Text(
                 text = listOf(partido.fecha, partido.hora, partido.ubicacion)
                     .filter { it.isNotBlank() }

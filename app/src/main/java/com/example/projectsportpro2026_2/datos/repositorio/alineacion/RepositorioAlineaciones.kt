@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.datos.repositorio.alineacion
 
+import com.example.projectsportpro2026_2.datos.alineacion.*
 import com.example.projectsportpro2026_2.datos.modelo.Academia
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.PerfilUsuario
@@ -13,8 +14,17 @@ import com.example.projectsportpro2026_2.datos.modelo.convocatoria.EstadoDisponi
 import com.example.projectsportpro2026_2.datos.modelo.convocatoria.JugadorConvocado
 import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.Partido
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+
+internal data class AlineacionEnVivo(
+    val formato: FormatoPartido,
+    val titulares: List<JugadorAlineacion>,
+    val alineados: List<JugadorAlineacion>,
+    val plantilla: List<Jugador>,
+    val formacion: String = ""
+)
 
 class RepositorioAlineaciones(
     private val bd: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -173,11 +183,14 @@ class RepositorioAlineaciones(
             uid
         )
 
+        leerAlineacion(idPartido)
+    }
+
+    private suspend fun leerAlineacion(idPartido: String): Alineacion? =
         alineaciones.document(idPartido)
             .get()
             .await()
             .toObject(Alineacion::class.java)
-    }
 
     suspend fun listarJugadoresAlineacion(
         idPartido: String,
@@ -191,14 +204,49 @@ class RepositorioAlineaciones(
             uid
         )
 
+        leerJugadoresAlineacion(idPartido)
+    }
+
+    private suspend fun leerJugadoresAlineacion(idPartido: String): List<JugadorAlineacion> =
         alineaciones.document(idPartido)
             .collection("jugadores")
             .get()
             .await()
-            .toObjects(JugadorAlineacion::class.java)
-            .sortedBy {
-                it.orden
+            .documents.mapNotNull { doc ->
+                doc.toObject(JugadorAlineacion::class.java)?.let {
+                    it.copy(idJugador = it.idJugador.ifBlank { doc.id })
+                        .recuperarCoordenadasGuardadas(doc.data.orEmpty())
+                }
             }
+            .sortedBy { it.orden }
+
+    // Las reglas de Firestore permiten a espectadores autenticados leer la alineación.
+    internal suspend fun leerAlineacionEnVivo(
+        idPartido: String,
+        idEquipo: String
+    ): Result<AlineacionEnVivo?> = intentar {
+        val alineacion = leerAlineacion(idPartido)
+            ?.takeIf { it.confirmada && it.idEquipo == idEquipo }
+            ?: return@intentar null
+
+        val alineados = leerJugadoresAlineacion(idPartido)
+        val titulares = alineados
+            .filter { it.tipo == TipoJugadorAlineacion.TITULAR && it.idJugador.isNotBlank() }
+        if (titulares.isEmpty()) return@intentar null
+
+        val plantilla = leerFichasAlineacion(alineados.map { it.idJugador }).getOrThrow()
+
+        AlineacionEnVivo(alineacion.formato, titulares, alineados, plantilla, alineacion.formacion)
+    }
+
+    internal suspend fun leerFichasAlineacion(idsJugadores: List<String>): Result<List<Jugador>> = intentar {
+        idsJugadores.filter { it.isNotBlank() }.distinct().chunked(10).flatMap { ids ->
+            jugadores.whereIn(FieldPath.documentId(), ids)
+                .get()
+                .await()
+                .documents
+                .mapNotNull { doc -> doc.toObject(Jugador::class.java)?.copy(id = doc.id) }
+        }
     }
 
     suspend fun guardarAlineacion(
@@ -206,7 +254,9 @@ class RepositorioAlineaciones(
         formato: FormatoPartido,
         jugadoresAlineacion: List<JugadorAlineacion>,
         confirmada: Boolean,
-        uid: String
+        uid: String,
+        formacion: String = "",
+        personalizada: Boolean = false
     ): Result<Alineacion> = intentar {
 
         val partido = obtenerPartido(idPartido)
@@ -221,6 +271,9 @@ class RepositorioAlineaciones(
                 "La alineación solo puede modificarse antes de iniciar el partido"
             )
         }
+
+        require(formacion.isEmpty() || formacion in formacionesParaFormato(formato)) { "Formación incompatible con el formato" }
+        require(jugadoresAlineacion.all(::coordenadasValidas)) { "Coordenadas de cancha inválidas" }
 
         val ids =
             jugadoresAlineacion.map {
@@ -368,7 +421,12 @@ class RepositorioAlineaciones(
                 .collection("jugadores")
                 .get()
                 .await()
-                .toObjects(JugadorAlineacion::class.java)
+                .documents.mapNotNull { doc ->
+                doc.toObject(JugadorAlineacion::class.java)?.let {
+                    it.copy(idJugador = it.idJugador.ifBlank { doc.id })
+                        .recuperarCoordenadasGuardadas(doc.data.orEmpty())
+                }
+            }
 
         val ahora =
             System.currentTimeMillis()
@@ -379,6 +437,8 @@ class RepositorioAlineaciones(
                 idEquipo = partido.idEquipo,
                 idAcademia = partido.idAcademia,
                 formato = formato,
+                formacion = formacion,
+                personalizada = personalizada,
                 confirmada = confirmada,
                 creadoPor =
                     anterior

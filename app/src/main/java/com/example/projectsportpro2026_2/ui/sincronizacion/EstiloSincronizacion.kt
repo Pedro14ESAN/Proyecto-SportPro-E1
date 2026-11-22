@@ -56,22 +56,22 @@ fun simboloEvento(
 ): String =
     when (codigo) {
 
-        "INICIO" -> "▶"
-        "FIN" -> "■"
-        "SAQUE_META" -> "↑"
-        "SAQUE_LATERAL" -> "↔"
-        "TIRO_ESQUINA" -> "⌑"
-        "FALTA" -> "!"
-        "PENAL" -> "◎"
+        "INICIO" -> "▶️"
+        "FIN" -> "⏹️"
+        "SAQUE_META" -> "🥅"
+        "SAQUE_LATERAL" -> "↔️"
+        "TIRO_ESQUINA" -> "🚩"
+        "FALTA" -> "⚠️"
+        "PENAL" -> "🎯"
         "GOL" -> "⚽"
 
         "TARJETA" ->
-            "▰"
+            if (tipoTarjeta == TipoTarjeta.ROJA) "🟥" else "🟨"
 
-        "FUERA_JUEGO" -> "⚑"
-        "CAMBIO" -> "⇅"
+        "FUERA_JUEGO" -> "🚩"
+        "CAMBIO" -> "🔄"
 
-        else -> "◆"
+        else -> "📋"
     }
 
 fun colorSimboloEvento(

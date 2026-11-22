@@ -25,6 +25,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.flow.catch
+import com.example.projectsportpro2026_2.datos.repositorio.sincronizacion.RepositorioSincronizacion
+import com.example.projectsportpro2026_2.datos.repositorio.evento.RepositorioEventosPartido
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -135,7 +139,7 @@ fun PantallaPartidos(
 
                 if (enCurso.isNotEmpty()) {
                     seccionPartidos(
-                        titulo = "EN CURSO",
+                        titulo = "EN VIVO",
                         partidos = enCurso,
                         equipos = estado.equipos,
                         marcadores = estado.marcadoresPorPartido,
@@ -144,7 +148,7 @@ fun PantallaPartidos(
                 }
 
                 seccionPartidos(
-                    titulo = "PRÓXIMOS",
+                    titulo = "Próximos partidos",
                     partidos = proximos,
                     equipos = estado.equipos,
                     marcadores = estado.marcadoresPorPartido,
@@ -152,7 +156,7 @@ fun PantallaPartidos(
                 )
 
                 seccionPartidos(
-                    titulo = "FINALIZADOS",
+                    titulo = "Partidos anteriores",
                     partidos = finalizados,
                     equipos = estado.equipos,
                     marcadores = estado.marcadoresPorPartido,
@@ -294,6 +298,14 @@ private fun TarjetaPartidoSportPro(
     val enCurso =
         partido.estado == EstadoPartido.EN_CURSO
 
+    val marcadorEnVivo by produceState<MarcadorPartido?>(null, partido.id, enCurso) {
+        if (enCurso) {
+            RepositorioSincronizacion().escucharEventos(partido.id)
+                .catch { value = null }
+                .collect { value = RepositorioEventosPartido().calcularMarcador(it.eventos) }
+        }
+    }
+    val marcadorVisible = if (enCurso) marcadorEnVivo else marcador
     val fondo = when (partido.estado) {
         EstadoPartido.EN_CURSO ->
             SportProNavy
@@ -395,14 +407,14 @@ private fun TarjetaPartidoSportPro(
                 )
 
                 if (
-                    partido.estado == EstadoPartido.FINALIZADO &&
-                    marcador != null
+                    (enCurso || partido.estado == EstadoPartido.FINALIZADO) &&
+                    marcadorVisible != null
                 ) {
 
                     Text(
-                        text = "${marcador.propio}–${marcador.rival}",
+                        text = "${marcadorVisible.propio}–${marcadorVisible.rival}",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = SportProVerde,
+                        color = if (enCurso) Color.White else SportProVerde,
                         fontWeight = FontWeight.Black,
                         modifier = Modifier.padding(
                             horizontal = 12.dp
@@ -412,9 +424,9 @@ private fun TarjetaPartidoSportPro(
                 } else {
 
                     Text(
-                        text = "VS",
+                        text = if (enCurso) "…" else "VS",
                         style = MaterialTheme.typography.titleLarge,
-                        color = SportProVerde,
+                        color = if (enCurso) Color.White else SportProVerde,
                         fontWeight = FontWeight.Black,
                         modifier = Modifier.padding(
                             horizontal = 12.dp

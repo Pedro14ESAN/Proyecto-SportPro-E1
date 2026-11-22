@@ -1,5 +1,7 @@
 package com.example.projectsportpro2026_2.datos.modelo.alineacion
 
+import com.google.firebase.firestore.PropertyName
+
 data class Alineacion(
     val idPartido: String = "",
     val idEquipo: String = "",
@@ -9,7 +11,9 @@ data class Alineacion(
     val creadoPor: String = "",
     val fechaCreacion: Long = 0L,
     val actualizadoPor: String = "",
-    val fechaActualizacion: Long = 0L
+    val fechaActualizacion: Long = 0L,
+    val formacion: String = "",
+    val personalizada: Boolean = false
 )
 
 data class JugadorAlineacion(
@@ -22,7 +26,13 @@ data class JugadorAlineacion(
     val posicionCampo: String = "",
 
     // Sirve para mantener un orden estable en pantalla.
-    val orden: Int = 0
+    val orden: Int = 0,
+    @get:PropertyName("xCampo")
+    @field:PropertyName("xCampo")
+    val xCampo: Double? = null,
+    @get:PropertyName("yCampo")
+    @field:PropertyName("yCampo")
+    val yCampo: Double? = null
 )
 
 enum class TipoJugadorAlineacion {

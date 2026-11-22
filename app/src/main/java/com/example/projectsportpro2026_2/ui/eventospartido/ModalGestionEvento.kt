@@ -66,6 +66,8 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModalGestionEvento(
+    idsSalida: Set<String>,
+    idsEntrada: Set<String>,
     evento: EventoPartido,
     accion: AccionEventoPartido?,
     formulario: FormularioEventoPartido,
@@ -208,6 +210,8 @@ fun ModalGestionEvento(
             ) {
 
                 FormularioCorreccion(
+                    idsSalida = idsSalida,
+                    idsEntrada = idsEntrada,
                     formulario =
                         formulario,
 
@@ -644,6 +648,8 @@ private fun TarjetaAuditoria(
 
 @Composable
 private fun FormularioCorreccion(
+    idsSalida: Set<String>,
+    idsEntrada: Set<String>,
     formulario:
     FormularioEventoPartido,
     motivo: String,
@@ -753,7 +759,7 @@ private fun FormularioCorreccion(
         }
     }
 
-    if (tipo.requiereEquipo) {
+    if (tipo.requiereEquipo || tipo.codigo == "CAMBIO") {
 
         Text(
             text = "EQUIPO",
@@ -863,7 +869,7 @@ private fun FormularioCorreccion(
 
                 SelectorJugadorCorreccion(
                     jugadores =
-                        jugadores,
+                        jugadores.filter { it.id in idsSalida },
                     idSeleccionado =
                         formulario.idJugadorSale,
                     habilitado =
@@ -880,10 +886,7 @@ private fun FormularioCorreccion(
 
                 SelectorJugadorCorreccion(
                     jugadores =
-                        jugadores.filter {
-                            it.id !=
-                                    formulario.idJugadorSale
-                        },
+                        jugadores.filter { it.id in idsEntrada },
                     idSeleccionado =
                         formulario.idJugadorEntra,
                     habilitado =
@@ -985,8 +988,10 @@ private fun FormularioCorreccion(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp),
-        enabled =
-            !procesando,
+        enabled = !procesando && (
+            tipo.codigo != "CAMBIO" || formulario.equipoEvento == EquipoEvento.RIVAL ||
+                (formulario.idJugadorSale in idsSalida && formulario.idJugadorEntra in idsEntrada)
+            ),
         shape =
             FormaBotonSportPro,
         colors =

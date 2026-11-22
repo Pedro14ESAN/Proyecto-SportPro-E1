@@ -6,6 +6,10 @@ import com.example.projectsportpro2026_2.datos.modelo.partido.EstadoPartido
 import com.example.projectsportpro2026_2.datos.modelo.partido.Partido
 import com.example.projectsportpro2026_2.datos.modelo.PerfilUsuario
 import com.example.projectsportpro2026_2.datos.modelo.Rol
+import com.example.projectsportpro2026_2.datos.modelo.evento.TipoEventoCatalogo
+import com.example.projectsportpro2026_2.datos.partido.ID_INICIO_AUTOMATICO
+import com.example.projectsportpro2026_2.datos.partido.planificarCambioEstado
+import com.example.projectsportpro2026_2.datos.sincronizacion.IdentificadorDispositivo
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
@@ -13,7 +17,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeParseException
 
 class RepositorioPartidos(
-    bd: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val bd: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
     private val partidos = bd.collection("partidos")
     private val equipos = bd.collection("equipos")
@@ -237,31 +241,102 @@ class RepositorioPartidos(
 
         verificarPermiso(partido.idAcademia, uid)
 
-        val cambioValido = when (partido.estado) {
-            EstadoPartido.PROGRAMADO ->
-                nuevoEstado == EstadoPartido.EN_CURSO ||
-                        nuevoEstado == EstadoPartido.CANCELADO
-
-            EstadoPartido.EN_CURSO ->
-                nuevoEstado == EstadoPartido.FINALIZADO ||
-                        nuevoEstado == EstadoPartido.CANCELADO
-
-            EstadoPartido.FINALIZADO,
-            EstadoPartido.CANCELADO -> false
+        val documento = partidos.document(idPartido)
+        // Cancelar y finalizar conservan su escritura habitual, incluida la cola offline.
+        if (nuevoEstado != EstadoPartido.EN_CURSO) {
+            planificarCambioEstado(
+                partido, nuevoEstado, false, null, uid, System.currentTimeMillis(), ""
+            )
+            documento.update(
+                mapOf(
+                    "estado" to nuevoEstado,
+                    "actualizadoPor" to uid,
+                    "fechaActualizacion" to System.currentTimeMillis()
+                )
+            ).await()
+            return@intentar Unit
         }
 
-        if (!cambioValido) {
-            throw IllegalStateException(
-                "No se puede cambiar de ${partido.estado} a $nuevoEstado"
-            )
-        }
+        val referenciaInicio = documento.collection("eventos").document(ID_INICIO_AUTOMATICO)
+        val catalogo = academias.document(partido.idAcademia).collection("catalogoEventos")
+        val inicia = partido.estado == EstadoPartido.PROGRAMADO && nuevoEstado == EstadoPartido.EN_CURSO
 
-        partidos.document(idPartido).update(
-            mapOf(
-                "estado" to nuevoEstado,
-                "actualizadoPor" to uid,
-                "fechaActualizacion" to System.currentTimeMillis()
+        // INICIO ya existe en los catálogos actuales. La consulta también admite IDs personalizados.
+        val tipoExistente = if (inicia) {
+            catalogo.whereEqualTo("codigo", "INICIO").get().await().documents
+                .sortedBy { it.id }.firstOrNull()
+        } else null
+        val referenciaTipo = tipoExistente?.reference ?: catalogo.document()
+        val inicioPrevio = if (inicia) {
+            documento.collection("eventos").whereEqualTo("codigoTipoEvento", "INICIO")
+                .limit(1).get().await().isEmpty.not()
+        } else false
+        val ahora = System.currentTimeMillis()
+
+        bd.runTransaction { transaccion ->
+            val snapshot = transaccion.get(documento)
+            val actual = snapshot.toObject(Partido::class.java)?.copy(id = snapshot.id)
+                ?: throw IllegalStateException("El partido no existe")
+            check(actual.idAcademia == partido.idAcademia) {
+                "El partido cambió de academia. Vuelve a cargarlo."
+            }
+
+            // No se reparan partidos históricos ni se repite una solicitud ya confirmada.
+            if (actual.estado == EstadoPartido.EN_CURSO && nuevoEstado == EstadoPartido.EN_CURSO) {
+                return@runTransaction Unit
+            }
+
+            val debeIniciar = actual.estado == EstadoPartido.PROGRAMADO &&
+                nuevoEstado == EstadoPartido.EN_CURSO
+            val existeInicio = if (debeIniciar) {
+                transaccion.get(referenciaInicio).exists() || inicioPrevio
+            } else false
+            val snapshotTipo = if (debeIniciar && !existeInicio) {
+                transaccion.get(referenciaTipo)
+            } else null
+            val tipo = snapshotTipo?.toObject(TipoEventoCatalogo::class.java)
+                ?.copy(id = referenciaTipo.id)
+                ?: TipoEventoCatalogo(
+                    id = referenciaTipo.id,
+                    codigo = "INICIO",
+                    nombre = "Inicio del partido",
+                    afectaEstadoPartido = true,
+                    esTipoBase = true,
+                    orden = 10,
+                    creadoPor = uid,
+                    fechaCreacion = ahora,
+                    actualizadoPor = uid,
+                    fechaActualizacion = ahora
+                )
+            check(snapshotTipo == null || !snapshotTipo.exists() || tipo.codigo == "INICIO") {
+                "El tipo INICIO del catálogo tiene un código incompatible"
+            }
+
+            val cambio = planificarCambioEstado(
+                partido = actual,
+                nuevoEstado = nuevoEstado,
+                inicioExistente = existeInicio,
+                tipoInicio = tipo,
+                uid = uid,
+                ahora = ahora,
+                idDispositivo = IdentificadorDispositivo.id
+            ) ?: return@runTransaction Unit
+
+            cambio.eventoInicio?.let { evento ->
+                if (snapshotTipo != null && !snapshotTipo.exists()) {
+                    transaccion.set(referenciaTipo, tipo)
+                }
+                transaccion.set(referenciaInicio, evento)
+            }
+            transaccion.update(
+                documento,
+                mapOf(
+                    "estado" to nuevoEstado,
+                    "actualizadoPor" to uid,
+                    "fechaActualizacion" to ahora
+                )
             )
-        ).await()
+            Unit
+        }.await()
     }
 }

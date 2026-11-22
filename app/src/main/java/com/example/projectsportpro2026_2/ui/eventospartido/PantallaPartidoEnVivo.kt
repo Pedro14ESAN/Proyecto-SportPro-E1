@@ -3,6 +3,7 @@ package com.example.projectsportpro2026_2.ui.eventospartido
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.example.projectsportpro2026_2.datos.alineacion.calcularSustituciones
+import com.example.projectsportpro2026_2.datos.alineacion.opcionesSustitucion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,7 +49,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.projectsportpro2026_2.ui.alineacion.AlineacionPartidoEnVivo
+import com.example.projectsportpro2026_2.ui.sincronizacion.ResumenEventosEnVivo
+import com.example.projectsportpro2026_2.ui.sincronizacion.IconoEvento
+import com.example.projectsportpro2026_2.ui.sincronizacion.JugadoresEvento
+import com.example.projectsportpro2026_2.ui.sincronizacion.estiloEventoEnVivo
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -100,6 +109,21 @@ fun PantallaPartidoEnVivo(
     }
 
     val contexto = estado.contexto
+    val eventosActuales = remember(sync.cargado, sync.eventos, estado.eventos) {
+        if (sync.cargado) sync.eventos.map { it.evento } else estado.eventos
+    }
+    val candidato = EventoPartido(
+        id = estado.eventoSeleccionado?.id ?: "~nuevo",
+        minuto = estado.formulario.minuto.toIntOrNull() ?: Int.MAX_VALUE,
+        fechaCaptura = estado.eventoSeleccionado?.fechaCaptura ?: Long.MAX_VALUE
+    )
+    val opcionesCambio = remember(contexto, eventosActuales, candidato) {
+        if (estado.eventoSeleccionado == null) {
+            calcularSustituciones(contexto?.alineacionInicial.orEmpty(), eventosActuales)
+        } else {
+            opcionesSustitucion(contexto?.alineacionInicial.orEmpty(), eventosActuales, candidato)
+        }
+    }
 
     /*
      * HU16: el estado del partido llega en tiempo real
@@ -118,7 +142,15 @@ fun PantallaPartidoEnVivo(
                 !sync.registroOfflineDisponible
 
     Scaffold(
-        containerColor = SportProFondo
+        containerColor = SportProFondo,
+        bottomBar = {
+            Surface(color = SportProFondo, modifier = Modifier.navigationBarsPadding()) {
+                BannerSincronizacion(
+                    estado = sync,
+                    onReintentar = sincronizacion::reintentarSincronizacion
+                )
+            }
+        }
     ) { relleno ->
 
         LazyColumn(
@@ -152,17 +184,6 @@ fun PantallaPartidoEnVivo(
                         fontWeight = FontWeight.Bold
                     )
                 }
-            }
-
-            // HU16: banner de sincronización
-            item {
-                BannerSincronizacion(
-                    estado = sync,
-                    onSimularConexion =
-                        sincronizacion::alternarConexionSimulada,
-                    onReintentar =
-                        sincronizacion::reintentarSincronizacion
-                )
             }
 
             if (registroBloqueado) {
@@ -275,6 +296,30 @@ fun PantallaPartidoEnVivo(
                     avisoRevision =
                         textoAvisoMarcador(sync)
                 )
+            }
+
+            if (estadoPartidoActual == EstadoPartido.EN_CURSO) {
+                item {
+                    AlineacionPartidoEnVivo(
+                        idPartido = idPartido,
+                        idEquipo = contexto.partido.idEquipo,
+                        nombreEquipo = contexto.equipo.nombre,
+                        eventos = eventosActuales
+                    )
+                }
+            }
+
+            item {
+                val eventosResumen = remember(sync.cargado, sync.eventos, estado.eventos) {
+                    if (sync.cargado) {
+                        sync.eventos
+                            .filter { it.estado != EstadoSincronizacionEvento.CONFLICTO }
+                            .map { it.evento }
+                    } else {
+                        estado.eventos
+                    }
+                }
+                ResumenEventosEnVivo(eventos = eventosResumen)
             }
 
             if (
@@ -460,6 +505,8 @@ fun PantallaPartidoEnVivo(
     ) {
 
         ModalRegistroEvento(
+            idsSalida = opcionesCambio.idsSalida,
+            idsEntrada = opcionesCambio.idsEntrada,
             formulario =
                 estado.formulario,
 
@@ -522,6 +569,8 @@ fun PantallaPartidoEnVivo(
         if (contexto != null) {
 
             ModalGestionEvento(
+                idsSalida = opcionesCambio.idsSalida,
+                idsEntrada = opcionesCambio.idsEntrada,
                 evento =
                     evento,
 
@@ -983,27 +1032,7 @@ private fun TarjetaCronologiaEvento(
                 Arrangement.spacedBy(12.dp)
         ) {
 
-            Surface(
-                modifier = Modifier.size(46.dp),
-                shape = RoundedCornerShape(13.dp),
-                color = estilo.fondoIcono
-            ) {
-
-                Box(
-                    contentAlignment =
-                        Alignment.Center
-                ) {
-
-                    Text(
-                        text = estilo.icono,
-                        color = estilo.colorIcono,
-                        style =
-                            MaterialTheme.typography.titleLarge,
-                        fontWeight =
-                            FontWeight.Black
-                    )
-                }
-            }
+            IconoEvento(evento.codigoTipoEvento, evento.tipoTarjeta)
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -1051,62 +1080,7 @@ private fun TarjetaCronologiaEvento(
                     }
                 }
 
-                if (
-                    evento.codigoTipoEvento == "CAMBIO" &&
-                    (
-                            evento.nombreJugadorSale.isNotBlank() ||
-                                    evento.nombreJugadorEntra.isNotBlank()
-                            )
-                ) {
-
-                    if (
-                        evento.nombreJugadorSale
-                            .isNotBlank()
-                    ) {
-                        Text(
-                            text =
-                                "↓ Sale: ${evento.nombreJugadorSale}",
-                            color = SportProRojo,
-                            style =
-                                MaterialTheme.typography.bodyMedium,
-                            fontWeight =
-                                FontWeight.Medium
-                        )
-                    }
-
-                    if (
-                        evento.nombreJugadorEntra
-                            .isNotBlank()
-                    ) {
-                        Text(
-                            text =
-                                "↑ Entra: ${evento.nombreJugadorEntra}",
-                            color = SportProVerde,
-                            style =
-                                MaterialTheme.typography.bodyMedium,
-                            fontWeight =
-                                FontWeight.Medium
-                        )
-                    }
-
-                } else if (
-                    evento.nombreJugador
-                        .isNotBlank()
-                ) {
-
-                    Text(
-                        text =
-                            evento.nombreJugador,
-                        color = SportProNavy,
-                        style =
-                            MaterialTheme.typography.bodyMedium,
-                        fontWeight =
-                            FontWeight.Medium,
-                        maxLines = 1,
-                        overflow =
-                            TextOverflow.Ellipsis
-                    )
-                }
+                JugadoresEvento(evento)
 
                 if (
                     evento.observacion
@@ -1143,6 +1117,8 @@ private fun TarjetaCronologiaEvento(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModalRegistroEvento(
+    idsSalida: Set<String>,
+    idsEntrada: Set<String>,
     formulario: FormularioEventoPartido,
     nombreEquipo: String,
     nombreRival: String,
@@ -1249,6 +1225,7 @@ private fun ModalRegistroEvento(
 
                                 Text(
                                     text = estilo.icono,
+                        fontSize = 28.sp,
                                     color = estilo.colorIcono,
                                     style =
                                         MaterialTheme.typography.titleLarge,
@@ -1318,7 +1295,7 @@ private fun ModalRegistroEvento(
                     RoundedCornerShape(12.dp)
             )
 
-            if (tipo.requiereEquipo) {
+            if (tipo.requiereEquipo || tipo.codigo == "CAMBIO") {
 
                 Text(
                     text =
@@ -1428,7 +1405,7 @@ private fun ModalRegistroEvento(
                     )
 
                     SelectorJugador(
-                        jugadores = jugadores,
+                        jugadores = jugadores.filter { it.id in idsSalida },
                         idSeleccionado =
                             formulario.idJugadorSale,
                         habilitado = !registrando,
@@ -1444,10 +1421,7 @@ private fun ModalRegistroEvento(
 
                     SelectorJugador(
                         jugadores =
-                            jugadores.filter {
-                                it.id !=
-                                        formulario.idJugadorSale
-                            },
+                            jugadores.filter { it.id in idsEntrada },
                         idSeleccionado =
                             formulario.idJugadorEntra,
                         habilitado = !registrando,
@@ -1630,8 +1604,10 @@ private fun ModalRegistroEvento(
 
         Button(
             onClick = onRegistrar,
-            enabled =
-                !registrando,
+            enabled = !registrando && (
+                tipo.codigo != "CAMBIO" || formulario.equipoEvento == EquipoEvento.RIVAL ||
+                    (formulario.idJugadorSale in idsSalida && formulario.idJugadorEntra in idsEntrada)
+                ),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
@@ -2019,151 +1995,6 @@ private fun textoEquipoSegunEvento(
         "EQUIPO QUE ANOTA"
     } else {
         "EQUIPO DEL EVENTO"
-    }
-
-private data class EstiloEventoEnVivo(
-    val icono: String,
-    val fondoIcono: Color,
-    val colorIcono: Color,
-    val borde: Color
-)
-
-private fun estiloEventoEnVivo(
-    codigo: String
-): EstiloEventoEnVivo =
-    when (codigo) {
-
-        "INICIO" ->
-            EstiloEventoEnVivo(
-                icono = "▶",
-                fondoIcono =
-                    SportProVerdeClaro,
-                colorIcono =
-                    SportProVerde,
-                borde =
-                    Color(0xFFB9E0C3)
-            )
-
-        "FIN" ->
-            EstiloEventoEnVivo(
-                icono = "■",
-                fondoIcono =
-                    Color(0xFFE8ECEF),
-                colorIcono =
-                    SportProNavy,
-                borde =
-                    SportProBorde
-            )
-
-        "GOL" ->
-            EstiloEventoEnVivo(
-                icono = "⚽",
-                fondoIcono =
-                    SportProVerdeClaro,
-                colorIcono =
-                    SportProVerde,
-                borde =
-                    Color(0xFFB9E0C3)
-            )
-
-        "TARJETA" ->
-            EstiloEventoEnVivo(
-                icono = "▰",
-                fondoIcono =
-                    Color(0xFFFFF3C4),
-                colorIcono =
-                    Color(0xFF9A7200),
-                borde =
-                    Color(0xFFE8D17A)
-            )
-
-        "CAMBIO" ->
-            EstiloEventoEnVivo(
-                icono = "⇅",
-                fondoIcono =
-                    Color(0xFFE7F0F8),
-                colorIcono =
-                    Color(0xFF28659A),
-                borde =
-                    Color(0xFFB9D2E7)
-            )
-
-        "FUERA_JUEGO" ->
-            EstiloEventoEnVivo(
-                icono = "⚑",
-                fondoIcono =
-                    Color(0xFFF0EBF8),
-                colorIcono =
-                    Color(0xFF67508A),
-                borde =
-                    Color(0xFFD4C8E8)
-            )
-
-        "FALTA" ->
-            EstiloEventoEnVivo(
-                icono = "!",
-                fondoIcono =
-                    SportProRojoClaro,
-                colorIcono =
-                    SportProRojo,
-                borde =
-                    Color(0xFFF0C6C2)
-            )
-
-        "PENAL" ->
-            EstiloEventoEnVivo(
-                icono = "◎",
-                fondoIcono =
-                    Color(0xFFFFEEDB),
-                colorIcono =
-                    Color(0xFFA85D16),
-                borde =
-                    Color(0xFFF0D0A9)
-            )
-
-        "TIRO_ESQUINA" ->
-            EstiloEventoEnVivo(
-                icono = "⌑",
-                fondoIcono =
-                    Color(0xFFE7F0F8),
-                colorIcono =
-                    Color(0xFF28659A),
-                borde =
-                    Color(0xFFB9D2E7)
-            )
-
-        "SAQUE_META" ->
-            EstiloEventoEnVivo(
-                icono = "↑",
-                fondoIcono =
-                    Color(0xFFEAF1EC),
-                colorIcono =
-                    SportProNavy,
-                borde =
-                    SportProBorde
-            )
-
-        "SAQUE_LATERAL" ->
-            EstiloEventoEnVivo(
-                icono = "↔",
-                fondoIcono =
-                    Color(0xFFEAF1EC),
-                colorIcono =
-                    SportProNavy,
-                borde =
-                    SportProBorde
-            )
-
-        else ->
-            EstiloEventoEnVivo(
-                icono = "◆",
-                fondoIcono =
-                    SportProVerdeClaro,
-                colorIcono =
-                    SportProVerde,
-                borde =
-                    SportProBorde
-            )
     }
 
 private fun nombreCortoEvento(
