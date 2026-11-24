@@ -56,6 +56,8 @@ fun PantallaLogin(
     onSesionIniciada: (PerfilUsuario) -> Unit,
     onIrARegistro: () -> Unit,
     onIrARecuperar: () -> Unit,
+    // Regresa a la portada; null = sin flecha
+    onVolverAlInicio: (() -> Unit)? = null,
     viewModel: LoginViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -70,7 +72,8 @@ fun PantallaLogin(
         onContrasena = viewModel::cambiarContrasena,
         onIniciarSesion = viewModel::iniciarSesion,
         onIrARegistro = onIrARegistro,
-        onIrARecuperar = onIrARecuperar
+        onIrARecuperar = onIrARecuperar,
+        onVolverAlInicio = onVolverAlInicio
     )
 }
 
@@ -96,7 +99,8 @@ fun ContenidoLogin(
     onIniciarSesion: () -> Unit,
     onIrARegistro: () -> Unit,
     onIrARecuperar: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onVolverAlInicio: (() -> Unit)? = null
 ) {
     val formaCampo = RoundedCornerShape(16.dp)
     val coloresCampo = OutlinedTextFieldDefaults.colors(
@@ -119,6 +123,17 @@ fun ContenidoLogin(
             .padding(horizontal = 24.dp, vertical = 32.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        if (onVolverAlInicio != null) {
+            Text(
+                text = "← Volver al inicio",
+                color = VerdePrincipal,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                modifier = Modifier
+                    .clickable { onVolverAlInicio() }
+                    .padding(vertical = 6.dp)
+            )
+        }
         Text(
             text = "Sport PRO",
             style = TextStyle(

@@ -267,6 +267,10 @@ fun NavegacionApp() {
                     navController.navigate(
                         Rutas.RECUPERAR
                     )
+                },
+                // Flecha para regresar a la portada
+                onVolverAlInicio = {
+                    irA(Rutas.BIENVENIDA)
                 }
             )
         }
