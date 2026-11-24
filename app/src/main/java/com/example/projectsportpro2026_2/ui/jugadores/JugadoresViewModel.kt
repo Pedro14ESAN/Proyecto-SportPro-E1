@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.example.projectsportpro2026_2.datos.remoto.ConfigSupabase
 import com.example.projectsportpro2026_2.datos.repositorio.RepositorioImagenes
+import com.google.firebase.firestore.FirebaseFirestoreException
 
 // Lo que escribe el usuario en el formulario (todo como texto)
 data class CamposJugador(
@@ -152,9 +153,19 @@ class JugadoresViewModel(
         return valor
     }
 
-    private fun mensaje(e: Throwable): String = when (e) {
-        is IllegalArgumentException, is IllegalStateException ->
-            e.message ?: "No se pudo completar la operación"
-        else -> "No se pudo completar la operación. Revisa tu conexión e inténtalo de nuevo"
+    private fun mensaje(e: Throwable): String {
+        android.util.Log.e("SportProJugadores", "Error en jugadores", e)
+        return when (e) {
+            is IllegalArgumentException, is IllegalStateException ->
+                e.message ?: "No se pudo completar la operación"
+            is FirebaseFirestoreException -> when (e.code) {
+                FirebaseFirestoreException.Code.PERMISSION_DENIED ->
+                    "No tienes permiso para realizar esta operación"
+                FirebaseFirestoreException.Code.UNAVAILABLE ->
+                    "Sin conexión. Revisa tu internet e inténtalo de nuevo"
+                else -> "No se pudo completar la operación (${e.code})"
+            }
+            else -> "No se pudo completar la operación: ${e.javaClass.simpleName}"
+        }
     }
 }
