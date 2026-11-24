@@ -204,6 +204,7 @@ fun InicioAdministrador(
     onComunidad: () -> Unit = {},         // HU21
     onNotificaciones: () -> Unit = {},    // HU20
     onEstadisticas: () -> Unit = {},      // HU18
+    onPlanes: () -> Unit = {},            // Planes y ofertas (demo)
     onCerrarSesion: () -> Unit
 ) = PantallaBaseInicio(
 
@@ -231,6 +232,7 @@ fun InicioAdministrador(
     BotonInicio("Anuncios del club", onAnuncios)
     BotonInicio("Comunidad", onComunidad)
     BotonInicio("🔔 Notificaciones", onNotificaciones)
+    BotonInicio("💎 Planes y ofertas", onPlanes)
 }
 
 @Composable

@@ -23,6 +23,7 @@ import com.example.projectsportpro2026_2.ui.asistencias.PantallaAsistencias
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaBienvenida
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaIntroduccion
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaLogin
+import com.example.projectsportpro2026_2.ui.planes.PantallaPlanes
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRegistro
 import com.example.projectsportpro2026_2.ui.catalogoeventos.PantallaCatalogoEventos
 import com.example.projectsportpro2026_2.ui.convocatoria.PantallaConvocatoria
@@ -322,8 +323,19 @@ fun NavegacionApp() {
                     abrirNotificaciones,
                 onEstadisticas =
                     abrirEstadisticas,
+                onPlanes = {
+                    navController.navigate(Rutas.PLANES)
+                },
                 onCerrarSesion =
                     cerrarSesion
+            )
+        }
+
+        composable(
+            Rutas.PLANES
+        ) {
+            PantallaPlanes(
+                onVolver = { navController.popBackStack() }
             )
         }
 

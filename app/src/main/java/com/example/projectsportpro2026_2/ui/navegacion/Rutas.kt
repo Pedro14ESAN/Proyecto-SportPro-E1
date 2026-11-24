@@ -11,6 +11,9 @@ object Rutas {
     const val INTRODUCCION = "introduccion"
 
     const val LOGIN = "login"
+
+    // Planes y ofertas (demo, sin pagos reales)
+    const val PLANES = "planes"
     const val REGISTRO = "registro"
 
     const val INICIO_ADM = "inicio_adm"
