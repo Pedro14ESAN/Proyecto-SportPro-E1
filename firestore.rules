@@ -165,11 +165,11 @@ service cloud.firestore {
 
       // Datos sensibles: ADM de la academia, DT del equipo, propio JUG o PAD vinculado
       match /privado/{documento} {
-        allow read: if veDatosSensibles(idJugador);
-        allow write: if gestionaAcademia(jugador(idJugador).idAcademia)
-          || jugador(idJugador).get('idUsuario', '') == uid();
-      }
-    }
+              allow read: if veDatosSensibles(idJugador);
+              // getAfter: en el lote de creación la ficha aún no existe al evaluar get()
+              allow write: if gestionaAcademia(getAfter(/databases/$(database)/documents/jugadores/$(idJugador)).data.idAcademia)
+                || getAfter(/databases/$(database)/documents/jugadores/$(idJugador)).data.get('idUsuario', '') == uid();
+       }
 
     // HU05: vínculo apoderado-jugador. Perder el vínculo revoca permisos.
     match /vinculaciones/{idVinculacion} {
