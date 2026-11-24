@@ -20,6 +20,8 @@ import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAutenticac
 import com.example.projectsportpro2026_2.ui.academias.PantallaAcademias
 import com.example.projectsportpro2026_2.ui.alineacion.PantallaAlineacion
 import com.example.projectsportpro2026_2.ui.asistencias.PantallaAsistencias
+import com.example.projectsportpro2026_2.ui.autenticacion.PantallaBienvenida
+import com.example.projectsportpro2026_2.ui.autenticacion.PantallaIntroduccion
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaLogin
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRegistro
 import com.example.projectsportpro2026_2.ui.catalogoeventos.PantallaCatalogoEventos
@@ -88,7 +90,8 @@ fun NavegacionApp() {
         destinoInicial =
             if (uid == null) {
 
-                Rutas.LOGIN
+                // Sin sesión: portada → introducción → login
+                Rutas.BIENVENIDA
 
             } else {
 
@@ -219,6 +222,30 @@ fun NavegacionApp() {
     ) {
 
         composable(
+            Rutas.BIENVENIDA
+        ) {
+            PantallaBienvenida(
+                onComenzar = {
+                    navController.navigate(Rutas.INTRODUCCION)
+                }
+            )
+        }
+
+        composable(
+            Rutas.INTRODUCCION
+        ) {
+            PantallaIntroduccion(
+                onVolver = {
+                    navController.popBackStack()
+                },
+                // Al terminar o saltar, el login queda como única pantalla
+                onTerminar = {
+                    irA(Rutas.LOGIN)
+                }
+            )
+        }
+
+        composable(
             Rutas.LOGIN
         ) {
 
@@ -240,6 +267,10 @@ fun NavegacionApp() {
                     navController.navigate(
                         Rutas.RECUPERAR
                     )
+                },
+                // Flecha para regresar a la portada
+                onVolverAlInicio = {
+                    irA(Rutas.BIENVENIDA)
                 }
             )
         }
@@ -1072,6 +1103,7 @@ fun NavegacionApp() {
     // no esté en login / registro / cuenta pendiente.
     LaunchedEffect(Unit) {
         val pantallasPublicas = setOf(
+            Rutas.BIENVENIDA, Rutas.INTRODUCCION,
             Rutas.LOGIN, Rutas.REGISTRO, Rutas.RECUPERAR, Rutas.CUENTA_PENDIENTE
         )
         DestinoNotificacion.pendiente.collect { id ->
