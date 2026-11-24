@@ -6,6 +6,10 @@ import com.example.projectsportpro2026_2.datos.modelo.PerfilUsuario
 import com.example.projectsportpro2026_2.datos.modelo.Rol
 
 object Rutas {
+    // Portada e introducción al abrir la app sin sesión
+    const val BIENVENIDA = "bienvenida"
+    const val INTRODUCCION = "introduccion"
+
     const val LOGIN = "login"
     const val REGISTRO = "registro"
 
