@@ -170,7 +170,7 @@ service cloud.firestore {
               allow write: if gestionaAcademia(getAfter(/databases/$(database)/documents/jugadores/$(idJugador)).data.idAcademia)
                 || getAfter(/databases/$(database)/documents/jugadores/$(idJugador)).data.get('idUsuario', '') == uid();
        }
-
+}
     // HU05: vínculo apoderado-jugador. Perder el vínculo revoca permisos.
     match /vinculaciones/{idVinculacion} {
       allow read: if activo()
