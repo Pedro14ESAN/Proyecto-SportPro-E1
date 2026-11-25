@@ -425,6 +425,7 @@ Cada punto lleva una **propuesta**. Si no hay respuesta, se aplica la propuesta 
 ## Reglas de trabajo (cambios de alcance pedidos por el usuario)
 
 - **Sin commits ni push** (2026-11-24): Claude no hace commits ni push en ninguna etapa. Los cambios quedan en el árbol de trabajo y el usuario los confirma a mano. Las instrucciones "haz un commit" de la especificación y de los prompts se ignoran.
+- **Doto en el LED** (2026-11-25): Doto solo se usa en números de 18 sp o más. Los nombres de equipo y las etiquetas del MarcadorLed van en DM Mono (blanco y amarillo), aunque la sección 5 decía Doto, porque la 3.3 lo prohíbe en texto.
 - **Sin vista de tablet** (2026-11-24): en cualquier tamaño de pantalla se usa el mismo diseño que en celular. En pantallas anchas, el contenido va centrado con `Modifier.widthIn(max = 600.dp)`. Se eliminan la cabecera ancha, la pizarra en grupos de 4 columnas, la columna derecha y la agenda de 7 días (6.2 y 7.1 de la espec, prompt 4).
 
 ---

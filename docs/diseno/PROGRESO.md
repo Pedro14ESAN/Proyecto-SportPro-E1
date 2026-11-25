@@ -48,3 +48,43 @@ HU tocadas: ninguna en lógica (solo aspecto, sección 4 de la espec).
 ### Commit sugerido
 
 `style: tema Línea de cal (claro y oscuro)`
+
+---
+
+## Etapa 2 · Kit de componentes (2026-11-25)
+
+HU tocadas: ninguna. Todavía no cambia ninguna pantalla.
+
+### Qué se hizo
+
+Nuevo archivo `app/src/main/java/com/example/projectsportpro2026_2/ui/comun/LineaDeCal.kt` con los 12 componentes de la sección 5. Todos leen los tokens del tema (`LineaDeCal.colores` y las familias de `Type.kt`) y tienen preview en claro y en oscuro con la anotación `@VistaClaroOscuro`.
+
+| Componente | Notas |
+|---|---|
+| `CabeceraCancha` | Franjas de césped, rectángulo y círculo central en blanco al 85 %, esquinas inferiores de 24 dp. Parámetros: título, subtítulo, etiqueta mono, botón atrás opcional, acciones y contenido extra. Incluye `PildoraCabecera` (selector "Equipo ▾" o etiqueta fija, 7.4) |
+| `MarcadorLed` | Fondo `ledFondo` con trama de puntos y goles en Doto lima con resplandor (más intenso en oscuro). Nombres en mono blanco, etiquetas en mono amarillo y "PROVISIONAL" en naranja. Tiene punto rojo de EN VIVO, variante compacta y `onClick` con flecha. Describe el marcador completo para TalkBack |
+| `ContadorLed` | Número en Doto (si no es numérico, por ejemplo "Al día", va en mono) más una etiqueta mono |
+| `TarjetaTicket` | Talón con hora (Doto) y fecha (mono), línea discontinua y muescas. Variantes: `NORMAL`, `VERDE`, `AMARILLA`, `APAGADA`, `TACHADA` y `OSCURA` (partido en curso, 6.8). `colorMuesca` = color del fondo donde va la tarjeta |
+| `FichaTactica` | De 44 a 58 dp, con sombra inferior "de ficha", 5 colores (`ColorFicha`), contador naranja y etiqueta de 2 líneas como máximo |
+| `PizarraFichas` | Navy (navy2 en oscuro) con borde discontinuo interior y cuadrícula de 3 o 4 columnas a partir de una lista de `DatoFicha` |
+| `CromoJugador` | Versiones `GRANDE` y `MINI`: borde amarillo, franjas verdes, número gigante translúcido, foto (`AvatarRemoto` si hay `fotoUrl`) o silueta lima, posición en chip lima, pie con equipo y estado, e insignia opcional. El número es opcional porque `Jugador` no tiene dorsal |
+| `ChipEstado` | `TipoEstado`: OK, PENDIENTE, ERROR, APAGADO, AMARILLO y NEUTRO; con punto o ícono opcional |
+| `BotonPrincipal` | `VarianteBoton.LIMA` y `NAVY`, con ícono opcional e indicador de carga |
+| `CampoSportPro` | `OutlinedTextField` con etiqueta mono arriba, fondo de superficie y borde verde al enfocar. Muestra error o ayuda y tiene `esContrasena` con el botón visibility / visibility_off (deja lista la 7.5) |
+| `BarraSuperior` | Botón atrás circular, título Bricolage centrado y hasta 2 acciones. Incluye `AccionBarra` (botón circular con contador y variante destacada para Moderar) |
+| `FondoCancha` | Versión grande de la cabecera para la bienvenida y el login |
+
+### Decisiones de esta etapa
+
+- **Doto solo en números de 18 sp o más.** La sección 5 pedía Doto en los nombres de equipo y en las etiquetas del LED, pero la 3.3 y el prompt lo prohíben en texto. Por eso van en DM Mono (blanco y amarillo). La función interna `TextoNumero` usa Doto solo si el texto es numérico y mide 18 sp o más; si no, cae a DM Mono.
+- Ningún texto del kit mide menos de 12 sp. Los íconos son Material Rounded (`material-icons-extended`).
+- Se agregaron tres ayudas que no están en la sección 5, porque las imágenes las usan: `PildoraCabecera`, `AccionBarra` y la variante `OSCURA` del ticket.
+
+### Verificación
+
+- **No se compiló ni se corrieron tests**: el usuario pidió no compilar. Se revisó el código a mano (APIs, imports, que no haya textos de menos de 12 sp). Los previews tampoco se revisaron en Android Studio.
+- Antes de confirmar las etapas 1 y 2 hay que correr `./gradlew assembleDebug` y `./gradlew testDebugUnitTest`, y abrir los previews de `LineaDeCal.kt` en claro y en oscuro.
+
+### Commit sugerido
+
+`feat(ui): kit de componentes Línea de cal`
