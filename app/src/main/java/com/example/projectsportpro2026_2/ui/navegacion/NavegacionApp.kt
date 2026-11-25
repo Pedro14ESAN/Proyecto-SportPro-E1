@@ -58,6 +58,7 @@ import kotlinx.coroutines.delay
 import com.example.projectsportpro2026_2.ui.autenticacion.PantallaRecuperar
 import com.example.projectsportpro2026_2.ui.estadisticas.PantallaEstadisticas
 import com.example.projectsportpro2026_2.ui.resumen.PantallaResumenPartido
+import com.example.projectsportpro2026_2.ui.vinculaciones.PantallaCuentasJugadores
 
 @Composable
 fun NavegacionApp() {
@@ -305,6 +306,11 @@ fun NavegacionApp() {
                 onVinculaciones = {
                     navController.navigate(
                         Rutas.VINCULACIONES
+                    )
+                },
+                onCuentasJugadores = {
+                    navController.navigate(
+                        Rutas.CUENTAS_JUGADORES
                     )
                 },
                 onMensualidades =
@@ -866,6 +872,17 @@ fun NavegacionApp() {
         ) {
 
             PantallaVinculaciones(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            Rutas.CUENTAS_JUGADORES
+        ) {
+
+            PantallaCuentasJugadores(
                 onVolver = {
                     navController.popBackStack()
                 }

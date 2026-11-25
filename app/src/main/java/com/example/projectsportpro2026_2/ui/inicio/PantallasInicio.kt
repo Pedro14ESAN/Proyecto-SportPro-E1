@@ -196,6 +196,7 @@ private fun BotonInicio(
 fun InicioAdministrador(
     onGestionarAcademias: () -> Unit,
     onVinculaciones: () -> Unit,
+    onCuentasJugadores: () -> Unit = {},
     onMensualidades: () -> Unit,
     onEjercicios: () -> Unit,
     onAsistencias: () -> Unit,
@@ -225,6 +226,7 @@ fun InicioAdministrador(
     BotonInicio("📊 Estadísticas", onEstadisticas)
     BotonInicio("Gestionar academias", onGestionarAcademias)
     BotonInicio("Vinculaciones", onVinculaciones)
+    BotonInicio("Cuentas de jugadores", onCuentasJugadores)
     BotonInicio("Mensualidades", onMensualidades)
     BotonInicio("Biblioteca de ejercicios", onEjercicios)
     BotonInicio("Asistencias", onAsistencias)

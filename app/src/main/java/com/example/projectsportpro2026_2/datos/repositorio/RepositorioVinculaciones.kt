@@ -10,6 +10,7 @@ import com.example.projectsportpro2026_2.datos.modelo.Vinculacion
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import com.example.projectsportpro2026_2.datos.modelo.EstadoCuenta
 
 // Lo que ve el apoderado en una vinculación activa
 data class DatosSensiblesVinculo(
@@ -183,6 +184,18 @@ class RepositorioVinculaciones(
             jugadores.document(vinculacion.idJugador),
             "idsApoderados", FieldValue.arrayUnion(vinculacion.idApoderado)
         )
+        // Si el jugador ya tiene cuenta vinculada y sigue pendiente, esta autorización
+        // (apoderado + academia) la activa
+        val ficha = jugadores.document(vinculacion.idJugador).get().await()
+            .toObject(Jugador::class.java)
+        val idCuenta = ficha?.idUsuario.orEmpty()
+        if (idCuenta.isNotBlank()) {
+            val cuenta = usuarios.document(idCuenta).get().await()
+                .toObject(PerfilUsuario::class.java)
+            if (cuenta != null && cuenta.rol == Rol.JUG && cuenta.estado == EstadoCuenta.PENDIENTE) {
+                lote.update(usuarios.document(idCuenta), "estado", EstadoCuenta.ACTIVA.name)
+            }
+        }
         lote.commit().await()
     }
 
