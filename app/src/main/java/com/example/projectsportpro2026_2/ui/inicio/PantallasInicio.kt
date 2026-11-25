@@ -102,7 +102,8 @@ import java.util.Locale
  *
  * Lo nuevo (7.1) solo lee datos con InicioViewModel; si algo falla, esa sección
  * no se muestra. No hay vista de tablet: en pantallas anchas el mismo diseño va
- * centrado con widthIn(max = 600.dp). No hay barra inferior.
+ * centrado con widthIn(max = 600.dp). La barra inferior (NavegacionApp) es un atajo
+ * adicional: todos los botones de la pizarra se mantienen.
  */
 
 private val localePeru: Locale = Locale.forLanguageTag("es-PE")

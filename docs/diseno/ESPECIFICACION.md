@@ -12,7 +12,7 @@ Rama de trabajo: `feature/nahim-diseno-linea-de-cal` (creada desde `main` en `f4
 2. **No se renombran** funciones públicas, ViewModels, repositorios, rutas (`Rutas.kt`), modelos ni campos de Firestore. Tampoco se cambia la estructura de las colecciones.
 3. **No se tocan** `firestore.rules`, `functions/`, la lógica de sincronización offline (`datos/sincronizacion`, `RepositorioSincronizacion`), la generación del resumen con IA ni las reglas de negocio de los repositorios, salvo lo indicado de forma explícita en la sección 7.
 4. **Los textos de los flujos se conservan**: títulos de pantalla, etiquetas de botones y mensajes. Solo pueden cambiar si la sección 6 o la 7 lo indica.
-5. **No se agrega la barra de navegación inferior.** Cambia la navegación de toda la app y está pendiente de coordinar con Pedro. Las imágenes que la muestran (01, 02 y 05 a 09) son solo referencia de estilo.
+5. **Barra de navegación inferior: solo como atajo adicional** (cambio de alcance aprobado el 2026-11-25). Estilo de las imágenes 01 y 05 a 09: navy, esquinas redondeadas, flotante con margen; el ítem activo en lima con una rayita debajo; íconos de Material. Pestañas: ADM y DT: Inicio · Academias · Partidos (`MIS_PARTIDOS`) · Comunidad · Perfil. JUG: Inicio · Entrenamientos · Partidos · Comunidad · Perfil. PAD: Inicio · Mis jugadores · Partidos · Comunidad · Perfil. Solo se muestra en esas pantallas principales; se oculta en bienvenida, login, registro, recuperar, cuenta pendiente y en todas las pantallas internas. Al tocar una pestaña se navega con `launchSingleTop`, `restoreState` y `popUpTo` del inicio con `saveState`. No se quita ningún botón del inicio ni ninguna ruta. Se agrega la pantalla Perfil (`Rutas.PERFIL = "perfil"`), de solo lectura, con "Cambiar contraseña" (mismo envío de correo que Recuperar) y "Cerrar sesión" (misma lógica que el inicio).
 6. **Commits pequeños por etapa y por módulo**, con mensajes del tipo `style(HU-08): ...` o `feat(HU-14): ...`. El proyecto debe compilar después de cada commit. No hacer push sin que el usuario lo pida.
 7. **Pruebas**: los tests existentes en `app/src/test` y `app/src/androidTest` deben seguir pasando. Toda lógica pura nueva (minuto sugerido, minutos jugados, contadores) lleva su test unitario.
 8. Si algo de este documento obligara a romper una regla de oro, **no se hace**: se deja anotado en `docs/diseno/PENDIENTES.md` y se sigue.
@@ -223,7 +223,7 @@ Las marcadas con ⚠️ cambian el flujo de un compañero: se implementan en un 
 - Botón para **mostrar u ocultar la contraseña** (ícono `visibility`) en el login y en el registro. Es un criterio de la HU-01 que hoy falta.
 
 ### 7.6 Lo que NO se hace en este rediseño
-- Barra de navegación inferior (coordinar con Pedro).
+- ~~Barra de navegación inferior~~: se agregó como atajo adicional (ver la regla de oro 5, cambio aprobado el 2026-11-25).
 - Campos nuevos de lugar del entrenamiento o de competición del partido. En su lugar se muestran la fecha y la ubicación que ya existen.
 - Cambios en las reglas de Firestore, la Cloud Function o la lógica de sincronización.
 
