@@ -276,8 +276,11 @@ class PartidoEnVivoViewModel(
                 }
         }
     }
+    // Línea de cal · 7.2: minutoSugerido precarga el campo (el operador lo confirma o corrige).
+    // null = sin INICIO en caché → el campo queda vacío, como antes.
     fun abrirEvento(
-        tipo: TipoEventoCatalogo
+        tipo: TipoEventoCatalogo,
+        minutoSugerido: Int? = null
     ) {
 
         val contexto =
@@ -328,6 +331,8 @@ class PartidoEnVivoViewModel(
                 formulario =
                     FormularioEventoPartido(
                         tipo = tipo,
+                        minuto =
+                            minutoSugerido?.toString().orEmpty(),
                         equipoEvento =
                             equipoInicial
                     ),
@@ -1416,7 +1421,7 @@ class PartidoEnVivoViewModel(
             }
 
             repositorio
-                .registrarEvento(
+                .registrarEventoConEstado(
                     idPartido =
                         idPartidoActual,
 
@@ -1461,7 +1466,9 @@ class PartidoEnVivoViewModel(
                     uid =
                         uidActual
                 )
-                .onSuccess { evento ->
+                .onSuccess { registro ->
+
+                    val evento = registro.evento
 
                     /*
                      * Después de registrar volvemos a leer
@@ -1537,7 +1544,10 @@ class PartidoEnVivoViewModel(
                                 FormularioEventoPartido(),
 
                             mensaje =
-                                if (
+                                if (!registro.sincronizado) {
+                                    // 7.2: mensaje honesto cuando quedó en la cola local (HU-16)
+                                    "${evento.nombreTipoEvento} guardado en este dispositivo · se enviará al reconectar"
+                                } else if (
                                     evento.codigoTipoEvento ==
                                     "FIN"
                                 ) {

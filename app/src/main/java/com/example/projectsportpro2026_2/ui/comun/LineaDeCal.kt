@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.comun
 
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.ui.layout.layout
 import android.content.res.Configuration
 import androidx.compose.foundation.background
@@ -1300,6 +1301,54 @@ fun FondoCancha(
             )
             .padding(horizontal = 26.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
+        content = contenido
+    )
+}
+
+// =====================================================================
+// Extra · MiniCancha (7.2: panel rápido del partido en vivo)
+// =====================================================================
+
+/**
+ * Cancha horizontal con líneas de cal: franjas de césped, rectángulo exterior, línea media,
+ * círculo central y las dos áreas. El contenido (fichas) se ubica con Modifier.align.
+ */
+@Composable
+fun MiniCancha(
+    modifier: Modifier = Modifier,
+    contenido: @Composable BoxScope.() -> Unit
+) {
+    val c = LineaDeCal.colores
+    val linea = Blanco.copy(alpha = 0.85f)
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .drawBehind {
+                val margen = 8.dp.toPx()
+                val grosor = 1.5.dp.toPx()
+                var x = 0f
+                var i = 0
+                val franja = 28.dp.toPx()
+                while (x < size.width) {
+                    drawRect(
+                        color = if (i % 2 == 0) c.cesped else c.cespedAlterno,
+                        topLeft = Offset(x, 0f),
+                        size = Size(franja, size.height)
+                    )
+                    x += franja
+                    i++
+                }
+                val ancho = size.width - margen * 2
+                val alto = size.height - margen * 2
+                drawRect(linea, Offset(margen, margen), Size(ancho, alto), style = Stroke(grosor))
+                drawLine(linea, Offset(size.width / 2f, margen), Offset(size.width / 2f, size.height - margen), grosor)
+                drawCircle(linea, radius = 34.dp.toPx(), center = Offset(size.width / 2f, size.height / 2f), style = Stroke(grosor))
+                val areaAncho = ancho * 0.14f
+                val areaAlto = alto * 0.5f
+                val areaY = (size.height - areaAlto) / 2f
+                drawRect(linea, Offset(margen, areaY), Size(areaAncho, areaAlto), style = Stroke(grosor))
+                drawRect(linea, Offset(size.width - margen - areaAncho, areaY), Size(areaAncho, areaAlto), style = Stroke(grosor))
+            },
         content = contenido
     )
 }

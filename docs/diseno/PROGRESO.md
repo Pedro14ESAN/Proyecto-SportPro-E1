@@ -282,3 +282,57 @@ Ya quedó en la etapa 4: Login y Registro usan `CampoSportPro(esContrasena = tru
 - `feat(HU-18): minutos jugados, goles por fecha y último partido` (calculadora, repositorio, pantalla y `MinutosJugadosTest`)
 - `feat(HU-18): compartir el cromo del jugador como imagen` (`PantallaEstadisticas` "Compartir cromo", `AndroidManifest.xml` y `rutas_compartidas.xml`)
 - `feat(ui): contadores LED y filtros en chips (7.4)` (kit, academias, equipos, jugadores, entrenamientos, partidos, convocatoria y asistencias)
+
+---
+
+## Etapa 7 · Partido en vivo (2026-11-25) — para revisión de Italo (HU-14)
+
+Sección 7.2 con la decisión D-02 (**no se agregó INICIO_2T al catálogo**). No se tocó nada de la HU-16 fuera de lo indicado: la cola offline, los pendientes, el reintento, "Requiere revisión" y el marcador provisional siguen igual. **No se compiló ni se corrieron tests** (pedido del usuario); se revisó a mano y con scripts que llaves y paréntesis estén balanceados.
+
+### 1 · Minuto sugerido y "Marcar inicio del 2T"
+
+- `datos/partido/RelojPartido.kt` (lógica pura, sin red):
+  - `capturaInicio(eventos)`: la `fechaCaptura` del INICIO válido (no anulado) más antiguo de la cronología que ya está en caché.
+  - `minutoSugerido(inicio, inicio2T, ahora)`: en el 1T, `((ahora − INICIO) / 60000) + 1`; con la marca del 2T, `45 + ((ahora − marca) / 60000) + 1`. Sin INICIO devuelve `null` y el campo queda vacío, como antes.
+- `datos/partido/AlmacenSegundoTiempo.kt`: guarda la hora del 2T **solo en el dispositivo** (SharedPreferences `sportpro_segundo_tiempo`, clave `inicio_2t_<idPartido>`). No escribe en Firestore ni pasa por la cola de la HU-16.
+- `PartidoEnVivoViewModel.abrirEvento(tipo, minutoSugerido: Int? = null)`: el parámetro nuevo tiene valor por defecto, así que las llamadas existentes no cambian. Precarga `formulario.minuto`.
+- Formulario de evento: botones **−** y **+** a los lados del campo Minuto, que sigue siendo editable. El operador confirma el minuto al registrar (HU-14).
+- Pantalla: botón **"Marcar inicio del 2T"** (solo EN CURSO y con INICIO en caché). Una vez marcado muestra "2T marcado a las HH:mm · solo en este dispositivo" y el botón "Quitar marca", por si se marcó por error.
+- **Para revisar**: el 2T continúa desde el minuto 45 (`MINUTOS_PRIMER_TIEMPO`). En categorías con tiempos más cortos la sugerencia hay que corregirla a mano (la constante y el parámetro `minutosPrimerTiempo` permiten cambiarlo).
+- Tests (no se corrieron): `app/src/test/.../partido/RelojPartidoTest.kt`, con 13 casos (sin INICIO, minuto 1, 37', reloj del celular atrasado, 2T en 46 y 56, marca inválida, duración ajustable, reloj 12:34 y 46:18, más de 99 minutos e INICIO válido más antiguo).
+
+### 2 · Reloj en el MarcadorLed
+
+`TarjetaMarcador` recibe `reloj`. El LED muestra "EN CURSO · mm:ss", que se actualiza cada segundo mientras el partido está EN CURSO. Antes de marcar el 2T se cuenta desde el INICIO; después, 45:00 más el tiempo desde la marca. Sin etiqueta 1T/2T (D-02). Sin INICIO en caché solo dice "EN CURSO".
+
+### 3 · Panel rápido sobre la mini cancha
+
+`PanelEventosRapidos` dibuja las fichas sobre `MiniCancha` (nueva en el kit): Tarjeta, Falta, **Gol** al centro, Cambio y Tiro de esquina. Se toman del **catálogo activo** por su código: si un tipo no está activo, su ficha no aparece, y la etiqueta es el nombre del catálogo. La ficha **"Más tipos"** lista todos los demás tipos activos, incluidos FIN y los personalizados; INICIO aparece deshabilitado, como antes. Todas abren el formulario actual con `abrirEvento(tipo)`. Se quitó `BotonEventoRapido`, que ya no se usaba.
+
+### 4 · Mensaje honesto sin conexión
+
+- `RepositorioEventosPartido.registrarEventoConEstado(...)` devuelve `RegistroEvento(evento, sincronizado)`, con el valor de `confirmarOEncolar`. **`registrarEvento(...)` conserva su firma pública** y delega en la variante nueva (`.map { it.evento }`).
+- `PartidoEnVivoViewModel.registrarEvento()` usa la variante. Si `sincronizado == false`, el mensaje es "**{Evento} guardado en este dispositivo · se enviará al reconectar**" en lugar de "registrado correctamente" (también para FIN).
+
+### Además
+
+- Se corrigió un `@Composable` duplicado sobre `TarjetaMarcador` que había quedado de la etapa 4 y no habría compilado.
+
+### Archivos tocados en este prompt (revisión de Italo)
+
+| Archivo | Cambio |
+|---|---|
+| `app/src/main/java/com/example/projectsportpro2026_2/datos/partido/RelojPartido.kt` | **Nuevo**: minuto sugerido, reloj e INICIO en caché |
+| `app/src/main/java/com/example/projectsportpro2026_2/datos/partido/AlmacenSegundoTiempo.kt` | **Nuevo**: hora del 2T en SharedPreferences |
+| `app/src/main/java/com/example/projectsportpro2026_2/datos/repositorio/evento/RepositorioEventosPartido.kt` | `registrarEventoConEstado` y `RegistroEvento`; `registrarEvento` delega (misma firma) |
+| `app/src/main/java/com/example/projectsportpro2026_2/ui/eventospartido/PartidoEnVivoViewModel.kt` | `abrirEvento(tipo, minutoSugerido)` y mensaje "guardado en este dispositivo" |
+| `app/src/main/java/com/example/projectsportpro2026_2/ui/eventospartido/PantallaPartidoEnVivo.kt` | Reloj en el LED, "Marcar inicio del 2T", − / + en el minuto, panel sobre la mini cancha con "Más tipos" |
+| `app/src/main/java/com/example/projectsportpro2026_2/ui/comun/LineaDeCal.kt` | Kit: `MiniCancha` |
+| `app/src/test/java/com/example/projectsportpro2026_2/partido/RelojPartidoTest.kt` | **Nuevo**: tests del minuto sugerido y del reloj |
+
+### Commits sugeridos (aparte, para que los revise Italo)
+
+- `feat(HU-14): minuto sugerido con − / + y marca local del 2T` (RelojPartido, AlmacenSegundoTiempo, ViewModel, formulario, RelojPartidoTest)
+- `feat(HU-14): reloj del partido en el marcador LED`
+- `feat(HU-14): panel rápido sobre la mini cancha con "Más tipos"` (PanelEventosRapidos y MiniCancha)
+- `feat(HU-14): mensaje "guardado en este dispositivo" sin conexión` (RepositorioEventosPartido y ViewModel)
