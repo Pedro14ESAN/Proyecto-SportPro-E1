@@ -434,3 +434,190 @@ Barrido de todo `ui/`:
 ### Pendientes
 
 Ver `docs/diseno/PENDIENTES.md`. **Ninguno rompe una regla de oro.** Hay 9 pendientes visuales u opcionales: el selector de equipo en las cabeceras, la caja "RESPONDIERON x/y", los colores en la cancha de Alineación, el cromo grande en Mis jugadores, tickets en Cuentas y Vinculaciones, el tema del `DatePickerDialog` nativo, la duración del 1er tiempo (45 min) para revisar con Italo, el conteo de jugadores por equipo, y la revisión visual en claro y oscuro y los tests instrumentados en un emulador.
+
+
+---
+
+## Etapa 8 · Barra de navegación inferior y Perfil (2026-11-25)
+
+Cambio de alcance aprobado: se actualizaron la regla de oro 5 y la 7.6 de `ESPECIFICACION.md` y las "Reglas de trabajo" de `PLAN.md`. Sin commits.
+
+- **Barra** (`ui/navegacion/BarraNavegacionInferior.kt`, nuevo): estilo de las imágenes 01 y 05 a 09, con fondo navy (`superficieOscura`), esquinas de 22 dp y margen de 16 dp (flotante y con sombra). El ítem activo va en lima con una rayita de 18×3 dp; los demás, en blanco al 62 %. Íconos de Material, etiquetas de 12 sp, `Role.Tab` y `selectableGroup` para accesibilidad. Las etiquetas largas reciben más ancho, porque el peso depende del largo del texto.
+  - ADM y DT: Inicio · Academias · Partidos · Comunidad · Perfil.
+  - JUG: Inicio · Entrenamientos · Partidos · Comunidad · Perfil.
+  - PAD: Inicio · Mis jugadores · Partidos · Comunidad · Perfil.
+  - Sin barra si no hay sesión o si la cuenta está pendiente.
+- **NavegacionApp**: guarda el perfil de la sesión (`perfilActual`), que se carga al abrir la app, al iniciar sesión y al registrarse, y se borra al cerrar sesión, para saber qué pestañas lleva la barra.
+- **Perfil** (`ui/perfil/PantallaPerfil.kt` y `PerfilViewModel.kt`, nuevos; `Rutas.PERFIL = "perfil"`):
+  - Es de solo lectura: muestra nombre, correo, rol (`nombreRol`), academia y estado de la cuenta (`ChipEstado`), con `CabeceraCancha` y un avatar con las iniciales.
+  - La academia se obtiene con lecturas que ya existen: para ADM y DT, `listarAcademias`; para JUG y PAD, la academia de los jugadores de `listarJugadoresConsulta`.
+  - "Cambiar contraseña" usa `RecuperarViewModel.enviar()` con el correo de la cuenta, el mismo envío de Recuperar, con sus mensajes.
+  - "Cerrar sesión" recibe el mismo callback `cerrarSesion` que el inicio.
+- Compilación (`./gradlew assembleDebug`): ✅ BUILD SUCCESSFUL al primer intento.
+
+## Etapa 8b · Barra en toda la sesión, corrección de Inicio y pizarra sin duplicados (2026-11-25)
+
+Cambios aprobados sobre la barra y el inicio. Se actualizaron la regla 5 y el punto de Cerrar sesión (6.2) de `ESPECIFICACION.md` y las "Reglas de trabajo" de `PLAN.md`. **No se compiló ni se corrieron tests**, como se pidió. Sin commits.
+
+### 1 · Cerrar sesión
+
+Se quitó el botón "Cerrar sesión" del final del inicio en los 4 roles. Queda en el menú del avatar y en la pantalla Perfil. El de Cuenta pendiente se mantiene, porque esa pantalla no tiene barra ni avatar.
+
+### 2 · Bug: "Inicio" en la barra no volvía al inicio
+
+- **Causa**: todas las pestañas usaban `popUpTo(inicio) { saveState = true }` + `restoreState = true`. Al tocar Inicio, Navigation restauraba el estado guardado de la "pestaña" inicio, que incluía la pantalla de la que se venía (por ejemplo, Partidos en vivo), así que no se veía el inicio.
+- **Corrección** (`NavegacionApp.irAPestana`):
+  - Si ya se está en esa pestaña, no se hace nada (no se recrea la pantalla).
+  - **Inicio**: `popBackStack(rutaInicio, inclusive = false)`. Si devuelve `false` porque el inicio no está en la pila, navega a `rutaInicio` limpiando toda la pila. Para limpiarla se usa `popUpTo(navController.graph.id) { inclusive = true }`, igual que el `irA` que ya existía: con `popUpTo(0)`, Navigation no encuentra el destino 0 y no saca nada de la pila.
+  - **Otras pestañas**: `popUpTo(rutaInicio)` + `launchSingleTop = true`, sin `saveState` ni `restoreState`. Si el inicio no estuviera en la pila (caso raro), primero se navega al inicio limpiando la pila y después a la pestaña.
+- **Casos revisados en el código** (I = inicio; A y B = pestañas; X e Y = pantallas internas; MP = Partidos; S = seguimiento):
+
+| Desde | Toca | Pila resultante | Atrás del celular |
+|---|---|---|---|
+| Inicio [I] | Inicio | [I] (no hace nada) | sale de la app |
+| Inicio [I] | Pestaña B | [I, B] | vuelve a [I] |
+| Pestaña A [I, A] | Pestaña B | [I, B] (A se saca) | vuelve a [I] |
+| Pestaña A [I, A] | A otra vez | [I, A] (no hace nada) | vuelve a [I] |
+| Pestaña A [I, A] | Inicio | [I] | sale de la app |
+| Interna [I, X, Y] (por ejemplo, Academias → Partidos → Detalle) | Inicio | [I] | sale de la app |
+| Interna [I, X, Y] | Pestaña B | [I, B] | vuelve a [I] |
+| Interna de la misma sección [I, A, Y] | A | [I, A] (A desde arriba) | vuelve a [I] |
+| Partido en vivo abierto desde el inicio [I, MP, S] | Inicio | [I] (este era el bug) | sale de la app |
+
+Las flechas de volver de cada pantalla (`popBackStack`) no cambian.
+
+### 3 · Pizarra sin las fichas de la barra
+
+| Rol | Se quitaron | Fichas que quedan | Columnas |
+|---|---|---|---|
+| ADM | Gestionar academias, Comunidad | Cuentas de jugadores, Vinculaciones, Mensualidades, Biblioteca de ejercicios, Asistencias, Estadísticas, Anuncios del club (7) | 4 |
+| DT | Gestionar academias, Comunidad | Entrenamientos, Asistencias, Biblioteca de ejercicios, Estadísticas, Anuncios del club (5) | 3 |
+| JUG | Mis entrenamientos, Comunidad | Mis convocatorias, Mi asistencia, Mis mensualidades, Estadísticas, Anuncios del club (5) | 3 |
+| PAD | Mis jugadores, Comunidad | Mensualidades, Entrenamientos, Historial de asistencia, Convocatorias, Estadísticas, Anuncios del club (6) | 3 |
+
+Se cambió la cantidad de columnas para que las filas queden parejas. La tarjeta EN VIVO, la campana y la tarjeta de Planes (ADM) se quedan. Los callbacks públicos de `InicioAdministrador`, `InicioEntrenador`, `InicioJugador` e `InicioApoderado` no cambian de firma; `onGestionarAcademias` y `onComunidad` siguen como parámetros (regla 2). En PAD, la sección "Mis jugadores" del inicio, con "Ver todos" y los cromos, sigue abriendo Mis jugadores.
+
+**Todos los destinos siguen accesibles:**
+
+| Rol | Destinos | Desde |
+|---|---|---|
+| ADM (12) | Academias · Comunidad | barra |
+| | Partidos en vivo | marcador EN VIVO y barra (Partidos) |
+| | Notificaciones | campana |
+| | Planes | tarjeta bajo la pizarra |
+| | Cuentas, Vinculaciones, Mensualidades, Ejercicios, Asistencias, Estadísticas, Anuncios | pizarra |
+| DT (9) | Academias · Comunidad | barra |
+| | Partidos en vivo | marcador y barra |
+| | Notificaciones | campana |
+| | Entrenamientos, Asistencias, Ejercicios, Estadísticas, Anuncios | pizarra |
+| JUG (9) | Entrenamientos · Comunidad | barra |
+| | Partidos en vivo | marcador y barra |
+| | Notificaciones | campana |
+| | Convocatorias, Asistencia, Mensualidades, Estadísticas, Anuncios | pizarra |
+| PAD (10) | Mis jugadores · Comunidad | barra (y la sección "Mis jugadores") |
+| | Partidos en vivo | marcador y barra |
+| | Notificaciones | campana |
+| | Mensualidades, Entrenamientos, Asistencia, Convocatorias, Estadísticas, Anuncios | pizarra |
+
+Además, todos los roles tienen Perfil en la barra.
+
+### 4 · Barra en todas las pantallas de la sesión
+
+- **Un único `Scaffold`** alrededor del `NavHost`, con la barra en `bottomBar`. El `NavHost` recibe `padding(relleno)` y `consumeWindowInsets(relleno)`:
+  - Ninguna pantalla queda tapada: el contenido, los botones de acción inferiores (Guardar, Confirmar alineación, Publicar, etc.) y los FAB de los `Scaffold` de cada pantalla quedan por encima de la barra.
+  - Las pantallas no repiten el margen de la barra de gestos del sistema, porque la barra ya lo cubre.
+  - `contentWindowInsets = WindowInsets(0, 0, 0, 0)`: arriba no cambia nada (cada pantalla sigue manejando la barra de estado).
+  - Las hojas inferiores (`ModalBottomSheet`) y los diálogos se dibujan encima de todo, como antes.
+- **Se oculta** en bienvenida, introducción, login, registro, recuperar y cuenta pendiente (`RUTAS_SIN_BARRA`), y **mientras el teclado está abierto** (`WindowInsets.isImeVisible`). Así no tapa los campos y la pantalla recupera ese espacio.
+- **Pestaña resaltada** (`rutaPestanaActiva`, función pura):
+  - partido/* → Partidos.
+  - equipos, jugadores, partidos de una academia (partidos/…) y catálogo (academias/…) → Academias.
+  - comunidad y moderación → Comunidad.
+  - perfil → Perfil.
+  - el resto (mensualidades, ejercicios, asistencias, anuncios, estadísticas, notificaciones, planes, vinculaciones, etc.) → Inicio.
+  - Para JUG, entrenamientos → Entrenamientos; para PAD, mis jugadores → Mis jugadores. Si el rol no tiene la pestaña de la sección, se resalta Inicio.
+- **Test nuevo** (no se corrió): `app/src/test/.../navegacion/NavegacionBarraTest.kt`, con 11 casos sobre dónde se muestra la barra y qué pestaña se resalta en cada ruta y rol.
+
+### Archivos de esta etapa (8 y 8b)
+
+- **Nuevos**: `ui/navegacion/BarraNavegacionInferior.kt`, `ui/perfil/PantallaPerfil.kt`, `ui/perfil/PerfilViewModel.kt` y `test/.../navegacion/NavegacionBarraTest.kt`.
+- **Modificados**: `ui/navegacion/NavegacionApp.kt`, `ui/navegacion/Rutas.kt` (+ `PERFIL`), `ui/inicio/PantallasInicio.kt`, `docs/diseno/ESPECIFICACION.md` y `docs/diseno/PLAN.md`.
+
+### Para verificar en un dispositivo
+
+- Correr `./gradlew assembleDebug testDebugUnitTest`: esta etapa no se compiló.
+- Probar en un emulador la tabla de navegación de arriba, que la barra desaparece al abrir el teclado y que los botones inferiores de Alineación, Convocatoria, formularios y Partido en vivo quedan por encima de la barra.
+
+
+---
+
+## Etapa 9 · Vista previa de Comunidad en el inicio (2026-11-25)
+
+Funcionalidad aprobada. Quedó anotada en la sección 7.1 de `ESPECIFICACION.md`. Sin commits.
+
+### Qué se agregó
+
+- **Sección "Comunidad"** en el inicio de los 4 roles (no en Cuenta pendiente), debajo de la pizarra; en el ADM, debajo de "Planes y ofertas" (`ui/inicio/SeccionComunidadInicio.kt`, nuevo):
+  - Encabezado "Comunidad" con "Ver todo" y una flecha como ícono de Material (no como texto, por la regla de los íconos), que abre `Rutas.COMUNIDAD`.
+  - Hasta **3 tarjetas compactas** con el kit: avatar con iniciales, nombre, chip de rol (ADM/DT/JUG/PAD, el mismo texto que en Comunidad), tiempo relativo (`tiempoRelativo`, el mismo de Comunidad: "Hace 5 min"), texto en máximo 2 líneas, miniatura de 56 dp si hay imagen (`ImagenRemota`), total de reacciones con los emojis presentes y número de comentarios.
+  - Tocar una tarjeta abre Comunidad. Desde el inicio no se reacciona ni se comenta.
+  - Las tarjetas nuevas entran con `fadeIn` + `expandVertically` de 300 ms. Las que ya estaban no vuelven a animarse, porque cada tarjeta lleva como clave el id de su publicación.
+  - **Vacío**: "Aún no hay publicaciones" con el botón "Publicar", que abre Comunidad.
+  - **Error**: la sección no se muestra y el resto del inicio sigue igual.
+
+### Tiempo real
+
+- `RepositorioPublicaciones.escucharRecientes(uid)` (función nueva, solo lectura): `addSnapshotListener` sobre `publicaciones` con `orderBy("fechaCreacion", DESCENDING).limit(20)`. Cada instantánea pasa por el mismo filtro del feed "Para ti". El listener se quita al cancelar el `Flow` (`awaitClose { registro.remove() }`).
+  - **Ventana de 20**: si en las 20 más recientes de toda la app quedan menos de 3 visibles para el usuario (por ejemplo, porque otras academias publicaron mucho), se completa **una sola vez** con `listarFeed`, sin tiempo real. Así no aparece "Aún no hay publicaciones" cuando sí hay publicaciones más antiguas. Si una publicación está en las dos listas, vale la versión en tiempo real.
+  - Las reglas de Firestore no cambian: `publicaciones` ya se puede leer con `activo()`, y ordenar por un solo campo no necesita un índice nuevo.
+- `InicioViewModel.comunidad`: `StateFlow<ComunidadInicio>` (Cargando / Oculta / Lista) con `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Cargando)`. Si el `Flow` falla, `.catch` emite `Oculta`.
+- La pantalla lo recoge con `collectAsStateWithLifecycle`. Al salir del inicio o pasar la app a segundo plano deja de haber suscriptores y, a los 5 s, se cierra el listener. El margen evita cerrarlo y reabrirlo al girar la pantalla. Cuenta pendiente no usa la sección, así que nunca abre el listener.
+
+### Privacidad: el mismo filtro de "Para ti"
+
+- El filtro estaba dentro de `RepositorioPublicaciones.listarFeed`, no en `ComunidadViewModel`. Se extrajo **tal cual** a la función pura `filtrarFeedComunidad(publicaciones, pertenencia, bloqueados)` (`datos/repositorio/FiltroFeedComunidad.kt`, nuevo):
+  - quita las repetidas;
+  - aplica `puedeVerPublicacion`: visibilidad Equipo, Academia o Comunidad, sin publicaciones ELIMINADAS ni OCULTAS;
+  - quita las de usuarios bloqueados en ambos sentidos;
+  - ordena de la más reciente a la más antigua.
+- `listarFeed` ahora llama a esa función con los mismos datos. **El feed de Comunidad no cambia.** Las dos consultas siguen igual, y también la pertenencia y los bloqueos.
+- `LogicaInicio.publicacionesRecientes` (las 3 primeras) y `LogicaInicio.emojisReacciones` son funciones puras nuevas.
+
+### Tests
+
+`app/src/test/.../comunidad/FiltroFeedComunidadTest.kt`, nuevo, con 12 casos:
+
+- Comunidad de otra academia sí se ve.
+- Academia solo si el usuario pertenece a ella.
+- Equipo si es su equipo o si administra la academia.
+- Sin eliminadas ni ocultas.
+- Sin bloqueados.
+- Una repetida queda una vez, con la primera versión.
+- Una repetida oculta en la versión nueva no aparece.
+- El orden.
+- Lista vacía.
+- Las 3 más recientes.
+- Con menos de 3 se muestran las que hay.
+- Los emojis presentes.
+
+### Compilación y tests
+
+- `./gradlew assembleDebug testDebugUnitTest`: ✅ **BUILD SUCCESSFUL**, **114 tests, 114 pasan, 0 fallos**.
+- Los 114 tests son: los 91 anteriores, los 11 de `NavegacionBarraTest` de la etapa 8b y los 12 nuevos.
+- Esta ejecución también **verifica la etapa 8b** (barra en toda la sesión), que se había dejado sin compilar.
+
+### Archivos
+
+- **Nuevos**: `datos/repositorio/FiltroFeedComunidad.kt`, `ui/inicio/SeccionComunidadInicio.kt` y `test/.../comunidad/FiltroFeedComunidadTest.kt`.
+- **Modificados**:
+  - `datos/repositorio/RepositorioPublicaciones.kt`: `listarFeed` usa el filtro compartido; nueva `escucharRecientes`.
+  - `ui/inicio/InicioViewModel.kt`: `ComunidadInicio` y `comunidad`; nuevo parámetro con valor por defecto en el constructor.
+  - `ui/inicio/LogicaInicio.kt`.
+  - `ui/inicio/PantallasInicio.kt`: la sección va debajo de la pizarra; `onComunidad` llega a `PantallaInicioRol`.
+  - `docs/diseno/ESPECIFICACION.md` (7.1).
+
+### Para verificar en un dispositivo
+
+- Que una publicación nueva aparezca sola en el inicio con la animación.
+- Que, desde la consola de Firebase, el listener se cierre al salir del inicio.
+- La miniatura de imagen.

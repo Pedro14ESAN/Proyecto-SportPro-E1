@@ -48,9 +48,52 @@ import com.example.projectsportpro2026_2.ui.theme.ProjectSportPro2026_2Theme
 
 /*
  * Línea de cal · barra de navegación inferior (cambio de alcance aprobado, img 01 y 05 a 09).
- * Es un atajo adicional: no reemplaza ningún botón del inicio ni ninguna ruta. Solo se
- * muestra en las pantallas principales de cada rol (las rutas de sus pestañas).
+ * Se muestra en TODAS las pantallas de la sesión, incluidas las internas, y se oculta en
+ * bienvenida, introducción, login, registro, recuperar y cuenta pendiente (y con el teclado
+ * abierto). En las pantallas internas se resalta la pestaña de su sección.
  */
+
+/** Rutas sin barra: autenticación y cuenta pendiente. */
+val RUTAS_SIN_BARRA: Set<String> = setOf(
+    Rutas.BIENVENIDA,
+    Rutas.INTRODUCCION,
+    Rutas.LOGIN,
+    Rutas.REGISTRO,
+    Rutas.RECUPERAR,
+    Rutas.CUENTA_PENDIENTE
+)
+
+/** true si la barra va en esta ruta (hay pestañas y la ruta no es de autenticación). */
+fun barraVisibleEn(rutaActual: String?, hayPestanas: Boolean): Boolean =
+    hayPestanas && rutaActual != null && rutaActual !in RUTAS_SIN_BARRA
+
+/**
+ * Ruta de la pestaña que se resalta en [rutaActual] (patrón de la ruta, por ejemplo
+ * "partido/{idPartido}"). [rutasPestanas] son las rutas de la barra del rol; la primera
+ * es el inicio. Reglas:
+ *  - Si la ruta es una pestaña, se resalta esa (para JUG, entrenamientos; para PAD, mis jugadores).
+ *  - partido/{idPartido} → Partidos.
+ *  - equipos, jugadores, partidos de una academia y catálogo de eventos → Academias.
+ *  - comunidad y moderación → Comunidad.
+ *  - perfil → Perfil.
+ *  - El resto, o si el rol no tiene esa pestaña → Inicio.
+ */
+fun rutaPestanaActiva(rutaActual: String?, rutasPestanas: List<String>): String? {
+    val inicio = rutasPestanas.firstOrNull() ?: return null
+    if (rutaActual == null) return inicio
+    if (rutaActual in rutasPestanas) return rutaActual
+
+    val seccion = when {
+        rutaActual.startsWith("partido/") -> Rutas.MIS_PARTIDOS
+        rutaActual.startsWith("equipos/") ||
+                rutaActual.startsWith("jugadores/") ||
+                rutaActual.startsWith("partidos/") ||
+                rutaActual.startsWith("academias/") -> Rutas.ACADEMIAS
+        rutaActual == Rutas.MODERACION -> Rutas.COMUNIDAD
+        else -> inicio
+    }
+    return if (seccion in rutasPestanas) seccion else inicio
+}
 
 /** Una pestaña de la barra inferior. */
 data class PestanaNavegacion(
@@ -87,7 +130,7 @@ fun pestanasPara(perfil: PerfilUsuario?): List<PestanaNavegacion> {
 @Composable
 fun BarraNavegacionInferior(
     pestanas: List<PestanaNavegacion>,
-    rutaActual: String?,
+    rutaActiva: String?,
     onElegir: (PestanaNavegacion) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -116,7 +159,7 @@ fun BarraNavegacionInferior(
             pestanas.forEach { pestana ->
                 ItemBarra(
                     pestana = pestana,
-                    activo = pestana.ruta == rutaActual,
+                    activo = pestana.ruta == rutaActiva,
                     onClick = { onElegir(pestana) },
                     // Las etiquetas largas ("Entrenamientos", "Mis jugadores") reciben más ancho
                     modifier = Modifier.weight((pestana.etiqueta.length + 3).toFloat())

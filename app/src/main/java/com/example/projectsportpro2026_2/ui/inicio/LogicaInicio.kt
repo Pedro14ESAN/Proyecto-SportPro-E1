@@ -1,5 +1,7 @@
 package com.example.projectsportpro2026_2.ui.inicio
 
+import com.example.projectsportpro2026_2.datos.modelo.Publicacion
+import com.example.projectsportpro2026_2.datos.modelo.TipoReaccion
 import com.example.projectsportpro2026_2.datos.estadisticas.ConteoAsistencia
 import com.example.projectsportpro2026_2.datos.modelo.Asistencia
 import com.example.projectsportpro2026_2.datos.modelo.Entrenamiento
@@ -31,6 +33,19 @@ import java.time.YearMonth
 object LogicaInicio {
 
     // ---------- Contadores ----------
+
+    /**
+     * Comunidad (7.1): las [cantidad] publicaciones más recientes de una lista ya filtrada con
+     * filtrarFeedComunidad (el mismo filtro del feed "Para ti").
+     */
+    fun publicacionesRecientes(publicaciones: List<Publicacion>, cantidad: Int = 3): List<Publicacion> =
+        publicaciones.sortedByDescending { it.fechaCreacion }.take(cantidad)
+
+    /** Comunidad (7.1): emojis de las reacciones presentes, en el orden de TipoReaccion. */
+    fun emojisReacciones(publicacion: Publicacion): String =
+        TipoReaccion.entries
+            .filter { publicacion.conteoDe(it) > 0 }
+            .joinToString("") { it.emoji }
 
     /** Campana: notificaciones con leida == false. */
     fun noLeidas(notificaciones: List<Notificacion>): Int =

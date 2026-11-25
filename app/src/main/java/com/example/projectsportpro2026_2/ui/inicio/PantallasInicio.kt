@@ -97,8 +97,11 @@ import java.util.Locale
  *  - "Notificaciones" pasa a la campana de la cabecera (con las no leídas).
  *  - "Partidos en vivo" pasa al marcador LED (o "Sin partidos en vivo").
  *  - "Planes y ofertas" (ADM) queda como tarjeta debajo de la pizarra.
- *  - El resto son fichas de la pizarra, con el mismo texto y el mismo destino.
- *  - "Cerrar sesión" está en el menú del avatar y como botón discreto al final.
+ *  - El resto son fichas de la pizarra, con el mismo texto y el mismo destino, salvo
+ *    las que ya están en la barra inferior (no se repiten): ADM y DT "Gestionar
+ *    academias" y "Comunidad"; JUG "Mis entrenamientos" y "Comunidad"; PAD "Mis
+ *    jugadores" y "Comunidad". Siguen accesibles desde la barra.
+ *  - "Cerrar sesión" está en el menú del avatar y en la pantalla Perfil.
  *
  * Lo nuevo (7.1) solo lee datos con InicioViewModel; si algo falla, esa sección
  * no se muestra. No hay vista de tablet: en pantallas anchas el mismo diseño va
@@ -122,6 +125,7 @@ private fun PantallaInicioRol(
     onPartidosEnVivo: () -> Unit,
     onCerrarSesion: () -> Unit,
     columnasPizarra: Int,
+    onComunidad: () -> Unit = {},
     fichas: (EstadoInicio) -> List<DatoFicha>,
     seccionSuperior: @Composable ColumnScope.(EstadoInicio) -> Unit,
     debajoDePizarra: @Composable ColumnScope.(EstadoInicio) -> Unit = {}
@@ -167,19 +171,10 @@ private fun PantallaInicioRol(
 
                 debajoDePizarra(estado)
 
-                // Se mantiene un botón discreto de Cerrar sesión al final (6.2)
-                TextButton(
-                    onClick = onCerrarSesion,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) {
-                    Text(
-                        "Cerrar sesión",
-                        color = c.textoSecundario,
-                        fontFamily = FamiliaCuerpo,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    )
-                }
+                // 7.1: vista previa de Comunidad (en el ADM, debajo de "Planes y ofertas")
+                SeccionComunidadInicio(viewModel, onComunidad)
+
+                // Cerrar sesión: en el menú del avatar y en la pantalla Perfil (barra inferior)
             }
         }
     }
@@ -512,11 +507,11 @@ fun InicioAdministrador(
     viewModel = viewModel,
     onNotificaciones = onNotificaciones,       // 🔔 Notificaciones → campana
     onPartidosEnVivo = onPartidosEnVivo,       // Partidos en vivo → marcador LED
+    onComunidad = onComunidad,
     onCerrarSesion = onCerrarSesion,
-    columnasPizarra = 3,
+    columnasPizarra = 4,
     fichas = { estado ->
         listOf(
-            DatoFicha(Icons.Rounded.AccountBalance, "Gestionar academias", onGestionarAcademias, ColorFicha.LIMA),
             DatoFicha(Icons.Rounded.Badge, "Cuentas de jugadores", onCuentasJugadores, ColorFicha.BLANCA,
                 contador = estado.atencion?.cuentasPorAprobar),
             DatoFicha(Icons.Rounded.Link, "Vinculaciones", onVinculaciones, ColorFicha.AMARILLA,
@@ -526,8 +521,7 @@ fun InicioAdministrador(
             DatoFicha(Icons.Rounded.FitnessCenter, "Biblioteca de ejercicios", onEjercicios, ColorFicha.BLANCA),
             DatoFicha(Icons.Rounded.HowToReg, "Asistencias", onAsistencias, ColorFicha.LIMA),
             DatoFicha(Icons.Rounded.BarChart, "Estadísticas", onEstadisticas, ColorFicha.AMARILLA),
-            DatoFicha(Icons.Rounded.Campaign, "Anuncios del club", onAnuncios, ColorFicha.VERDE),
-            DatoFicha(Icons.Rounded.Forum, "Comunidad", onComunidad, ColorFicha.BLANCA)
+            DatoFicha(Icons.Rounded.Campaign, "Anuncios del club", onAnuncios, ColorFicha.VERDE)
         )
     },
     seccionSuperior = { estado ->
@@ -604,17 +598,16 @@ fun InicioEntrenador(
     viewModel = viewModel,
     onNotificaciones = onNotificaciones,
     onPartidosEnVivo = onPartidosEnVivo,
+    onComunidad = onComunidad,
     onCerrarSesion = onCerrarSesion,
-    columnasPizarra = 4,
+    columnasPizarra = 3,
     fichas = {
         listOf(
-            DatoFicha(Icons.Rounded.AccountBalance, "Gestionar academias", onGestionarAcademias, ColorFicha.LIMA),
             DatoFicha(Icons.Rounded.CalendarMonth, "Entrenamientos", onEntrenamientos, ColorFicha.BLANCA),
             DatoFicha(Icons.Rounded.HowToReg, "Asistencias", onAsistencias, ColorFicha.AMARILLA),
             DatoFicha(Icons.Rounded.FitnessCenter, "Biblioteca de ejercicios", onEjercicios, ColorFicha.VERDE),
             DatoFicha(Icons.Rounded.BarChart, "Estadísticas", onEstadisticas, ColorFicha.AMARILLA),
-            DatoFicha(Icons.Rounded.Campaign, "Anuncios del club", onAnuncios, ColorFicha.VERDE),
-            DatoFicha(Icons.Rounded.Forum, "Comunidad", onComunidad, ColorFicha.BLANCA)
+            DatoFicha(Icons.Rounded.Campaign, "Anuncios del club", onAnuncios, ColorFicha.VERDE)
         )
     },
     seccionSuperior = { estado ->
@@ -695,18 +688,17 @@ fun InicioJugador(
     viewModel = viewModel,
     onNotificaciones = onNotificaciones,
     onPartidosEnVivo = onPartidosEnVivo,
+    onComunidad = onComunidad,
     onCerrarSesion = onCerrarSesion,
-    columnasPizarra = 4,
+    columnasPizarra = 3,
     fichas = { estado ->
         listOf(
             DatoFicha(Icons.Rounded.SportsSoccer, "Mis convocatorias", onConvocatorias, ColorFicha.LIMA,
                 contador = estado.paraTi?.convocatoriasPendientes),
-            DatoFicha(Icons.Rounded.CalendarMonth, "Mis entrenamientos", onEntrenamientos, ColorFicha.BLANCA),
             DatoFicha(Icons.Rounded.EventAvailable, "Mi asistencia", onAsistencias, ColorFicha.AMARILLA),
             DatoFicha(Icons.Rounded.Payments, "Mis mensualidades", onMensualidades, ColorFicha.VERDE),
             DatoFicha(Icons.Rounded.BarChart, "Estadísticas", onEstadisticas, ColorFicha.AMARILLA),
-            DatoFicha(Icons.Rounded.Campaign, "Anuncios del club", onAnuncios, ColorFicha.VERDE),
-            DatoFicha(Icons.Rounded.Forum, "Comunidad", onComunidad, ColorFicha.BLANCA)
+            DatoFicha(Icons.Rounded.Campaign, "Anuncios del club", onAnuncios, ColorFicha.VERDE)
         )
     },
     seccionSuperior = { estado ->
@@ -775,11 +767,11 @@ fun InicioApoderado(
     viewModel = viewModel,
     onNotificaciones = onNotificaciones,
     onPartidosEnVivo = onPartidosEnVivo,
+    onComunidad = onComunidad,
     onCerrarSesion = onCerrarSesion,
-    columnasPizarra = 4,
+    columnasPizarra = 3,
     fichas = { estado ->
         listOf(
-            DatoFicha(Icons.Rounded.Groups, "Mis jugadores", onMisJugadores, ColorFicha.LIMA),
             DatoFicha(Icons.Rounded.Payments, "Mensualidades", onMensualidades, ColorFicha.VERDE,
                 contador = estado.mensualidadesVencidasPad),
             DatoFicha(Icons.Rounded.CalendarMonth, "Entrenamientos", onEntrenamientos, ColorFicha.BLANCA),
@@ -787,8 +779,7 @@ fun InicioApoderado(
             DatoFicha(Icons.Rounded.SportsSoccer, "Convocatorias", onConvocatorias, ColorFicha.BLANCA,
                 contador = estado.convocatoriasPendientesPad),
             DatoFicha(Icons.Rounded.BarChart, "Estadísticas", onEstadisticas, ColorFicha.AMARILLA),
-            DatoFicha(Icons.Rounded.Campaign, "Anuncios del club", onAnuncios, ColorFicha.VERDE),
-            DatoFicha(Icons.Rounded.Forum, "Comunidad", onComunidad, ColorFicha.LIMA)
+            DatoFicha(Icons.Rounded.Campaign, "Anuncios del club", onAnuncios, ColorFicha.VERDE)
         )
     },
     seccionSuperior = { estado ->

@@ -9,7 +9,9 @@ import com.example.projectsportpro2026_2.datos.modelo.Entrenamiento
 import com.example.projectsportpro2026_2.datos.modelo.EstadoMensualidad
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.Mensualidad
+import com.example.projectsportpro2026_2.datos.modelo.Publicacion
 import com.example.projectsportpro2026_2.datos.modelo.Rol
+import com.example.projectsportpro2026_2.datos.repositorio.RepositorioPublicaciones
 import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAsistencias
 import com.example.projectsportpro2026_2.datos.repositorio.RepositorioAutenticacion
 import com.example.projectsportpro2026_2.datos.repositorio.RepositorioCuentasJugador
@@ -28,7 +30,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -86,6 +93,18 @@ data class JugadorInicio(
     val mensualidad: EstadoMensualidad? = null
 )
 
+/** Vista previa de Comunidad (7.1). */
+sealed interface ComunidadInicio {
+    /** Todavía no llegó la primera lista: no se muestra nada. */
+    data object Cargando : ComunidadInicio
+
+    /** La consulta falló o no hay sesión: la sección se oculta y el inicio sigue funcionando. */
+    data object Oculta : ComunidadInicio
+
+    /** Hasta 3 publicaciones visibles para el usuario (lista vacía = "Aún no hay publicaciones"). */
+    data class Lista(val publicaciones: List<Publicacion>) : ComunidadInicio
+}
+
 data class EstadoInicio(
     val nombre: String = "",
     val noLeidas: Int? = null,
@@ -113,11 +132,33 @@ class InicioViewModel(
     private val entrenamientos: RepositorioEntrenamientos = RepositorioEntrenamientos(),
     private val convocatorias: RepositorioConvocatorias = RepositorioConvocatorias(),
     private val asistencias: RepositorioAsistencias = RepositorioAsistencias(),
-    private val estadisticas: RepositorioEstadisticas = RepositorioEstadisticas()
+    private val estadisticas: RepositorioEstadisticas = RepositorioEstadisticas(),
+    private val publicaciones: RepositorioPublicaciones = RepositorioPublicaciones()
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(EstadoInicio())
     val estado: StateFlow<EstadoInicio> = _estado.asStateFlow()
+
+    /**
+     * Comunidad (7.1), en tiempo real. El listener de Firestore solo está activo mientras la
+     * sección del inicio está a la vista (WhileSubscribed): al salir del inicio o pasar la app
+     * a segundo plano deja de haber suscriptores y, 5 s después, se quita el listener. El
+     * margen de 5 s evita cerrarlo y abrirlo de nuevo al girar la pantalla.
+     */
+    val comunidad: StateFlow<ComunidadInicio> =
+        flow {
+            val uid = autenticacion.uidActual()
+            if (uid == null) {
+                emit(ComunidadInicio.Oculta)
+                return@flow
+            }
+            emitAll(
+                publicaciones.escucharRecientes(uid)
+                    .map { ComunidadInicio.Lista(LogicaInicio.publicacionesRecientes(it)) }
+            )
+        }
+            .catch { emit(ComunidadInicio.Oculta) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ComunidadInicio.Cargando)
 
     private var iniciado = false
     private var escuchaPartidos: Job? = null

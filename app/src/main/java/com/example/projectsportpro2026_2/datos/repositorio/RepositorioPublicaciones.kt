@@ -8,6 +8,11 @@ import com.example.projectsportpro2026_2.datos.modelo.Publicacion
 import com.example.projectsportpro2026_2.datos.modelo.VisibilidadPublicacion
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 // Dónde puede publicar el usuario (además de Comunidad SportPro, que siempre está disponible)
@@ -89,11 +94,61 @@ class RepositorioPublicaciones(
                 .mapNotNull { convertirPublicacion(it) }
         }
 
-        (deComunidad + internas)
-            .distinctBy { it.id }                  // una pública de mi academia aparece en ambas listas
-            .filter { puedeVerPublicacion(it, p) }
-            .filter { it.idAutor !in bloqueados }                // HU24: ocultar usuarios bloqueados
-            .sortedByDescending { it.fechaCreacion }
+        // Mismo filtro de siempre, ahora compartido con la vista previa del inicio:
+        // sin repetidas, visibilidad (RC-03), sin moderadas y sin usuarios bloqueados (HU24)
+        filtrarFeedComunidad(deComunidad + internas, p, bloqueados)
+    }
+
+    /**
+     * Línea de cal (7.1): vista previa de Comunidad en el inicio, en tiempo real.
+     * Escucha las [limite] publicaciones más recientes y aplica el MISMO filtro del feed
+     * "Para ti" (filtrarFeedComunidad). Si en esa ventana quedan menos de [minimo] visibles
+     * para el usuario, se completa una vez con listarFeed, para no mostrar "Aún no hay
+     * publicaciones" cuando sí hay publicaciones más antiguas. El listener se quita al
+     * cancelar el Flow. Solo lee; no cambia nada del feed de la pantalla Comunidad.
+     */
+    fun escucharRecientes(
+        uid: String,
+        limite: Long = 20,
+        minimo: Int = 3
+    ): Flow<List<Publicacion>> = callbackFlow {
+        val perfil = obtenerPerfil(uid)
+        val p = resolutor.obtener(uid, perfil.rol)
+        val bloqueados = bloqueos.usuariosBloqueadosCon(uid)
+
+        var recientes: List<Publicacion> = emptyList()
+        var respaldo: List<Publicacion> = emptyList()
+        var respaldoPedido = false
+
+        // Las versiones en tiempo real van primero: si una publicación está en las dos listas,
+        // vale la más nueva (por ejemplo, si la acaban de ocultar o tiene más reacciones)
+        fun enviar() {
+            trySend(filtrarFeedComunidad(recientes + respaldo, p, bloqueados))
+        }
+
+        val registro = publicaciones
+            .orderBy("fechaCreacion", Query.Direction.DESCENDING)
+            .limit(limite)
+            .addSnapshotListener { instantanea, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val documentos = instantanea?.documents.orEmpty()
+                recientes = documentos.mapNotNull { convertirPublicacion(it) }
+                enviar()
+
+                val pocas = filtrarFeedComunidad(recientes, p, bloqueados).size < minimo
+                if (pocas && documentos.size >= limite && !respaldoPedido) {
+                    respaldoPedido = true
+                    launch {
+                        respaldo = listarFeed(uid).getOrNull().orEmpty()
+                        enviar()
+                    }
+                }
+            }
+
+        awaitClose { registro.remove() }
     }
 
     suspend fun opcionesPublicacion(uid: String): Result<OpcionesComunidad> = intentar {
