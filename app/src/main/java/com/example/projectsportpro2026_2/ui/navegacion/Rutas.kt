@@ -38,6 +38,8 @@ object Rutas {
     const val MIS_JUGADORES = "mis_jugadores"
     const val VINCULACIONES = "vinculaciones"
 
+    const val CUENTAS_JUGADORES = "cuentas_jugadores"
+
     const val MENSUALIDADES = "mensualidades"
     const val EJERCICIOS = "ejercicios"
     const val ENTRENAMIENTOS = "entrenamientos"
