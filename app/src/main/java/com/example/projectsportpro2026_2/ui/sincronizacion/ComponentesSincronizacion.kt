@@ -1,5 +1,17 @@
 package com.example.projectsportpro2026_2.ui.sincronizacion
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.CloudSync
+import androidx.compose.material.icons.rounded.CloudDone
+import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -89,7 +101,7 @@ fun BannerSincronizacion(
     }
     val pendientes = if (estado.pendientes == 1) "1 pendiente" else "${estado.pendientes} pendientes"
     val titulo = when (general) {
-        EstadoConexionPartido.SINCRONIZADO -> "✓ Sincronizado"
+        EstadoConexionPartido.SINCRONIZADO -> "Sincronizado"
         EstadoConexionPartido.SINCRONIZANDO ->
             if (estado.pendientes > 0) "Sincronizando · $pendientes"
             else "Conectando con el servidor…"
@@ -103,42 +115,73 @@ fun BannerSincronizacion(
         "Sin confirmación del servidor"
     }
 
+    // Línea de cal (6.9): aviso naranja cuando no hay conexión o hay pendientes
+    val fondoBanner = when (general) {
+        EstadoConexionPartido.SINCRONIZADO -> Color.Transparent
+        EstadoConexionPartido.SINCRONIZANDO, EstadoConexionPartido.SIN_CONEXION -> SyncNaranjaFondo
+    }
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(fondoBanner)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = when (general) {
+                    EstadoConexionPartido.SINCRONIZADO -> Icons.Rounded.CloudDone
+                    EstadoConexionPartido.SINCRONIZANDO -> Icons.Rounded.CloudSync
+                    EstadoConexionPartido.SIN_CONEXION -> Icons.Rounded.CloudOff
+                },
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(6.dp))
         Text(
             text = "$titulo · $confirmacion",
             color = color,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             lineHeight = 14.sp
         )
+        }
 
         when (general) {
             EstadoConexionPartido.SINCRONIZANDO -> Text(
                 text = "Los eventos guardados se compartirán al confirmarse.",
                 color = SportProTextoSecundario,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 lineHeight = 14.sp
             )
             EstadoConexionPartido.SIN_CONEXION -> Text(
                 text = "Los eventos se guardan en este dispositivo; los demás aún no los reciben.",
                 color = SportProTextoSecundario,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 lineHeight = 14.sp
             )
             EstadoConexionPartido.SINCRONIZADO -> Unit
         }
 
         if (!estado.sinConexion && (estado.pendientes > 0 || estado.rechazados.isNotEmpty())) {
-            Text(
-                text = if (estado.reintentando) "Reintentando…" else "↻ Reintentar sincronización",
+            Row(
                 modifier = Modifier
                     .clickable(enabled = !estado.reintentando, onClick = onReintentar)
                     .padding(vertical = 4.dp),
-                color = color,
-                style = MaterialTheme.typography.labelSmall
-            )
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (!estado.reintentando) {
+                    Icon(Icons.Rounded.Refresh, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                }
+                Text(
+                    text = if (estado.reintentando) "Reintentando…" else "Reintentar sincronización",
+                    color = color,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
         }
     }
 }
@@ -177,9 +220,9 @@ fun textoAvisoMarcador(estado: EstadoSincronizacionUi): String? {
     }
 
     return if (goles == 1) {
-        "⚠ 1 gol pendiente de revisión · marcador provisional"
+        "1 gol pendiente de revisión · marcador provisional"
     } else {
-        "⚠ $goles goles pendientes de revisión · marcador provisional"
+        "$goles goles pendientes de revisión · marcador provisional"
     }
 }
 
@@ -198,10 +241,11 @@ fun IndicadorNubeSincronizacion(
             border = BorderStroke(1.dp, SportProBorde)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = "☁",
-                    color = SportProNavy,
-                    fontSize = 16.sp
+                Icon(
+                    Icons.Rounded.Cloud,
+                    contentDescription = null,
+                    tint = SportProNavy,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -276,8 +320,8 @@ private fun PildoraContador(
             Text(
                 text = texto,
                 color = color,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 11.sp
+                fontFamily = FamiliaEtiquetas,
+                fontSize = 12.sp
             )
         }
     }
@@ -310,9 +354,9 @@ fun ChipEstadoSincronizacion(
             text = texto,
             modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
             color = color,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = FamiliaEtiquetas,
             fontWeight = FontWeight.Bold,
-            fontSize = 10.sp
+            fontSize = 12.sp
         )
     }
 }
@@ -364,7 +408,7 @@ fun TarjetaEventoSincronizado(
             Text(
                 text = "${evento.minuto}'",
                 color = punto,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FamiliaEtiquetas,
                 fontWeight = FontWeight.Black,
                 style = MaterialTheme.typography.labelLarge
             )
@@ -406,15 +450,16 @@ fun TarjetaEventoSincronizado(
                 Text(
                     text = "Capturado ${horaConSegundos(evento.fechaCaptura)}",
                     color = SportProTextoSecundario,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 10.sp
+                    fontFamily = FamiliaEtiquetas,
+                    fontSize = 12.sp
                 )
             }
 
-            Text(
-                text = "›",
-                color = SportProTextoSecundario,
-                fontSize = 20.sp
+            Icon(
+                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = null,
+                tint = SportProTextoSecundario,
+                modifier = Modifier.size(22.dp)
             )
         }
     }
@@ -449,23 +494,25 @@ fun TarjetaEventoRechazado(
                 Text(
                     text = "${evento.minuto}'",
                     color = SyncRojo,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = FamiliaEtiquetas,
                     fontWeight = FontWeight.Black
                 )
 
-                Text(
-                    text = simboloEvento(
+                Icon(
+                    imageVector = iconoEvento(
                         codigo =
                             evento.codigoTipoEvento,
                         tipoTarjeta =
                             evento.tipoTarjeta
                     ),
-                    color = colorSimboloEvento(
+                    contentDescription = null,
+                    tint = colorSimboloEvento(
                         codigo =
                             evento.codigoTipoEvento,
                         tipoTarjeta =
                             evento.tipoTarjeta
-                    )
+                    ),
+                    modifier = Modifier.size(20.dp)
                 )
 
                 Text(
@@ -548,7 +595,7 @@ fun ModalConflictoSincronizacion(
             Text(
                 text = "REQUIERE REVISIÓN",
                 color = SyncRojoTexto,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FamiliaEtiquetas,
                 fontWeight = FontWeight.Black,
                 style = MaterialTheme.typography.labelSmall
             )
@@ -557,23 +604,21 @@ fun ModalConflictoSincronizacion(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = simboloEvento(
+                Icon(
+                    imageVector = iconoEvento(
                         codigo =
                             evento.codigoTipoEvento,
                         tipoTarjeta =
                             evento.tipoTarjeta
                     ),
-                    color = colorSimboloEvento(
+                    contentDescription = null,
+                    tint = colorSimboloEvento(
                         codigo =
                             evento.codigoTipoEvento,
                         tipoTarjeta =
                             evento.tipoTarjeta
                     ),
-                    style =
-                        MaterialTheme.typography.headlineSmall,
-                    fontWeight =
-                        FontWeight.Black
+                    modifier = Modifier.size(26.dp)
                 )
 
                 Text(
@@ -690,13 +735,13 @@ fun MensajeSincronizacion(
                 style = MaterialTheme.typography.bodySmall
             )
 
-            Text(
-                text = "×",
+            Icon(
+                Icons.Rounded.Close,
+                contentDescription = "Cerrar",
+                tint = SportProTextoSecundario,
                 modifier = Modifier
                     .clickable(onClick = onCerrar)
-                    .padding(10.dp),
-                color = SportProTextoSecundario,
-                fontWeight = FontWeight.Bold
+                    .padding(10.dp).size(18.dp)
             )
         }
     }

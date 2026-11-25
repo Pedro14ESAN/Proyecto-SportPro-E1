@@ -1,5 +1,16 @@
 package com.example.projectsportpro2026_2.ui.equipos
 
+import com.example.projectsportpro2026_2.ui.comun.EscudoIniciales
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -88,54 +99,30 @@ fun PantallaEquipos(
                     enEdicion = null
                     mostrarFormulario = true
                 },
-                containerColor = VerdePrincipal,
-                contentColor = Color.White,
+                containerColor = LineaDeCal.colores.lima,
+                contentColor = LineaDeCal.colores.navy,
                 shape = RoundedCornerShape(16.dp)
-            ) { Text("+", fontSize = 26.sp, fontWeight = FontWeight.Bold) }
+            ) { Icon(Icons.Rounded.Add, contentDescription = "Nuevo equipo") }
         }
     ) { relleno ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(relleno)
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+                .padding(relleno),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "← Volver",
-                color = VerdeOscuro,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-                modifier = Modifier.clickable(onClick = onVolver)
+            // Línea de cal (6.3, img 08): cabecera de césped con el nombre de la academia
+            CabeceraCancha(
+                titulo = nombreAcademia,
+                subtitulo = "Equipos y directores técnicos de la academia.",
+                etiqueta = "EQUIPOS",
+                onVolver = onVolver
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = "EQUIPOS",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        letterSpacing = 2.sp,
-                        color = VerdePrincipal
-                    )
-                )
-                Text(
-                    text = nombreAcademia,
-                    style = TextStyle(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 30.sp,
-                        color = TituloOscuro
-                    )
-                )
-                Text(
-                    text = "Equipos y directores técnicos de la academia.",
-                    color = TextoSecundario,
-                    fontSize = 14.sp
-                )
-            }
-
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
             BotonSeccion(
                 texto = "Directores técnicos de la academia",
                 onClick = {
@@ -176,6 +163,7 @@ fun PantallaEquipos(
                         onCambiarEstado = { viewModel.cambiarEstado(equipo) }
                     )
                 }
+            }
             }
         }
     }
@@ -234,9 +222,10 @@ private fun TarjetaEquipo(
     onEditar: () -> Unit,
     onCambiarEstado: () -> Unit
 ) {
+    // Línea de cal (6.3): escudo de iniciales y categoría; los equipos inactivos se ven apagados
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = LineaDeCal.colores.superficie),
         border = BorderStroke(1.dp, BordeCampo)
     ) {
@@ -245,30 +234,26 @@ private fun TarjetaEquipo(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(if (equipo.activo) 1f else 0.6f),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                EscudoIniciales(equipo.nombre, activo = equipo.activo)
+                Spacer(Modifier.width(12.dp))
                 Text(
                     equipo.nombre,
                     color = TituloOscuro,
+                    fontFamily = FamiliaTitulos,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     modifier = Modifier.weight(1f)
                 )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(if (equipo.activo) VerdeClaro else GrisInactivo)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        if (equipo.activo) "Activo" else "Inactivo",
-                        color = if (equipo.activo) VerdeOscuro else TextoSecundario,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
+                ChipEstado(
+                    if (equipo.activo) "Activo" else "Inactivo",
+                    if (equipo.activo) TipoEstado.OK else TipoEstado.APAGADO
+                )
             }
             Text("Categoría: ${equipo.categoria}", color = TextoSecundario, fontSize = 14.sp)
             Text(
@@ -317,7 +302,7 @@ private fun TituloDialogo(texto: String) {
     Text(
         texto,
         style = TextStyle(
-            fontFamily = FontFamily.Serif,
+            fontFamily = FamiliaTitulos,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 22.sp,
             color = TituloOscuro

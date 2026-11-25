@@ -1,5 +1,22 @@
 package com.example.projectsportpro2026_2.ui.jugadores
 
+import com.example.projectsportpro2026_2.ui.comun.TamanoCromo
+import com.example.projectsportpro2026_2.ui.comun.CromoJugador
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -13,8 +30,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -57,7 +72,6 @@ import com.example.projectsportpro2026_2.datos.modelo.DatosPrivadosJugador
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.PiesHabiles
 import com.example.projectsportpro2026_2.datos.modelo.Posiciones
-import androidx.compose.foundation.lazy.itemsIndexed
 import com.example.projectsportpro2026_2.ui.comun.CampoFecha
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -106,53 +120,30 @@ fun PantallaJugadores(
                     privadosEdicion = null
                     mostrarFormulario = true
                 },
-                containerColor = VerdePrincipal,
-                contentColor = Color.White,
+                containerColor = LineaDeCal.colores.lima,
+                contentColor = LineaDeCal.colores.navy,
                 shape = RoundedCornerShape(16.dp)
-            ) { Text("+", fontSize = 26.sp, fontWeight = FontWeight.Bold) }
+            ) { Icon(Icons.Rounded.PersonAdd, contentDescription = "Nuevo jugador") }
         }
     ) { relleno ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(relleno)
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+                .padding(relleno),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "← Volver",
-                color = VerdeOscuro,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-                modifier = Modifier.clickable(onClick = onVolver)
+            // Línea de cal (6.4, img 08): cabecera con el nombre del equipo
+            CabeceraCancha(
+                titulo = nombreEquipo,
+                subtitulo = "Jugadores registrados en este equipo.",
+                etiqueta = "JUGADORES",
+                onVolver = onVolver
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = "JUGADORES",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        letterSpacing = 2.sp,
-                        color = VerdePrincipal
-                    )
-                )
-                Text(
-                    text = nombreEquipo,
-                    style = TextStyle(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 30.sp,
-                        color = TituloOscuro
-                    )
-                )
-                Text(
-                    text = "Jugadores registrados en este equipo.",
-                    color = TextoSecundario,
-                    fontSize = 14.sp
-                )
-            }
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
 
             if (!mostrarFormulario) {
                 estado.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -167,8 +158,11 @@ fun PantallaJugadores(
                 )
             }
 
-            LazyColumn(
+            // Línea de cal (6.4): cuadrícula de cromos mini
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 88.dp)
             ) {
                 itemsIndexed(
@@ -188,6 +182,7 @@ fun PantallaJugadores(
                         onCambiarEstado = { viewModel.cambiarEstado(jugador) }
                     )
                 }
+            }
             }
         }
     }
@@ -212,83 +207,44 @@ private fun TarjetaJugador(
     onEditar: () -> Unit,
     onCambiarEstado: () -> Unit
 ) {
-    Card(
+    // Línea de cal (6.4): cromo mini con foto, estado y las mismas acciones
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = LineaDeCal.colores.superficie),
-        border = BorderStroke(1.dp, BordeCampo)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+        CromoJugador(
+            nombre = jugador.nombreCompleto(),
+            posicion = jugador.posicion.ifBlank { jugador.categoria },
+            fotoUrl = jugador.fotoUrl,
+            tamano = TamanoCromo.MINI,
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(if (jugador.activo) 1f else 0.6f),
+            insignia = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (!jugador.activo) ChipEstado("Inactivo", TipoEstado.APAGADO)
+                    if (jugador.esMenorDeEdad()) ChipEstado("Menor de edad", TipoEstado.AMARILLO)
+                }
+            }
+        )
+        val detalle = listOf(jugador.categoria, jugador.posicion)
+            .filter { it.isNotBlank() }.joinToString(" · ")
+        if (detalle.isNotBlank()) {
+            Text(detalle, color = TextoSecundario, fontSize = 12.sp, maxLines = 1)
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            if (jugador.fotoUrl.isNotBlank()) {
-                ImagenRemota(
-                    url = jugador.fotoUrl,
-                    descripcion = "Foto de ${jugador.nombreCompleto()}",
-                    modifier = Modifier.size(72.dp)
-                )
+            TextButton(onClick = onEditar) {
+                Text("Editar", color = VerdeOscuro, fontWeight = FontWeight.SemiBold)
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            TextButton(onClick = onCambiarEstado) {
                 Text(
-                    jugador.nombreCompleto(),
-                    color = TituloOscuro,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.weight(1f)
+                    if (jugador.activo) "Inactivar" else "Activar",
+                    color = if (jugador.activo) TextoSecundario else VerdeOscuro,
+                    fontWeight = FontWeight.SemiBold
                 )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(if (jugador.activo) VerdeClaro else GrisInactivo)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        if (jugador.activo) "Activo" else "Inactivo",
-                        color = if (jugador.activo) VerdeOscuro else TextoSecundario,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-            val detalle = listOf(jugador.categoria, jugador.posicion)
-                .filter { it.isNotBlank() }.joinToString(" · ")
-            if (detalle.isNotBlank()) {
-                Text(detalle, color = TextoSecundario, fontSize = 14.sp)
-            }
-            if (jugador.esMenorDeEdad()) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(AvisoFondo)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        "Menor de edad",
-                        color = AvisoTexto,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = onEditar) {
-                    Text("Editar", color = VerdeOscuro, fontWeight = FontWeight.SemiBold)
-                }
-                TextButton(onClick = onCambiarEstado) {
-                    Text(
-                        if (jugador.activo) "Inactivar" else "Activar",
-                        color = if (jugador.activo) TextoSecundario else VerdeOscuro,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
             }
         }
     }
@@ -317,9 +273,9 @@ private fun TituloSeccion(texto: String) {
     Text(
         text = texto.uppercase(),
         style = TextStyle(
-            fontFamily = FontFamily.Monospace,
+            fontFamily = FamiliaEtiquetas,
             fontWeight = FontWeight.Bold,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             letterSpacing = 1.sp,
             color = VerdeOscuro
         ),
@@ -382,7 +338,7 @@ private fun FormularioJugador(
             Text(
                 if (inicial == null) "Nuevo jugador" else "Editar jugador",
                 style = TextStyle(
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = FamiliaTitulos,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 22.sp,
                     color = TituloOscuro
@@ -423,8 +379,12 @@ private fun FormularioJugador(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    if (fotoElegida != null) {
+                        Icon(Icons.Rounded.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                    }
                     Text(
-                        if (fotoElegida != null) "Foto elegida ✓ (cambiar)"
+                        if (fotoElegida != null) "Foto elegida (cambiar)"
                         else if (inicial != null && inicial.fotoUrl.isNotBlank()) "Cambiar foto"
                         else "Elegir foto (opcional)"
                     )

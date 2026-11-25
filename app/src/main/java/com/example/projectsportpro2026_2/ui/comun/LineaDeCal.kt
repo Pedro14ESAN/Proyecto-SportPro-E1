@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.comun
 
+import androidx.compose.ui.layout.layout
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -1301,6 +1302,73 @@ fun FondoCancha(
         verticalArrangement = Arrangement.spacedBy(14.dp),
         content = contenido
     )
+}
+
+// =====================================================================
+// Extra · anchoCompleto
+// =====================================================================
+
+/**
+ * Deja que un elemento (por ejemplo CabeceraCancha) ocupe todo el ancho aunque su contenedor
+ * tenga un margen lateral de `margen`. Evita reestructurar pantallas que ya tienen padding.
+ */
+fun Modifier.anchoCompleto(margen: Dp): Modifier = layout { medible, restricciones ->
+    val extra = margen.roundToPx() * 2
+    if (!restricciones.hasBoundedWidth) {
+        val p = medible.measure(restricciones)
+        return@layout layout(p.width, p.height) { p.place(0, 0) }
+    }
+    val ancho = restricciones.maxWidth + extra
+    val p = medible.measure(restricciones.copy(minWidth = ancho, maxWidth = ancho))
+    layout(restricciones.maxWidth, p.height) { p.place(-extra / 2, 0) }
+}
+
+// =====================================================================
+// Extra · EscudoIniciales (img 08: equipos de la academia)
+// =====================================================================
+
+/**
+ * Escudo cuadrado con iniciales. "Halcones Sub-12" → "S12"; otros nombres → iniciales.
+ * El color se elige por el texto (siempre el mismo para el mismo nombre). Inactivo: apagado.
+ */
+@Composable
+fun EscudoIniciales(
+    nombre: String,
+    modifier: Modifier = Modifier,
+    activo: Boolean = true,
+    tamano: Dp = 44.dp
+) {
+    val c = LineaDeCal.colores
+    val sub = Regex("(?i)sub\\s*-?\\s*(\\d{1,2})").find(nombre)?.groupValues?.get(1)
+    val texto = if (sub != null) {
+        "S$sub"
+    } else {
+        nombre.split(" ").filter { it.isNotBlank() }.take(2)
+            .joinToString("") { it.first().uppercase() }.ifBlank { "?" }
+    }
+    val opciones = listOf(c.navy to c.lima, c.verde to Blanco, c.amarillo to c.navy, c.superficie to c.textoPrincipal)
+    val (fondo, contenido) = if (activo) {
+        opciones[(nombre.hashCode() and Int.MAX_VALUE) % opciones.size]
+    } else {
+        c.apagadoFondo to c.apagadoTexto
+    }
+    Box(
+        modifier = modifier
+            .size(tamano)
+            .clip(RoundedCornerShape(12.dp))
+            .background(fondo)
+            .border(1.dp, c.borde, RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = texto,
+            color = contenido,
+            fontFamily = FamiliaTitulos,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 15.sp,
+            maxLines = 1
+        )
+    }
 }
 
 // =====================================================================

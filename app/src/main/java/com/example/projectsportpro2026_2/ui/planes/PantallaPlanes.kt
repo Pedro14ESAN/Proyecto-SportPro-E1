@@ -1,5 +1,17 @@
 package com.example.projectsportpro2026_2.ui.planes
 
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.WorkspacePremium
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -60,7 +72,7 @@ private data class Plan(
 )
 
 private data class Oferta(
-    val emoji: String,
+    val icono: ImageVector,
     val nombre: String,
     val descripcion: String
 )
@@ -82,9 +94,9 @@ private val planes = listOf(
 )
 
 private val ofertas = listOf(
-    Oferta("⏱️", "Primer Tiempo Gratis", "45 días del plan Pro gratis, sin tarjeta."),
-    Oferta("🏅", "Academia Fundadora", "50 % de descuento de por vida para las primeras 20 academias."),
-    Oferta("🏆", "Temporada Completa", "Paga 10 meses y usa 12, con el plan Élite gratis en el torneo de fin de año.")
+    Oferta(Icons.Rounded.Timer, "Primer Tiempo Gratis", "45 días del plan Pro gratis, sin tarjeta."),
+    Oferta(Icons.Rounded.WorkspacePremium, "Academia Fundadora", "50 % de descuento de por vida para las primeras 20 academias."),
+    Oferta(Icons.Rounded.EmojiEvents, "Temporada Completa", "Paga 10 meses y usa 12, con el plan Élite gratis en el torneo de fin de año.")
 )
 
 @Composable
@@ -146,8 +158,8 @@ fun PantallaPlanes(onVolver: () -> Unit) {
 @Composable
 private fun TituloBloque(texto: String) {
     Text(
-        texto, color = SportProTextoSecundario, fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.5.sp
+        texto, color = SportProTextoSecundario, fontFamily = FamiliaEtiquetas,
+        fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.5.sp
     )
 }
 
@@ -159,7 +171,7 @@ private fun TarjetaOferta(o: Oferta) {
         color = SportProVerdeClaro
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(o.emoji, fontSize = 28.sp)
+            Icon(o.icono, contentDescription = null, tint = LineaDeCal.colores.amarillo, modifier = Modifier.size(30.dp))
             Spacer(Modifier.padding(start = 12.dp))
             Column {
                 Text(o.nombre, color = SportProNavy, fontWeight = FontWeight.Bold, fontSize = 15.sp)
@@ -186,10 +198,10 @@ private fun TarjetaPlan(p: Plan, onElegir: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(p.nombre, color = texto, fontFamily = FontFamily.Serif,
+                Text(p.nombre, color = texto, fontFamily = FamiliaTitulos,
                     fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
                 if (p.recomendado) {
-                    EtiquetaSportPro("RECOMENDADO", SportProNavy, Color(0xFFA8F06A))
+                    EtiquetaSportPro("RECOMENDADO", SportProNavy, LineaDeCal.colores.lima /* antes 0xFFA8F06A */)
                 }
             }
             Row(verticalAlignment = Alignment.Bottom) {
@@ -198,13 +210,19 @@ private fun TarjetaPlan(p: Plan, onElegir: () -> Unit) {
                     modifier = Modifier.padding(bottom = 4.dp))
             }
             Text(p.detalle, color = secundario, fontSize = 13.sp)
-            p.incluye.forEach { Text("✓ $it", color = texto, fontSize = 14.sp) }
+            p.incluye.forEach {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.Check, contentDescription = null, tint = texto, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(it, color = texto, fontSize = 14.sp)
+            }
+        }
             Spacer(Modifier.height(4.dp))
             Button(
                 onClick = onElegir,
                 shape = FormaBotonSportPro,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (p.recomendado) Color(0xFFA8F06A) else SportProNavy,
+                    containerColor = if (p.recomendado) LineaDeCal.colores.lima /* antes 0xFFA8F06A */ else SportProNavy,
                     contentColor = if (p.recomendado) SportProNavy else Color.White
                 ),
                 modifier = Modifier.fillMaxWidth().height(48.dp)

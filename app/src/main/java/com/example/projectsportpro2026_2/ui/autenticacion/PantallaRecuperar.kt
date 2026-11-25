@@ -1,5 +1,19 @@
 package com.example.projectsportpro2026_2.ui.autenticacion
 
+import com.example.projectsportpro2026_2.ui.comun.BotonPrincipal
+import com.example.projectsportpro2026_2.ui.comun.CampoSportPro
+import com.example.projectsportpro2026_2.ui.comun.FondoCancha
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -61,6 +75,7 @@ fun PantallaRecuperar(
 }
 
 @Composable
+@Composable
 fun ContenidoRecuperar(
     estado: EstadoRecuperar,
     onCorreo: (String) -> Unit,
@@ -68,107 +83,91 @@ fun ContenidoRecuperar(
     onVolver: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    // Línea de cal (6.1): mismo estilo que el login
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(FondoPantalla)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .background(FondoPantalla),
+        contentAlignment = Alignment.TopCenter
     ) {
-        Text(
-            text = "← Volver",
-            color = VerdeOscuro,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
-            modifier = Modifier.clickable(onClick = onVolver)
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        Text(
-            text = "RECUPERAR ACCESO",
-            style = TextStyle(
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
-                letterSpacing = 2.sp,
-                color = VerdePrincipal
-            )
-        )
-        Text(
-            text = "¿Olvidaste tu contraseña?",
-            style = TextStyle(
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 30.sp,
-                color = TituloOscuro
-            )
-        )
-        Text(
-            text = "Escribe el correo de tu cuenta y te enviaremos un enlace para crear una contraseña nueva.",
-            color = TextoSecundario,
-            fontSize = 14.sp
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        Text(
-            text = "CORREO ELECTRÓNICO",
-            style = TextStyle(
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp,
-                letterSpacing = 1.sp,
-                color = TextoEtiqueta
-            )
-        )
-        OutlinedTextField(
-            value = estado.correo,
-            onValueChange = onCorreo,
-            placeholder = { Text("nombre@correo.com") },
-            singleLine = true,
-            shape = RoundedCornerShape(16.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = LineaDeCal.colores.superficie,
-                unfocusedContainerColor = LineaDeCal.colores.superficie,
-                focusedBorderColor = VerdePrincipal,
-                unfocusedBorderColor = BordeCampo,
-                cursorColor = VerdePrincipal,
-                focusedTextColor = TituloOscuro,
-                unfocusedTextColor = TituloOscuro,
-                focusedPlaceholderColor = Color(0xFFA5B1B7),
-                unfocusedPlaceholderColor = Color(0xFFA5B1B7)
-            ),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        estado.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        estado.mensaje?.let { Text(it, color = VerdeOscuro, fontSize = 14.sp) }
-
-        Spacer(Modifier.height(8.dp))
-
-        Button(
-            onClick = onEnviar,
-            enabled = !estado.cargando,
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = VerdePrincipal,
-                contentColor = Color.White
-            ),
+        Column(
             modifier = Modifier
+                .widthIn(max = 600.dp)
                 .fillMaxWidth()
-                .height(52.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (estado.cargando) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp,
-                    color = Color.White
+            FondoCancha(alturaMinima = 220.dp) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .clickable(role = Role.Button, onClick = onVolver)
+                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Volver",
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
+                Text(
+                    text = "RECUPERAR ACCESO",
+                    style = TextStyle(
+                        fontFamily = FamiliaEtiquetas,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 12.sp,
+                        letterSpacing = 2.sp,
+                        color = LineaDeCal.colores.lima
+                    )
                 )
-            } else {
-                Text("Enviar enlace", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(
+                    text = "¿Olvidaste tu contraseña?",
+                    style = TextStyle(
+                        fontFamily = FamiliaTitulos,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 30.sp,
+                        lineHeight = 34.sp,
+                        color = Color.White
+                    )
+                )
+            }
+
+            Column(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Escribe el correo de tu cuenta y te enviaremos un enlace para crear una contraseña nueva.",
+                    color = TextoSecundario,
+                    fontSize = 14.sp
+                )
+
+                CampoSportPro(
+                    valor = estado.correo,
+                    onValorChange = onCorreo,
+                    etiqueta = "Correo electrónico",
+                    placeholder = "nombre@correo.com",
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                )
+
+                estado.error?.let { Text(it, color = LineaDeCal.colores.errorTexto, fontSize = 14.sp) }
+                estado.mensaje?.let { Text(it, color = VerdeOscuro, fontSize = 14.sp) }
+
+                BotonPrincipal(
+                    texto = "Enviar enlace",
+                    onClick = onEnviar,
+                    cargando = estado.cargando
+                )
             }
         }
     }

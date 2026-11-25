@@ -1,5 +1,10 @@
 package com.example.projectsportpro2026_2.ui.convocatoria
 
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -117,8 +122,9 @@ fun PantallaConvocatoria(
                 TextButton(
                     onClick = onVolver
                 ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
                     Text(
-                        text = "← Partidos",
+                        text = "Partidos",
                         color = SportProVerde
                     )
                 }
@@ -284,7 +290,7 @@ private fun TarjetaJugadorConvocatoria(
     val fondo = if (jugador.activo) {
         SportProSuperficie
     } else {
-        Color(0xFFF4F5F2)
+        LineaDeCal.colores.apagadoFondo /* antes 0xFFF4F5F2 */
     }
 
     Card(
@@ -301,7 +307,7 @@ private fun TarjetaJugadorConvocatoria(
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
             if (seleccionado && jugador.activo) {
-                Color(0xFFB9E0C3)
+                LineaDeCal.colores.okBorde /* antes 0xFFB9E0C3 */
             } else {
                 SportProBorde
             }
@@ -402,7 +408,7 @@ private fun CheckConvocatoria(
             fondo
 
         else ->
-            Color(0xFFB7C5BC)
+            LineaDeCal.colores.borde /* antes 0xFFB7C5BC */
     }
 
     Surface(
@@ -418,11 +424,11 @@ private fun CheckConvocatoria(
             Box(
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "✓",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    Icons.Rounded.Check,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
@@ -455,7 +461,7 @@ private fun ChipDisponibilidad(
     val fondo = when (estado) {
 
         EstadoDisponibilidad.PENDIENTE ->
-            Color(0xFFFFF2D9)
+            LineaDeCal.colores.amarilloFondo /* antes 0xFFFFF2D9 */
 
         EstadoDisponibilidad.DISPONIBLE ->
             SportProVerdeClaro
@@ -467,7 +473,7 @@ private fun ChipDisponibilidad(
     val textoColor = when (estado) {
 
         EstadoDisponibilidad.PENDIENTE ->
-            Color(0xFF9A6514)
+            LineaDeCal.colores.amarilloTexto /* antes 0xFF9A6514 */
 
         EstadoDisponibilidad.DISPONIBLE ->
             SportProVerde
@@ -572,62 +578,8 @@ private fun BarraPublicarConvocatoria(
 
 @Composable
 private fun CabeceraConvocatoriaSportPro() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement =
-            Arrangement.SpaceBetween
-    ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement =
-                Arrangement.spacedBy(10.dp)
-        ) {
-
-            Surface(
-                modifier = Modifier.size(38.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = SportProNavyFondo
-            ) {
-
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("⚽")
-                }
-            }
-
-            Column {
-
-                Text(
-                    text = "SPORTPRO",
-                    color = SportProNavy,
-                    fontWeight = FontWeight.Black,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(
-                    text = "",
-                    color = SportProTextoSecundario,
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-
-        Surface(
-            modifier = Modifier.size(38.dp),
-            color = SportProVerdeClaro,
-            shape = CircleShape
-        ) {
-
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Text("🔔")
-            }
-        }
-    }
+    // Línea de cal: la cabecera decorativa (logo ⚽ y campana 🔔 sin acción) se quitó;
+    // cada pantalla muestra su título y su botón de volver.
 }
 
 private fun abreviarPosicion(

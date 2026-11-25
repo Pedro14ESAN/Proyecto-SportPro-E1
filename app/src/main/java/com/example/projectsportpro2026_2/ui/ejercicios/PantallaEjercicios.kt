@@ -1,5 +1,21 @@
 package com.example.projectsportpro2026_2.ui.ejercicios
 
+import com.example.projectsportpro2026_2.ui.theme.EstiloMarcador
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.ColorFicha
+import com.example.projectsportpro2026_2.ui.comun.FichaTactica
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.Route
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.material.icons.rounded.SyncAlt
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.comun.anchoCompleto
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -133,16 +149,11 @@ fun PantallaEjercicios(
                     mostrarFormulario = true
                 },
                 containerColor =
-                    VerdeEjercicios,
+                    LineaDeCal.colores.lima,
                 contentColor =
-                    Color.White
+                    LineaDeCal.colores.navy
             ) {
-                Text(
-                    "+",
-                    fontSize = 25.sp,
-                    fontWeight =
-                        FontWeight.Bold
-                )
+                Icon(Icons.Rounded.Add, contentDescription = "Crear ejercicio")
             }
         }
     ) {
@@ -164,59 +175,15 @@ fun PantallaEjercicios(
                 )
         ) {
 
+            // Línea de cal: cabecera de césped (mismos textos y el mismo "Volver")
             item {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(46.dp),
-                    horizontalArrangement =
-                        Arrangement.SpaceBetween,
-                    verticalAlignment =
-                        Alignment.CenterVertically
-                ) {
-                    TextButton(
-                        onClick = onVolver
-                    ) {
-                        Text(
-                            "← Volver",
-                            color =
-                                AzulEjercicios,
-                            fontWeight =
-                                FontWeight.SemiBold
-                        )
-                    }
-
-                    Text(
-                        "SPORTPRO",
-                        color =
-                            AzulEjercicios,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-                }
-            }
-
-            item {
-                Column {
-                    Text(
-                        "ENTRENAMIENTOS",
-                        color =
-                            VerdeEjercicios,
-                        fontSize = 11.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-
-                    Text(
-                        "Biblioteca de ejercicios",
-                        color =
-                            AzulEjercicios,
-                        fontSize = 26.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-                }
+                CabeceraCancha(
+                    titulo = "Biblioteca de ejercicios",
+                    etiqueta = "ENTRENAMIENTOS",
+                    onVolver = onVolver,
+                    descripcionVolver = "Volver",
+                    modifier = Modifier.anchoCompleto(16.dp)
+                )
             }
 
             item {
@@ -343,7 +310,7 @@ fun PantallaEjercicios(
                     MensajeEjercicio(
                         texto = error,
                         fondo =
-                            Color(0xFFFFE8E8),
+                            LineaDeCal.colores.errorFondo /* antes 0xFFFFE8E8 */,
                         color =
                             RojoEjercicios
                     )
@@ -357,7 +324,7 @@ fun PantallaEjercicios(
                     MensajeEjercicio(
                         texto = mensaje,
                         fondo =
-                            Color(0xFFE5F5EB),
+                            LineaDeCal.colores.okFondo /* antes 0xFFE5F5EB */,
                         color =
                             VerdeEjercicios
                     )
@@ -505,7 +472,7 @@ private fun FiltroEjercicio(
                     if (seleccionado) {
                         LineaDeCal.colores.superficieOscura
                     } else {
-                        Color(0xFFEDEFF0)
+                        LineaDeCal.colores.apagadoFondo /* antes 0xFFEDEFF0 */
                     },
                 contentColor =
                     if (seleccionado) {
@@ -517,7 +484,7 @@ private fun FiltroEjercicio(
     ) {
         Text(
             texto,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             fontWeight =
                 FontWeight.SemiBold
         )
@@ -556,80 +523,60 @@ private fun TarjetaEjercicio(
                     6.dp
                 )
         ) {
+            // Línea de cal (6.6, img 05): ficha táctica según el objetivo, chip del objetivo y duración en Doto
             Row(
                 modifier =
                     Modifier.fillMaxWidth(),
                 horizontalArrangement =
-                    Arrangement.SpaceBetween,
+                    Arrangement.spacedBy(12.dp),
                 verticalAlignment =
                     Alignment.CenterVertically
             ) {
-                Text(
-                    "$numero. ${ejercicio.nombre}",
-                    color =
-                        AzulEjercicios,
-                    fontSize = 15.sp,
-                    fontWeight =
-                        FontWeight.Bold
+                val (icono, color) = fichaObjetivo(ejercicio.objetivo)
+                FichaTactica(
+                    icono = icono,
+                    etiqueta = ejercicio.objetivo,
+                    onClick = onEditar,
+                    color = color,
+                    tamano = 44.dp,
+                    mostrarEtiqueta = false
                 )
 
-                Surface(
-                    color =
-                        if (
-                            ejercicio.activo
-                        ) {
-                            Color(
-                                0xFFE5F5EB
-                            )
-                        } else {
-                            Color(
-                                0xFFFFE8E8
-                            )
-                        },
-                    shape =
-                        RoundedCornerShape(
-                            50.dp
-                        )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        if (
-                            ejercicio.activo
-                        ) {
-                            "Activo"
-                        } else {
-                            "Inactivo"
-                        },
-                        modifier =
-                            Modifier.padding(
-                                horizontal =
-                                    9.dp,
-                                vertical =
-                                    4.dp
-                            ),
+                        "$numero. ${ejercicio.nombre}",
                         color =
-                            if (
-                                ejercicio.activo
-                            ) {
-                                VerdeEjercicios
-                            } else {
-                                RojoEjercicios
-                            },
-                        fontSize =
-                            10.sp,
+                            AzulEjercicios,
+                        fontSize = 15.sp,
                         fontWeight =
                             FontWeight.Bold
                     )
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (ejercicio.objetivo.isNotBlank()) {
+                            ChipEstado(ejercicio.objetivo, TipoEstado.NEUTRO)
+                        }
+                        ChipEstado(
+                            if (
+                                ejercicio.activo
+                            ) {
+                                "Activo"
+                            } else {
+                                "Inactivo"
+                            },
+                            if (ejercicio.activo) TipoEstado.OK else TipoEstado.APAGADO
+                        )
+                    }
                 }
-            }
 
-            Text(
-                ejercicio.objetivo,
-                color =
-                    AzulEjercicios,
-                fontSize = 12.sp,
-                fontWeight =
-                    FontWeight.SemiBold
-            )
+                Text(
+                    "${ejercicio.duracionMinutos}'",
+                    color = AzulEjercicios,
+                    style = EstiloMarcador.copy(fontSize = 22.sp, lineHeight = 24.sp)
+                )
+            }
 
             if (
                 ejercicio.descripcion
@@ -639,7 +586,7 @@ private fun TarjetaEjercicio(
                     ejercicio.descripcion,
                     color =
                         GrisEjercicios,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     maxLines = 2
                 )
             }
@@ -648,7 +595,7 @@ private fun TarjetaEjercicio(
                 "${ejercicio.duracionMinutos} minutos",
                 color =
                     GrisEjercicios,
-                fontSize = 11.sp
+                fontSize = 12.sp
             )
 
             Row(
@@ -678,7 +625,7 @@ private fun TarjetaEjercicio(
                 ) {
                     Text(
                         "Editar",
-                        fontSize = 11.sp
+                        fontSize = 12.sp
                     )
                 }
 
@@ -716,11 +663,23 @@ private fun TarjetaEjercicio(
                         } else {
                             "Activar"
                         },
-                        fontSize = 11.sp
+                        fontSize = 12.sp
                     )
                 }
             }
         }
+    }
+}
+
+/** Ícono y color de la ficha según el objetivo del ejercicio (texto libre). */
+private fun fichaObjetivo(objetivo: String): Pair<ImageVector, ColorFicha> {
+    val o = objetivo.lowercase()
+    return when {
+        "técn" in o || "tecn" in o || "pase" in o -> Icons.Rounded.SyncAlt to ColorFicha.LIMA
+        "defin" in o || "remat" in o || "tiro" in o -> Icons.Rounded.SportsSoccer to ColorFicha.AMARILLA
+        "fís" in o || "fis" in o || "resist" in o || "agil" in o -> Icons.AutoMirrored.Rounded.DirectionsRun to ColorFicha.VERDE
+        "táct" in o || "tact" in o -> Icons.Rounded.Route to ColorFicha.NAVY
+        else -> Icons.Rounded.FitnessCenter to ColorFicha.BLANCA
     }
 }
 

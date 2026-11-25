@@ -1,5 +1,20 @@
 package com.example.projectsportpro2026_2.ui.autenticacion
 
+import com.example.projectsportpro2026_2.ui.comun.VarianteBoton
+import com.example.projectsportpro2026_2.ui.comun.BotonPrincipal
+import com.example.projectsportpro2026_2.ui.comun.FondoCancha
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Campaign
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.widthIn
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.activity.compose.BackHandler
@@ -57,105 +72,100 @@ private val NavyPortada: Color @Composable get() = LineaDeCal.colores.navy // an
 
 @Composable
 fun PantallaBienvenida(onComenzar: () -> Unit) {
+    // Línea de cal (6.1, img 09): portada con FondoCancha y botón lima
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyPortada)
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .background(SportProFondo)
+            .navigationBarsPadding(),
+        contentAlignment = Alignment.TopCenter
     ) {
-        // Balón grande de fondo, apenas visible
-        Text(
-            "⚽",
-            fontSize = 220.sp,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .offset(x = 70.dp, y = (-40).dp)
-                .alpha(0.12f)
-        )
-
         Column(
             modifier = Modifier
+                .widthIn(max = 600.dp)
                 .fillMaxSize()
-                .padding(horizontal = 28.dp, vertical = 32.dp)
         ) {
-            Text(
-                "SPORTPRO / 2026",
-                color = VerdeLima,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp,
-                letterSpacing = 2.sp
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(VerdeLima),
-                contentAlignment = Alignment.Center
+            FondoCancha(
+                modifier = Modifier.weight(1f),
+                alturaMinima = 420.dp
             ) {
-                Text("⚽", fontSize = 28.sp)
+                Text(
+                    "SPORTPRO / 2026",
+                    color = VerdeLima,
+                    fontFamily = FamiliaEtiquetas,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    letterSpacing = 2.sp
+                )
+
+                Spacer(Modifier.weight(1f))
+
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(VerdeLima),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Rounded.SportsSoccer,
+                        contentDescription = null,
+                        tint = NavyPortada,
+                        modifier = Modifier.size(34.dp)
+                    )
+                }
+                Text(
+                    "SPORTPRO",
+                    color = Color.White,
+                    fontFamily = FamiliaTitulos,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 44.sp
+                )
+                Text(
+                    "La operación de tu academia,\nsiempre en juego.",
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontFamily = FamiliaTitulos,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    lineHeight = 28.sp
+                )
+                Spacer(Modifier.height(24.dp))
             }
-            Spacer(Modifier.height(18.dp))
-            Text(
-                "SPORTPRO",
-                color = Color.White,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 44.sp
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "La operación de tu academia,\nsiempre en juego.",
-                color = Color.White.copy(alpha = 0.75f),
-                fontSize = 15.sp,
-                lineHeight = 22.sp
-            )
 
-            Spacer(Modifier.weight(1.2f))
-
-            Button(
-                onClick = onComenzar,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = VerdeLima,
-                    contentColor = NavyPortada
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-            ) {
-                Text("Comenzar →", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Box(Modifier.padding(horizontal = 24.dp, vertical = 28.dp)) {
+                BotonPrincipal(
+                    texto = "Comenzar",
+                    onClick = onComenzar,
+                    icono = Icons.AutoMirrored.Rounded.ArrowForward
+                )
             }
         }
     }
 }
 
+
 // ---------------- 2. Introducción ----------------
 
 private data class PasoIntro(
     val etiqueta: String,
-    val emoji: String,
+    val icono: ImageVector,
     val titulo: String,
     val texto: String
 )
 
 private val pasos = listOf(
     PasoIntro(
-        "ORGANIZACIÓN", "⚽",
+        "ORGANIZACIÓN", Icons.Rounded.SportsSoccer,
         "Todo tu equipo, en la misma cancha.",
         "Entrenamientos, convocatorias y partidos organizados en un solo lugar."
     ),
     PasoIntro(
-        "PARTIDO EN VIVO", "⏱️",
+        "PARTIDO EN VIVO", Icons.Rounded.Timer,
         "Cada jugada, al minuto.",
         "Registra goles, tarjetas y cambios en tiempo real, aunque te quedes sin señal."
     ),
     PasoIntro(
-        "COMUNIDAD", "📣",
+        "COMUNIDAD", Icons.Rounded.Campaign,
         "Familias y jugadores siempre al tanto.",
         "Avisos, estadísticas y el resumen de cada partido llegan a quien corresponde."
     )
@@ -185,16 +195,30 @@ fun PantallaIntroduccion(
             .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 20.dp)
     ) {
-        Text(
-            "← Volver",
-            color = SportProVerde,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp,
-            modifier = Modifier.clickable {
-                if (pagina > 0) alcance.launch { estadoPager.animateScrollToPage(pagina - 1) }
-                else onVolver()
-            }
-        )
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .clickable(role = Role.Button) {
+                    if (pagina > 0) alcance.launch { estadoPager.animateScrollToPage(pagina - 1) }
+                    else onVolver()
+                }
+                .padding(vertical = 6.dp, horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                Icons.AutoMirrored.Rounded.ArrowBack,
+                contentDescription = null,
+                tint = SportProVerde,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                "Volver",
+                color = SportProVerde,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp
+            )
+        }
         Spacer(Modifier.height(24.dp))
 
         HorizontalPager(
@@ -215,35 +239,26 @@ fun PantallaIntroduccion(
                         .height(6.dp)
                         .width(if (i == pagina) 26.dp else 6.dp)
                         .clip(CircleShape)
-                        .background(if (i == pagina) SportProVerde else Color(0xFFD5DBD3))
+                        .background(if (i == pagina) SportProVerde else LineaDeCal.colores.borde) // antes Color(0xFFD5DBD3)
                 )
             }
         }
         Spacer(Modifier.height(20.dp))
 
-        Button(
+        BotonPrincipal(
+            texto = if (esUltima) "Ir a iniciar sesión" else "Continuar",
             onClick = {
                 if (esUltima) onTerminar()
                 else alcance.launch { estadoPager.animateScrollToPage(pagina + 1) }
             },
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = SportProNavyFondo),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-        ) {
-            Text(
-                if (esUltima) "Ir a iniciar sesión" else "Continuar",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-        }
+            variante = if (esUltima) VarianteBoton.LIMA else VarianteBoton.NAVY
+        )
         Spacer(Modifier.height(14.dp))
         Text(
             "Saltar introducción",
             color = SportProVerde,
             fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .clickable { onTerminar() }
@@ -277,7 +292,7 @@ private fun PaginaIntro(numero: Int, total: Int, paso: PasoIntro) {
                         .background(VerdeLimaSuave),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(paso.emoji, fontSize = 48.sp)
+                    Icon(paso.icono, contentDescription = null, tint = NavyPortada, modifier = Modifier.size(52.dp))
                 }
             }
         }
@@ -285,16 +300,16 @@ private fun PaginaIntro(numero: Int, total: Int, paso: PasoIntro) {
         Text(
             "%02d / %02d · %s".format(numero, total, paso.etiqueta),
             color = SportProVerde,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = FamiliaEtiquetas,
             fontWeight = FontWeight.Bold,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             letterSpacing = 1.5.sp
         )
         Spacer(Modifier.height(8.dp))
         Text(
             paso.titulo,
             color = SportProNavy,
-            fontFamily = FontFamily.Serif,
+            fontFamily = FamiliaTitulos,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 28.sp,
             lineHeight = 32.sp

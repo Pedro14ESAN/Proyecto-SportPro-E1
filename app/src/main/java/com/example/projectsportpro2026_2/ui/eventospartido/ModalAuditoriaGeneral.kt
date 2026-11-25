@@ -1,5 +1,9 @@
 package com.example.projectsportpro2026_2.ui.eventospartido
 
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -123,20 +127,18 @@ fun ModalAuditoriaGeneral(
                         CircleShape,
 
                     color =
-                        Color(0xFFF2F3F1)
+                        LineaDeCal.colores.apagadoFondo /* antes 0xFFF2F3F1 */
                 ) {
 
                     Box(
                         contentAlignment =
                             Alignment.Center
                     ) {
-                        Text(
-                            text = "×",
-                            color =
-                                SportProNavy,
-
-                            fontWeight =
-                                FontWeight.Bold
+                        Icon(
+                            Icons.Rounded.Close,
+                            contentDescription = "Cerrar",
+                            tint = SportProNavy,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

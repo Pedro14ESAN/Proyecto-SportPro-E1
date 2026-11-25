@@ -1,5 +1,14 @@
 package com.example.projectsportpro2026_2.ui.vinculaciones
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -64,43 +73,22 @@ fun PantallaVinculaciones(
         modifier = Modifier
             .fillMaxSize()
             .background(FondoPantalla)
-            .padding(horizontal = 20.dp, vertical = 24.dp),
+            .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "← Volver",
-            color = VerdeOscuro,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
-            modifier = Modifier.clickable(onClick = onVolver)
+        // Línea de cal: cabecera de césped (mismos textos y el mismo "Volver")
+        CabeceraCancha(
+            titulo = "Vinculaciones",
+            subtitulo = "Solicitudes de apoderados para vincularse a un jugador.",
+            etiqueta = "GESTIÓN",
+            onVolver = onVolver,
+            descripcionVolver = "Volver"
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                text = "GESTIÓN",
-                style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    letterSpacing = 2.sp,
-                    color = VerdePrincipal
-                )
-            )
-            Text(
-                text = "Vinculaciones",
-                style = TextStyle(
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 30.sp,
-                    color = TituloOscuro
-                )
-            )
-            Text(
-                text = "Solicitudes de apoderados para vincularse a un jugador.",
-                color = TextoSecundario,
-                fontSize = 14.sp
-            )
-        }
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
 
         // Banner con el número de solicitudes pendientes
         if (estado.pendientes > 0) {
@@ -112,7 +100,7 @@ fun PantallaVinculaciones(
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("ⓘ", color = AvisoTexto, fontSize = 18.sp)
+                Icon(Icons.Rounded.Info, contentDescription = null, tint = AvisoTexto, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.padding(horizontal = 5.dp))
                 Text(
                     text = if (estado.pendientes == 1) "1 solicitud esperando aprobación"
@@ -145,34 +133,21 @@ fun PantallaVinculaciones(
                 )
             }
         }
+        }
     }
 }
 
 @Composable
 private fun EtiquetaEstadoVinculacion(estado: EstadoVinculacion) {
-    val fondo = when (estado) {
-        EstadoVinculacion.PENDIENTE -> AvisoFondo
-        EstadoVinculacion.ACTIVA -> VerdeClaro
-        EstadoVinculacion.INACTIVA -> GrisInactivo
-    }
-    val texto = when (estado) {
-        EstadoVinculacion.PENDIENTE -> AvisoTexto
-        EstadoVinculacion.ACTIVA -> VerdeOscuro
-        EstadoVinculacion.INACTIVA -> TextoSecundario
-    }
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(fondo)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-        Text(
-            etiquetaEstado(estado),
-            color = texto,
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp
-        )
-    }
+    // Línea de cal: ChipEstado con los mismos estados y textos
+    ChipEstado(
+        etiquetaEstado(estado),
+        when (estado) {
+            EstadoVinculacion.PENDIENTE -> TipoEstado.PENDIENTE
+            EstadoVinculacion.ACTIVA -> TipoEstado.OK
+            EstadoVinculacion.INACTIVA -> TipoEstado.APAGADO
+        }
+    )
 }
 
 @Composable

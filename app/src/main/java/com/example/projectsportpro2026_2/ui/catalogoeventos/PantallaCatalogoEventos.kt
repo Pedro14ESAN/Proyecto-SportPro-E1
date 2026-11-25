@@ -1,5 +1,11 @@
 package com.example.projectsportpro2026_2.ui.catalogoeventos
 
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -105,8 +111,9 @@ fun PantallaCatalogoEventos(
                     onClick = onVolver,
                     contentPadding = PaddingValues(0.dp)
                 ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
                     Text(
-                        text = "← Inicio",
+                        text = "Inicio",
                         color = SportProVerde,
                         fontWeight = FontWeight.Bold
                     )
@@ -443,20 +450,17 @@ private fun TarjetaEventoCatalogo(
 
             Box {
 
-                Text(
-                    text = "⋮",
-                    modifier = Modifier
-                        .clickable {
-                            menuAbierto = true
-                        }
-                        .padding(
-                            horizontal = 6.dp,
-                            vertical = 10.dp
-                        ),
-                    color = SportProNavy,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                IconButton(
+                    onClick = {
+                        menuAbierto = true
+                    }
+                ) {
+                    Icon(
+                        Icons.Rounded.MoreVert,
+                        contentDescription = "Más opciones de ${evento.nombre}",
+                        tint = SportProNavy
+                    )
+                }
 
                 DropdownMenu(
                     expanded = menuAbierto,
@@ -548,7 +552,7 @@ private fun IndicadorSincronizacion(
                 SportProNavy
 
             EstadoSincronizacionCatalogo.DATOS_LOCALES ->
-                Color(0xFF9A6A00)
+                LineaDeCal.colores.amarilloTexto /* antes 0xFF9A6A00 */
         }
 
     Surface(
@@ -874,60 +878,8 @@ private fun MensajeCatalogo(
 
 @Composable
 private fun CabeceraCatalogoSportPro() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-
-            Surface(
-                modifier = Modifier.size(38.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = SportProNavyFondo
-            ) {
-
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("⚽")
-                }
-            }
-
-            Column {
-
-                Text(
-                    text = "SPORTPRO",
-                    color = SportProNavy,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black
-                )
-
-                Text(
-                    text = "ADMINISTRACIÓN",
-                    color = SportProTextoSecundario,
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-
-        Surface(
-            modifier = Modifier.size(38.dp),
-            shape = CircleShape,
-            color = SportProVerdeClaro
-        ) {
-
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Text("🔔")
-            }
-        }
-    }
+    // Línea de cal: la cabecera decorativa (logo ⚽ y campana 🔔 sin acción) se quitó;
+    // cada pantalla muestra su título y su botón de volver.
 }
 
 private fun camposRequeridos(

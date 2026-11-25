@@ -1,5 +1,21 @@
 package com.example.projectsportpro2026_2.ui.asistencias
 
+import com.example.projectsportpro2026_2.ui.comun.ContadorLed
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
+import androidx.compose.foundation.background
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import com.example.projectsportpro2026_2.ui.comun.anchoCompleto
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -116,66 +132,19 @@ fun PantallaAsistencias(
                     bottom = 20.dp
                 )
         ) {
+            // Línea de cal: cabecera de césped (mismos textos y el mismo "Volver")
             item {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(46.dp),
-                    verticalAlignment =
-                        Alignment.CenterVertically,
-                    horizontalArrangement =
-                        Arrangement.SpaceBetween
-                ) {
-                    TextButton(
-                        onClick =
-                            onVolver
-                    ) {
-                        Text(
-                            "← Volver",
-                            color =
-                                AzulSportPro,
-                            fontWeight =
-                                FontWeight.SemiBold
-                        )
-                    }
-
-                    Text(
-                        "SPORTPRO",
-                        color =
-                            AzulSportPro,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-                }
-            }
-
-            item {
-                Column {
-                    Text(
-                        "ASISTENCIA",
-                        color =
-                            VerdeSportPro,
-                        fontSize = 11.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-
-                    Text(
-                        if (
-                            puedeGestionar
-                        ) {
-                            "Registro de asistencia"
-                        } else {
-                            "Historial de asistencia"
-                        },
-                        color =
-                            AzulSportPro,
-                        fontSize = 26.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-                }
+                CabeceraCancha(
+                    titulo = if (puedeGestionar) {
+                        "Registro de asistencia"
+                    } else {
+                        "Historial de asistencia"
+                    },
+                    etiqueta = "ASISTENCIA",
+                    onVolver = onVolver,
+                    descripcionVolver = "Volver",
+                    modifier = Modifier.anchoCompleto(16.dp)
+                )
             }
 
             if (puedeGestionar) {
@@ -827,8 +796,8 @@ private fun TarjetaJugadorEditable(
                 Text(
                     jugador.categoria,
                     color =
-                        Color(0xFF5B6266),
-                    fontSize = 11.sp
+                        LineaDeCal.colores.textoSecundario /* antes 0xFF5B6266 */,
+                    fontSize = 12.sp
                 )
             }
 
@@ -907,48 +876,39 @@ private fun BotonEstado(
     ancho: androidx.compose.ui.unit.Dp,
     onClick: () -> Unit
 ) {
-    Button(
-        onClick =
-            onClick,
+    // Línea de cal (6.7, img 06): ficha redonda P / A / J. TalkBack lee el estado completo.
+    Box(
         modifier =
             Modifier
                 .width(ancho)
                 .height(46.dp),
-        shape =
-            RoundedCornerShape(
-                10.dp
-            ),
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor =
-                    if (
-                        seleccionado
-                    ) {
-                        colorSeleccionado
-                    } else {
-                        GrisClaro
-                    },
-                contentColor =
-                    if (
-                        seleccionado
-                    ) {
-                        Color.White
-                    } else {
-                        AzulSportPro
-                    }
-            ),
-        contentPadding =
-            PaddingValues(
-                horizontal = 2.dp
-            )
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            texto,
-            fontSize = 10.sp,
-            maxLines = 1,
-            fontWeight =
-                FontWeight.SemiBold
-        )
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(if (seleccionado) colorSeleccionado else GrisClaro)
+                .border(
+                    1.dp,
+                    if (seleccionado) colorSeleccionado else LineaDeCal.colores.borde,
+                    CircleShape
+                )
+                .clickable(role = Role.RadioButton, onClick = onClick)
+                .semantics {
+                    contentDescription = texto
+                    selected = seleccionado
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                texto.take(1).uppercase(),
+                color = if (seleccionado) Color.White else AzulSportPro,
+                fontFamily = FamiliaTitulos,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+        }
     }
 }
 
@@ -1003,8 +963,8 @@ private fun TarjetaJugadorRegistrado(
                     Text(
                         jugador.categoria,
                         color =
-                            Color(0xFF5B6266),
-                        fontSize = 11.sp
+                            LineaDeCal.colores.textoSecundario /* antes 0xFF5B6266 */,
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -1023,46 +983,17 @@ private fun TarjetaResumen(
     fondo: Color,
     color: Color
 ) {
-    Surface(
-        modifier =
-            Modifier
-                .width(102.dp)
-                .height(72.dp),
-        color =
-            fondo,
-        shape =
-            RoundedCornerShape(
-                12.dp
-            )
-    ) {
-        Column(
-            modifier =
-                Modifier.padding(
-                    vertical = 8.dp
-                ),
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-            verticalArrangement =
-                Arrangement.Center
-        ) {
-            Text(
-                cantidad.toString(),
-                color =
-                    color,
-                fontSize = 21.sp,
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-            Text(
-                texto,
-                color =
-                    Color(0xFF454B4E),
-                fontSize = 9.sp,
-                maxLines = 1
-            )
+    // Línea de cal (6.7): ContadorLed de presentes, ausentes y justificados
+    ContadorLed(
+        valor = cantidad.toString(),
+        etiqueta = texto,
+        modifier = Modifier.width(104.dp),
+        color = when (fondo) {
+            RojoClaro -> LineaDeCal.colores.naranja
+            AmarilloClaro -> LineaDeCal.colores.amarillo
+            else -> LineaDeCal.colores.lima
         }
-    }
+    )
 }
 
 @Composable
@@ -1111,31 +1042,19 @@ private fun EtiquetaEstado(
                 AmarilloSportPro
 
             null ->
-                Color(0xFF555555)
+                LineaDeCal.colores.textoSecundario /* antes 0xFF555555 */
         }
 
-    Surface(
-        color =
-            fondo,
-        shape =
-            RoundedCornerShape(
-                50.dp
-            )
-    ) {
-        Text(
-            texto,
-            modifier =
-                Modifier.padding(
-                    horizontal = 10.dp,
-                    vertical = 5.dp
-                ),
-            color =
-                color,
-            fontSize = 11.sp,
-            fontWeight =
-                FontWeight.Bold
-        )
-    }
+    // Línea de cal: ChipEstado con los estados reales
+    ChipEstado(
+        texto,
+        when (estado) {
+            EstadoAsistencia.PRESENTE -> TipoEstado.OK
+            EstadoAsistencia.AUSENTE -> TipoEstado.ERROR
+            EstadoAsistencia.JUSTIFICADO -> TipoEstado.AMARILLO
+            null -> TipoEstado.APAGADO
+        }
+    )
 }
 
 @Composable
@@ -1184,8 +1103,8 @@ private fun TarjetaHistorial(
                 Text(
                     asistencia.fechaEntrenamiento,
                     color =
-                        Color(0xFF5B6266),
-                    fontSize = 11.sp
+                        LineaDeCal.colores.textoSecundario /* antes 0xFF5B6266 */,
+                    fontSize = 12.sp
                 )
             }
 
@@ -1248,7 +1167,7 @@ private fun TextoVacio(
                     16.dp
                 ),
             color =
-                Color(0xFF5B6266),
+                LineaDeCal.colores.textoSecundario /* antes 0xFF5B6266 */,
             fontSize = 13.sp
         )
     }

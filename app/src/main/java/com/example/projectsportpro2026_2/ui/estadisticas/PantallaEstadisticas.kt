@@ -1,5 +1,14 @@
 package com.example.projectsportpro2026_2.ui.estadisticas
 
+import com.example.projectsportpro2026_2.ui.comun.CromoJugador
+import androidx.compose.material.icons.rounded.PanTool
+import androidx.compose.material.icons.rounded.HowToReg
+import androidx.compose.material.icons.rounded.CropPortrait
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.material.icons.Icons
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -246,7 +255,7 @@ private fun TarjetaEquipo(nombre: String, categoria: String, r: EstadisticasEqui
             AvatarIniciales(nombre, oscuro = true, tamano = 46.dp)
             Spacer(Modifier.padding(6.dp))
             Column(Modifier.weight(1f)) {
-                Text(nombre, color = SportProNavy, fontFamily = FontFamily.Serif,
+                Text(nombre, color = SportProNavy, fontFamily = FamiliaTitulos,
                     fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
                 if (categoria.isNotBlank()) {
                     Text(categoria, color = SportProTextoSecundario, fontSize = 12.sp)
@@ -261,7 +270,7 @@ private fun TarjetaEquipo(nombre: String, categoria: String, r: EstadisticasEqui
             Spacer(Modifier.height(8.dp))
             Text(
                 "${r.eventosAnuladosExcluidos} evento(s) anulado(s) excluido(s) del cálculo",
-                color = SportProTextoSecundario, fontSize = 11.sp
+                color = SportProTextoSecundario, fontSize = 12.sp
             )
         }
     }
@@ -272,8 +281,8 @@ private fun MetricasEquipo(r: EstadisticasEquipo) {
     val sinPartidos = !r.hayPartidos
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         FilaMetricas {
-            TarjetaMetrica("Partidos jugados", r.partidosJugados.toString(), icono = "⚽")
-            TarjetaMetrica("Sesiones entrenamiento", r.sesionesEntrenamiento.toString(), icono = "🏃")
+            TarjetaMetrica("Partidos jugados", r.partidosJugados.toString(), icono = Icons.Rounded.SportsSoccer)
+            TarjetaMetrica("Sesiones entrenamiento", r.sesionesEntrenamiento.toString(), icono = Icons.AutoMirrored.Rounded.DirectionsRun)
         }
         FilaMetricas {
             TarjetaMetrica(
@@ -287,12 +296,12 @@ private fun MetricasEquipo(r: EstadisticasEquipo) {
                 valor = if (sinPartidos) null else r.tarjetasAmarillas.toString(),
                 detalle = if (sinPartidos) null
                 else "${r.tarjetasRojas} rojas · ${r.cambios} cambios",
-                icono = "🟨"
+                icono = Icons.Rounded.CropPortrait
             )
         }
         TarjetaBlanca {
             Text("BALANCE DE GOLES", color = SportProTextoSecundario,
-                fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                fontFamily = FamiliaEtiquetas, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))
             if (sinPartidos) {
                 Text("Sin datos: aún no hay partidos finalizados en este periodo.",
@@ -327,48 +336,43 @@ private fun SeccionJugador(
     r: EstadisticasJugador
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TarjetaBlanca {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AvatarIniciales(nombre, tamano = 46.dp)
-                Spacer(Modifier.padding(6.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(nombre, color = SportProNavy, fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (posicion.isNotBlank()) {
-                            EtiquetaSportPro(posicion.uppercase(), EtiquetaAzul, EtiquetaAzulFondo)
+        // Línea de cal (6.11, img 01): cromo grande del jugador (la foto y lo nuevo de 7.3 van en la etapa 6)
+        CromoJugador(
+            nombre = nombre,
+            posicion = posicion,
+            modifier = Modifier.fillMaxWidth(),
+            insignia = {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // La edad es dato sensible: solo con acceso completo
+                    if (completo) {
+                        edad(fechaNacimiento)?.let {
+                            EtiquetaSportPro("$it AÑOS", EtiquetaAzul, EtiquetaAzulFondo)
                         }
-                        // La edad es dato sensible: solo con acceso completo
-                        if (completo) {
-                            edad(fechaNacimiento)?.let {
-                                EtiquetaSportPro("$it AÑOS", EtiquetaAzul, EtiquetaAzulFondo)
-                            }
-                        }
-                        if (esMenor) {
-                            EtiquetaSportPro("MENOR", EtiquetaNaranja, EtiquetaNaranjaFondo)
-                        }
+                    }
+                    if (esMenor) {
+                        EtiquetaSportPro("MENOR", EtiquetaNaranja, EtiquetaNaranjaFondo)
                     }
                 }
             }
-        }
+        )
 
         FilaMetricas {
             TarjetaMetrica("Participaciones", if (hayPartidos) r.participaciones.toString() else null,
-                icono = "👟")
+                icono = Icons.Rounded.HowToReg)
             TarjetaMetrica("Goles", if (hayPartidos) r.goles.toString() else null,
-                icono = "⚽", colorValor = SportProVerde)
+                icono = Icons.Rounded.SportsSoccer, colorValor = SportProVerde)
         }
 
         if (completo) {
             TarjetaBlanca {
                 Text("ASISTENCIA A ENTRENAMIENTOS", color = SportProTextoSecundario,
-                    fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    fontFamily = FamiliaEtiquetas, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 val porcentaje = r.asistencia.porcentaje
                 if (porcentaje == null) {
                     Text("Sin datos", color = SportProTextoSecundario, fontWeight = FontWeight.SemiBold)
                 } else {
-                    Text("$porcentaje %", color = SportProNavy, fontFamily = FontFamily.Serif,
+                    Text("$porcentaje %", color = SportProNavy, fontFamily = FamiliaTitulos,
                         fontWeight = FontWeight.ExtraBold, fontSize = 26.sp)
                     Spacer(Modifier.height(6.dp))
                     BarraProporcion(porcentaje / 100f)
@@ -387,10 +391,10 @@ private fun SeccionJugador(
 
             FilaMetricas {
                 TarjetaMetrica("T. amarillas", if (hayPartidos) r.tarjetasAmarillas.toString() else null,
-                    icono = "🟨")
+                    icono = Icons.Rounded.CropPortrait)
                 TarjetaMetrica("T. rojas", if (hayPartidos) r.tarjetasRojas.toString() else null,
-                    icono = "🟥")
-                TarjetaMetrica("Faltas", if (hayPartidos) r.faltas.toString() else null, icono = "⚑")
+                    icono = Icons.Rounded.CropPortrait)
+                TarjetaMetrica("Faltas", if (hayPartidos) r.faltas.toString() else null, icono = Icons.Rounded.PanTool)
             }
         }
 
@@ -410,8 +414,8 @@ private fun SeccionJugador(
 private fun MetricasPeriodo(r: EstadisticasEquipo) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         FilaMetricas {
-            TarjetaMetrica("Sesiones", r.sesionesEntrenamiento.toString(), icono = "🏃")
-            TarjetaMetrica("Partidos", r.partidosJugados.toString(), icono = "⚽")
+            TarjetaMetrica("Sesiones", r.sesionesEntrenamiento.toString(), icono = Icons.AutoMirrored.Rounded.DirectionsRun)
+            TarjetaMetrica("Partidos", r.partidosJugados.toString(), icono = Icons.Rounded.SportsSoccer)
         }
         FilaMetricas {
             TarjetaMetrica("% asistencia", r.porcentajeAsistencia?.let { "$it %" })

@@ -1,5 +1,10 @@
 package com.example.projectsportpro2026_2.ui.vinculaciones
 
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -58,43 +63,22 @@ fun PantallaCuentasJugadores(
         modifier = Modifier
             .fillMaxSize()
             .background(FondoPantalla)
-            .padding(horizontal = 20.dp, vertical = 24.dp),
+            .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "← Volver",
-            color = VerdeOscuro,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
-            modifier = Modifier.clickable(onClick = onVolver)
+        // Línea de cal: cabecera de césped (mismos textos y el mismo "Volver")
+        CabeceraCancha(
+            titulo = "Cuentas de jugadores",
+            subtitulo = "Cuentas cuyo documento coincide con una ficha que aún no tiene cuenta.",
+            etiqueta = "GESTIÓN",
+            onVolver = onVolver,
+            descripcionVolver = "Volver"
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                text = "GESTIÓN",
-                style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    letterSpacing = 2.sp,
-                    color = VerdePrincipal
-                )
-            )
-            Text(
-                text = "Cuentas de jugadores",
-                style = TextStyle(
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 28.sp,
-                    color = TituloOscuro
-                )
-            )
-            Text(
-                text = "Cuentas cuyo documento coincide con una ficha que aún no tiene cuenta.",
-                color = TextoSecundario,
-                fontSize = 14.sp
-            )
-        }
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
 
         estado.aviso?.let {
             Text(it, color = VerdeOscuro, fontWeight = FontWeight.SemiBold)
@@ -120,6 +104,7 @@ fun PantallaCuentasJugadores(
                     onVincular = { viewModel.vincular(cuenta) }
                 )
             }
+        }
         }
     }
 }
@@ -152,19 +137,10 @@ private fun TarjetaCuenta(
                     fontSize = 18.sp,
                     modifier = Modifier.weight(1f)
                 )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(if (cuenta.pendiente) AvisoFondo else VerdeClaro)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        if (cuenta.pendiente) "Pendiente" else "Activa",
-                        color = if (cuenta.pendiente) AvisoTexto else VerdeOscuro,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
+                ChipEstado(
+                    if (cuenta.pendiente) "Pendiente" else "Activa",
+                    if (cuenta.pendiente) TipoEstado.PENDIENTE else TipoEstado.OK
+                )
             }
             Text(cuenta.perfil.correo, color = TextoSecundario, fontSize = 14.sp)
             Text(

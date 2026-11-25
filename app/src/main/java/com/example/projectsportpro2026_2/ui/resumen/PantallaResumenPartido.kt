@@ -1,5 +1,20 @@
 package com.example.projectsportpro2026_2.ui.resumen
 
+import com.example.projectsportpro2026_2.ui.comun.MarcadorLed
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.WarningAmber
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.Icons
+import com.example.projectsportpro2026_2.ui.sincronizacion.colorSimboloEvento
+import com.example.projectsportpro2026_2.ui.sincronizacion.iconoEvento
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import com.example.projectsportpro2026_2.ui.theme.PaletaLineaDeCal
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
@@ -153,6 +168,19 @@ fun PantallaResumenPartido(
                             contexto.partido.nombreRival.uppercase(),
                     titulo = "Resumen del partido"
                 )
+            }
+
+            // Línea de cal (6.11, img 09): marcador LED del partido
+            if (contexto != null) {
+                item {
+                    MarcadorLed(
+                        local = contexto.equipo.nombre,
+                        rival = contexto.partido.nombreRival,
+                        golesLocal = m.propio,
+                        golesRival = m.rival,
+                        etiquetaSuperior = if (contexto.partido.estado == EstadoPartido.FINALIZADO) "FINAL" else null
+                    )
+                }
             }
 
             estado.error?.let { texto ->
@@ -357,12 +385,21 @@ fun PantallaResumenPartido(
             // Notas de evaluación de cada narración aprobada (DT o ADM)
             if (contexto.puedeVerBorrador && estado.evaluaciones.isNotEmpty()) {
                 item {
-                    Text(
-                        text = (if (verNotas) "▾ " else "▸ ") +
-                                "Notas de evaluación por narración (${estado.evaluaciones.size})",
-                        color = SportProNavy, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { verNotas = !verNotas }
-                    )
+                    Row(
+                        modifier = Modifier.clickable { verNotas = !verNotas },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            if (verNotas) Icons.Rounded.ExpandMore else Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = SportProNavy,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Notas de evaluación por narración (${estado.evaluaciones.size})",
+                            color = SportProNavy, fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 if (verNotas) {
                     items(estado.evaluaciones, key = { it.id }) { n -> FilaNotaEvaluacion(n) }
@@ -372,12 +409,21 @@ fun PantallaResumenPartido(
             // Historial de versiones (DT o ADM)
             if (contexto.puedeVerBorrador && estado.historial.isNotEmpty()) {
                 item {
-                    Text(
-                        text = (if (verHistorial) "▾ " else "▸ ") +
-                                "Historial de versiones (${estado.historial.size})",
-                        color = SportProNavy, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { verHistorial = !verHistorial }
-                    )
+                    Row(
+                        modifier = Modifier.clickable { verHistorial = !verHistorial },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            if (verHistorial) Icons.Rounded.ExpandMore else Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = SportProNavy,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Historial de versiones (${estado.historial.size})",
+                            color = SportProNavy, fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 if (verHistorial) {
                     items(estado.historial, key = { it.id }) { v -> FilaVersion(v) }
@@ -434,7 +480,7 @@ private fun BloqueGenerar(estado: EstadoResumenPartido, onGenerar: () -> Unit) {
     val juego = estado.eventosValidos.count { it.codigoTipoEvento != "INICIO" && it.codigoTipoEvento != "FIN" }
 
     TarjetaBlanca {
-        Text("Genera el borrador con IA", color = SportProNavy, fontFamily = FontFamily.Serif,
+        Text("Genera el borrador con IA", color = SportProNavy, fontFamily = FamiliaTitulos,
             fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
         Spacer(Modifier.height(4.dp))
         Text(
@@ -445,13 +491,21 @@ private fun BloqueGenerar(estado: EstadoResumenPartido, onGenerar: () -> Unit) {
         )
         if (estado.pendientesSync) {
             Spacer(Modifier.height(8.dp))
-            Text("⚠ Hay eventos pendientes de sincronizar: espera la sincronización.",
-                color = SportProRojo, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.WarningAmber, contentDescription = null, tint = SportProRojo, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Hay eventos pendientes de sincronizar: espera la sincronización.",
+                    color = SportProRojo, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
         if (finalizado && juego < 2) {
             Spacer(Modifier.height(8.dp))
-            Text("⚠ Eventos insuficientes: no se puede generar un resumen fiable.",
-                color = SportProRojo, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.WarningAmber, contentDescription = null, tint = SportProRojo, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Eventos insuficientes: no se puede generar un resumen fiable.",
+                    color = SportProRojo, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
         Spacer(Modifier.height(12.dp))
         Button(
@@ -467,7 +521,9 @@ private fun BloqueGenerar(estado: EstadoResumenPartido, onGenerar: () -> Unit) {
                 Spacer(Modifier.width(10.dp))
                 Text("Generando…")
             } else {
-                Text("✨ Generar resumen", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Generar resumen", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }
@@ -487,7 +543,7 @@ private fun TarjetaBorrador(
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                EtiquetaSportPro("BORRADOR · REQUIERE REVISIÓN DT", AmarilloAviso, Color(0xFFFFE7A3))
+                EtiquetaSportPro("BORRADOR · REQUIERE REVISIÓN DT", AmarilloAviso, LineaDeCal.colores.amarilloFondo /* antes 0xFFFFE7A3 */)
                 EtiquetaSportPro(
                     if (resumen.origen == OrigenResumen.IA) "IA · v${resumen.version}"
                     else "SIN IA · v${resumen.version}",
@@ -507,7 +563,7 @@ private fun TarjetaBorrador(
                 "Generado ${formatearFecha(resumen.fechaGeneracion)}" +
                         (if (resumen.modeloIA.isNotBlank()) " · ${resumen.modeloIA}" else "") +
                         " · eventos válidos ahora: $totalValidos",
-                color = AmarilloAviso, fontSize = 11.sp
+                color = AmarilloAviso, fontSize = 12.sp
             )
         }
     }
@@ -522,7 +578,11 @@ private fun TarjetaAprobado(resumen: ResumenPartido, lector: LectorNarracion) {
         border = BorderStroke(1.dp, VerdeFigma.copy(alpha = 0.4f))
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("✓ Resumen aprobado", color = VerdeFigma, fontWeight = FontWeight.ExtraBold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = VerdeFigma, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Resumen aprobado", color = VerdeFigma, fontWeight = FontWeight.ExtraBold)
+            }
             Text(
                 LineaDeCal.colores.let { paleta -> remember(resumen.textoFinal, paleta) { ResaltadoNarracion.resaltar(resumen.textoFinal, paleta) } },
                 color = SportProNavy, fontSize = 14.sp, lineHeight = 20.sp
@@ -531,7 +591,7 @@ private fun TarjetaAprobado(resumen: ResumenPartido, lector: LectorNarracion) {
                 "Aprobado por ${resumen.nombreAprobador.ifBlank { "el DT" }} · " +
                         formatearFecha(resumen.fechaAprobacion) +
                         " · ${resumen.totalEventos} eventos fuente",
-                color = SportProTextoSecundario, fontSize = 11.sp
+                color = SportProTextoSecundario, fontSize = 12.sp
             )
             BotonEscuchar(resumen.textoFinal, lector)
         }
@@ -563,9 +623,13 @@ private fun TarjetaComentarios(
 
     TarjetaBlanca {
         Text("COMENTARIOS DE LOS DT (${comentarios.size})", color = SportProTextoSecundario,
-            fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-        Text("🔒 Solo los directores técnicos ven estos comentarios.",
-            color = SportProTextoSecundario, fontSize = 11.sp)
+            fontFamily = FamiliaEtiquetas, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.Lock, contentDescription = null, tint = SportProTextoSecundario, modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("Solo los directores técnicos ven estos comentarios.",
+                color = SportProTextoSecundario, fontSize = 12.sp)
+        }
         Spacer(Modifier.height(8.dp))
 
         if (comentarios.isEmpty()) {
@@ -588,7 +652,7 @@ private fun TarjetaComentarios(
                             c.nombreAutor.ifBlank { "DT" } + if (c.autor == uidActual) " (tú)" else "",
                             color = SportProNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp
                         )
-                        Text(formatearFecha(c.fecha), color = SportProTextoSecundario, fontSize = 11.sp)
+                        Text(formatearFecha(c.fecha), color = SportProTextoSecundario, fontSize = 12.sp)
                     }
                     Text(c.texto, color = SportProNavy, fontSize = 13.sp, lineHeight = 18.sp)
                     // El autor borra lo suyo; el DT titular puede retirar
@@ -597,7 +661,7 @@ private fun TarjetaComentarios(
                     if (propio || puedeModerar) {
                         Text(
                             if (propio) "Eliminar" else "Eliminar por ofensivo o inapropiado",
-                            color = SportProRojo, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                            color = SportProRojo, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(top = 4.dp).clickable {
                                 motivo = ""
                                 porEliminar = c
@@ -682,7 +746,7 @@ private fun BotonEscuchar(texto: String, lector: LectorNarracion) {
         Text(
             "Para escuchar la narración instala la voz en español en " +
                     "Ajustes › Sistema › Idiomas › Salida de texto a voz.",
-            color = SportProTextoSecundario, fontSize = 11.sp
+            color = SportProTextoSecundario, fontSize = 12.sp
         )
         return
     }
@@ -691,15 +755,23 @@ private fun BotonEscuchar(texto: String, lector: LectorNarracion) {
         enabled = lector.disponible && texto.isNotBlank(),
         shape = FormaBotonSportPro,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (lector.hablando) SportProRojo else SportProNavy
+            containerColor = if (lector.hablando) SportProRojo else SportProNavyFondo
         ),
         modifier = Modifier.fillMaxWidth().height(46.dp)
     ) {
+        if (lector.disponible) {
+            Icon(
+                if (lector.hablando) Icons.Rounded.Stop else Icons.AutoMirrored.Rounded.VolumeUp,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+        }
         Text(
             when {
                 !lector.disponible -> "Preparando audio…"
-                lector.hablando -> "⏹ Detener audio"
-                else -> "🔊 Escuchar narración"
+                lector.hablando -> "Detener audio"
+                else -> "Escuchar narración"
             },
             fontWeight = FontWeight.Bold
         )
@@ -711,17 +783,17 @@ private fun BotonEscuchar(texto: String, lector: LectorNarracion) {
 private fun TarjetaNotaEvaluacion(nota: EvaluacionNarracion?, resumen: ResumenPartido) {
     TarjetaBlanca {
         Text("NOTA DE EVALUACIÓN · v${resumen.version}", color = SportProTextoSecundario,
-            fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            fontFamily = FamiliaEtiquetas, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(6.dp))
         // Si aún no carga la colección, se usa la evaluación del resumen
         val utilidad = nota?.utilidad ?: resumen.evaluacion.utilidad
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("$utilidad/5", color = SportProNavy, fontFamily = FontFamily.Serif,
+            Text("$utilidad/5", color = SportProNavy, fontFamily = FamiliaTitulos,
                 fontWeight = FontWeight.ExtraBold, fontSize = 28.sp)
             Spacer(Modifier.width(10.dp))
             Column {
                 Text(estrellas(utilidad), color = VerdeFigma, fontSize = 16.sp)
-                Text("Utilidad percibida", color = SportProTextoSecundario, fontSize = 11.sp)
+                Text("Utilidad percibida", color = SportProTextoSecundario, fontSize = 12.sp)
             }
         }
         val omisiones = nota?.omisiones ?: resumen.evaluacion.omisiones
@@ -735,7 +807,7 @@ private fun TarjetaNotaEvaluacion(nota: EvaluacionNarracion?, resumen: ResumenPa
             Text(
                 (if (nota.textoModificado) "El DT editó el texto de la IA" else "Texto de la IA sin cambios") +
                         " · ${nota.nombreEvaluador.ifBlank { "DT" }} · ${formatearFecha(nota.fechaEvaluacion)}",
-                color = SportProTextoSecundario, fontSize = 11.sp
+                color = SportProTextoSecundario, fontSize = 12.sp
             )
         }
     }
@@ -754,7 +826,7 @@ private fun FilaNotaEvaluacion(n: EvaluacionNarracion) {
                         " · ${n.utilidad}/5 ${estrellas(n.utilidad)}",
                 color = SportProNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp
             )
-            Text(formatearFecha(n.fechaEvaluacion), color = SportProTextoSecundario, fontSize = 11.sp)
+            Text(formatearFecha(n.fechaEvaluacion), color = SportProTextoSecundario, fontSize = 12.sp)
         }
         DetalleNota("Omisiones", n.omisiones)
         DetalleNota("Errores", n.erroresOInvenciones)
@@ -762,7 +834,7 @@ private fun FilaNotaEvaluacion(n: EvaluacionNarracion) {
         Text(
             "Evaluó ${n.nombreEvaluador.ifBlank { "el DT" }}" +
                     (if (n.modeloIA.isNotBlank()) " · ${n.modeloIA}" else ""),
-            color = SportProTextoSecundario, fontSize = 11.sp
+            color = SportProTextoSecundario, fontSize = 12.sp
         )
     }
 }
@@ -789,13 +861,15 @@ private fun AvisoEstado(titulo: String, texto: String, fondo: Color, color: Colo
 private fun FilaEventoFuente(e: EventoPartido, nombreEquipo: String, nombreRival: String) {
     TarjetaBlanca {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("${e.minuto}'", color = SportProNavy, fontFamily = FontFamily.Monospace,
+            Text("${e.minuto}'", color = SportProNavy, fontFamily = FamiliaEtiquetas,
                 fontWeight = FontWeight.Bold, modifier = Modifier.width(44.dp))
-            Text(
-                simboloEvento(
+            Icon(
+                imageVector = iconoEvento(
                     codigo = e.codigoTipoEvento,
                     tipoTarjeta = e.tipoTarjeta
                 ),
+                contentDescription = null,
+                tint = colorSimboloEvento(e.codigoTipoEvento, e.tipoTarjeta),
                 modifier = Modifier.width(28.dp)
             )
             Column(Modifier.weight(1f)) {
@@ -828,7 +902,7 @@ private fun FormularioEvaluacion(
 ) {
     TarjetaBlanca {
         Text("EVALUACIÓN DEL RESUMEN", color = SportProTextoSecundario,
-            fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            fontFamily = FamiliaEtiquetas, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text("Utilidad percibida", color = SportProNavy, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
         Spacer(Modifier.height(6.dp))
@@ -884,7 +958,7 @@ private fun FilaVersion(v: VersionResumen) {
         ) {
             Text("v${v.version} · ${nombreTipoVersion(v.tipo)}", color = SportProNavy,
                 fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            Text(formatearFecha(v.fecha), color = SportProTextoSecundario, fontSize = 11.sp)
+            Text(formatearFecha(v.fecha), color = SportProTextoSecundario, fontSize = 12.sp)
         }
         if (v.nota.isNotBlank()) {
             Text(v.nota, color = SportProTextoSecundario, fontSize = 12.sp)

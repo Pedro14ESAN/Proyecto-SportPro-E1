@@ -1,5 +1,15 @@
 package com.example.projectsportpro2026_2.ui.mensualidades
 
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.Icons
+import com.example.projectsportpro2026_2.ui.comun.BotonPrincipal
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.VarianteTicket
+import com.example.projectsportpro2026_2.ui.comun.TarjetaTicket
+import com.example.projectsportpro2026_2.ui.comun.ContadorLed
+import com.example.projectsportpro2026_2.ui.comun.anchoCompleto
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -216,70 +226,13 @@ fun PantallaMensualidades(
                     )
         ) {
 
-            Spacer(
-                Modifier.height(
-                    14.dp
-                )
-            )
-
-            Row(
-                modifier =
-                    Modifier.fillMaxWidth(),
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-
-                TextButton(
-                    onClick =
-                        onVolver
-                ) {
-                    Text(
-                        "← Inicio",
-                        color =
-                            VerdeSportPro
-                    )
-                }
-
-                Spacer(
-                    Modifier.weight(1f)
-                )
-
-                Text(
-                    text =
-                        "SPORTPRO",
-                    fontWeight =
-                        FontWeight.Bold,
-                    color =
-                        AzulSportPro
-                )
-            }
-
-            Spacer(
-                Modifier.height(
-                    12.dp
-                )
-            )
-
-            Text(
-                text =
-                    "CLUB DEPORTIVO",
-                color =
-                    VerdeSportPro,
-                fontSize =
-                    11.sp,
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-            Text(
-                text =
-                    "Mensualidades",
-                color =
-                    AzulSportPro,
-                fontSize =
-                    30.sp,
-                fontWeight =
-                    FontWeight.Bold
+            // Línea de cal (6.5, img 06): cabecera de césped (mismo "Inicio" y mismos textos)
+            CabeceraCancha(
+                titulo = "Mensualidades",
+                etiqueta = "CLUB DEPORTIVO",
+                onVolver = onVolver,
+                descripcionVolver = "Inicio",
+                modifier = Modifier.anchoCompleto(18.dp)
             )
 
             Spacer(
@@ -494,7 +447,8 @@ fun PantallaMensualidades(
                 Rol.ADM
             ) {
 
-                Button(
+                BotonPrincipal(
+                    texto = "Registrar mensualidad",
                     onClick = {
                         mensualidadEdicion =
                             null
@@ -505,29 +459,8 @@ fun PantallaMensualidades(
                         mostrarFormulario =
                             true
                     },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(
-                                48.dp
-                            ),
-                    colors =
-                        ButtonDefaults
-                            .buttonColors(
-                                containerColor =
-                                    VerdeSportPro
-                            ),
-                    shape =
-                        RoundedCornerShape(
-                            14.dp
-                        )
-                ) {
-                    Text(
-                        "+ Registrar mensualidad",
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-                }
+                    icono = Icons.Rounded.Add
+                )
 
             } else {
 
@@ -551,9 +484,7 @@ fun PantallaMensualidades(
                         fontSize =
                             12.sp,
                         color =
-                            Color(
-                                0xFF715B21
-                            )
+                            LineaDeCal.colores.amarilloTexto /* antes 0xFF715B21 */
                     )
                 }
             }
@@ -636,7 +567,7 @@ fun PantallaMensualidades(
                             text =
                                 "No hay mensualidades para mostrar.",
                             color =
-                                Color.Gray
+                                LineaDeCal.colores.textoSecundario
                         )
                     }
                 }
@@ -762,47 +693,17 @@ private fun TarjetaContador(
     modifier: Modifier = Modifier
 ) {
 
-    Surface(
-        modifier =
-            modifier,
-        color =
-            fondo,
-        shape =
-            RoundedCornerShape(
-                14.dp
-            )
-    ) {
-
-        Column(
-            modifier =
-                Modifier.padding(
-                    14.dp
-                ),
-            horizontalAlignment =
-                Alignment.CenterHorizontally
-        ) {
-
-            Text(
-                text =
-                    numero.toString(),
-                color =
-                    AzulSportPro,
-                fontSize =
-                    23.sp,
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-            Text(
-                text =
-                    texto,
-                fontSize =
-                    11.sp,
-                color =
-                    Color.DarkGray
-            )
+    // Línea de cal: contador LED (el fondo de antes ya no se usa)
+    ContadorLed(
+        valor = numero.toString(),
+        etiqueta = texto,
+        modifier = modifier,
+        color = when (fondo) {
+            RojoClaro -> LineaDeCal.colores.naranja
+            AmarilloClaro -> LineaDeCal.colores.amarillo
+            else -> LineaDeCal.colores.lima
         }
-    }
+    )
 }
 
 @Composable
@@ -811,54 +712,29 @@ private fun TarjetaMensualidad(
     onClick: () -> Unit
 ) {
 
-    Card(
-        onClick =
-            onClick,
-        modifier =
-            Modifier.fillMaxWidth(),
-        shape =
-            RoundedCornerShape(
-                16.dp
-            ),
-        colors =
-            CardDefaults
-                .cardColors(
-                    containerColor =
-                        LineaDeCal.colores.superficie
-                )
+    // Línea de cal (6.5): un ticket por mensualidad, con el periodo en el talón. Sin montos (RN-03).
+    val mes = try {
+        java.time.YearMonth.parse(mensualidad.periodo)
+    } catch (e: Exception) {
+        null
+    }
+    TarjetaTicket(
+        hora = mes?.month?.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.forLanguageTag("es-PE"))
+            ?.replace(".", "")?.uppercase() ?: mensualidad.periodo,
+        fecha = mes?.year?.toString() ?: "",
+        variante = when (mensualidad.estado) {
+            EstadoMensualidad.PAGADO -> VarianteTicket.VERDE
+            EstadoMensualidad.PENDIENTE -> VarianteTicket.AMARILLA
+            EstadoMensualidad.VENCIDO -> VarianteTicket.NORMAL
+        },
+        onClick = onClick
     ) {
-
         Row(
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        16.dp
-                    ),
+                Modifier.fillMaxWidth(),
             verticalAlignment =
                 Alignment.CenterVertically
         ) {
-
-            Surface(
-                color =
-                    colorEstadoClaro(
-                        mensualidad.estado
-                    ),
-                shape =
-                    RoundedCornerShape(
-                        100.dp
-                    ),
-                modifier =
-                    Modifier.size(
-                        12.dp
-                    )
-            ) {}
-
-            Spacer(
-                Modifier.width(
-                    12.dp
-                )
-            )
 
             Column(
                 modifier =
@@ -883,7 +759,7 @@ private fun TarjetaMensualidad(
                     text =
                         "${mensualidad.nombreAcademia} · ${textoPeriodo(mensualidad.periodo)}",
                     color =
-                        Color.Gray,
+                        LineaDeCal.colores.textoSecundario,
                     fontSize =
                         12.sp
                 )
@@ -902,39 +778,15 @@ private fun EtiquetaEstado(
     estado: EstadoMensualidad
 ) {
 
-    Surface(
-        color =
-            colorEstadoClaro(
-                estado
-            ),
-        shape =
-            RoundedCornerShape(
-                50.dp
-            )
-    ) {
-
-        Text(
-            text =
-                textoEstado(
-                    estado
-                ),
-            modifier =
-                Modifier.padding(
-                    horizontal =
-                        10.dp,
-                    vertical =
-                        5.dp
-                ),
-            fontSize =
-                11.sp,
-            fontWeight =
-                FontWeight.Bold,
-            color =
-                colorEstadoOscuro(
-                    estado
-                )
-        )
-    }
+    // Línea de cal: ChipEstado Pagado / Pendiente / Vencido
+    ChipEstado(
+        textoEstado(estado),
+        when (estado) {
+            EstadoMensualidad.PAGADO -> TipoEstado.OK
+            EstadoMensualidad.PENDIENTE -> TipoEstado.PENDIENTE
+            EstadoMensualidad.VENCIDO -> TipoEstado.ERROR
+        }
+    )
 }
 
 @Composable
@@ -961,8 +813,7 @@ private fun DetalleMensualidad(
         Text(
             text =
                 "MENSUALIDAD · ${textoPeriodo(mensualidad.periodo)}",
-            fontSize =
-                11.sp,
+            fontSize = 12.sp,
             color =
                 VerdeSportPro,
             fontWeight =
@@ -998,7 +849,7 @@ private fun DetalleMensualidad(
                 mensualidad
                     .nombreAcademia,
             color =
-                Color.Gray
+                LineaDeCal.colores.textoSecundario
         )
 
         Spacer(
@@ -1009,9 +860,7 @@ private fun DetalleMensualidad(
 
         Surface(
             color =
-                Color(
-                    0xFFF5F7F6
-                ),
+                LineaDeCal.colores.apagadoFondo /* antes 0xFFF5F7F6 */,
             shape =
                 RoundedCornerShape(
                     15.dp
@@ -1109,9 +958,7 @@ private fun DetalleMensualidad(
                     fontSize =
                         12.sp,
                     color =
-                        Color(
-                            0xFF715B21
-                        )
+                        LineaDeCal.colores.amarilloTexto /* antes 0xFF715B21 */
                 )
             }
         }
@@ -1135,7 +982,7 @@ private fun FilaDetalle(
             text =
                 titulo,
             color =
-                Color.Gray,
+                LineaDeCal.colores.textoSecundario,
             fontSize =
                 12.sp
         )
@@ -1336,10 +1183,9 @@ private fun FormularioMensualidad(
                                                         Text(
                                                             text =
                                                                 jugador.categoria,
-                                                            fontSize =
-                                                                11.sp,
+                                                            fontSize = 12.sp,
                                                             color =
-                                                                Color.Gray
+                                                                LineaDeCal.colores.textoSecundario
                                                         )
                                                     }
                                                 }
@@ -1431,7 +1277,7 @@ private fun FormularioMensualidad(
                         text =
                             "Periodo: ${textoPeriodo(periodo)}",
                         color =
-                            Color.Gray
+                            LineaDeCal.colores.textoSecundario
                     )
                 }
 

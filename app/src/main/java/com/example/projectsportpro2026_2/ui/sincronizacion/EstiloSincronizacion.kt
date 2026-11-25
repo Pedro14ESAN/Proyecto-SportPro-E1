@@ -1,5 +1,18 @@
 package com.example.projectsportpro2026_2.ui.sincronizacion
 
+import androidx.compose.material.icons.rounded.Event
+import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material.icons.rounded.OutlinedFlag
+import androidx.compose.material.icons.rounded.CropPortrait
+import androidx.compose.material.icons.rounded.GpsFixed
+import androidx.compose.material.icons.rounded.PanTool
+import androidx.compose.material.icons.rounded.Flag
+import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import com.example.projectsportpro2026_2.ui.theme.TokenOscuroTexto2
 import androidx.compose.runtime.Composable
@@ -75,6 +88,30 @@ fun simboloEvento(
         "CAMBIO" -> "🔄"
 
         else -> "📋"
+    }
+
+/*
+ * Línea de cal: ícono de Material para cada tipo de evento (reemplaza a los emojis de
+ * simboloEvento, que se conserva por compatibilidad).
+ */
+fun iconoEvento(
+    codigo: String,
+    tipoTarjeta: TipoTarjeta =
+        TipoTarjeta.NINGUNA
+): ImageVector =
+    when (codigo) {
+        "INICIO" -> Icons.Rounded.PlayArrow
+        "FIN" -> Icons.Rounded.Stop
+        "SAQUE_META" -> Icons.Rounded.SportsSoccer
+        "SAQUE_LATERAL" -> Icons.Rounded.SwapHoriz
+        "TIRO_ESQUINA" -> Icons.Rounded.Flag
+        "FALTA" -> Icons.Rounded.PanTool
+        "PENAL" -> Icons.Rounded.GpsFixed
+        "GOL" -> Icons.Rounded.SportsSoccer
+        "TARJETA" -> Icons.Rounded.CropPortrait
+        "FUERA_JUEGO" -> Icons.Rounded.OutlinedFlag
+        "CAMBIO" -> Icons.Rounded.SwapVert
+        else -> Icons.Rounded.Event
     }
 
 // Línea de cal: @Composable porque los colores salen del tema (claro u oscuro).

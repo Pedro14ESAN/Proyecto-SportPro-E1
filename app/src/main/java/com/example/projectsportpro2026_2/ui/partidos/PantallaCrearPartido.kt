@@ -1,5 +1,12 @@
 package com.example.projectsportpro2026_2.ui.partidos
 
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.background
@@ -129,8 +136,9 @@ fun PantallaCrearPartido(
         TextButton(
             onClick = onVolver
         ) {
+            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
             Text(
-                text = "← Partidos",
+                text = "Partidos",
                 color = SportProVerde,
                 fontWeight = FontWeight.Medium
             )
@@ -169,10 +177,10 @@ fun PantallaCrearPartido(
                     Text("Selecciona un equipo")
                 },
                 trailingIcon = {
-                    Text(
-                        text = "⌄",
-                        color = SportProTextoSecundario,
-                        fontWeight = FontWeight.Bold
+                    Icon(
+                        imageVector = Icons.Rounded.ExpandMore,
+                        contentDescription = null,
+                        tint = SportProTextoSecundario
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -260,7 +268,7 @@ fun PantallaCrearPartido(
                 SelectorLecturaSportPro(
                     valor = mostrarFecha(fecha),
                     placeholder = "dd/mm/aaaa",
-                    icono = "▣",
+                    icono = Icons.Rounded.CalendarMonth,
                     onClick = {
                         dialogoFecha.show()
                     }
@@ -283,7 +291,7 @@ fun PantallaCrearPartido(
                 SelectorLecturaSportPro(
                     valor = hora,
                     placeholder = "--:--",
-                    icono = "◷",
+                    icono = Icons.Rounded.Schedule,
                     onClick = {
                         dialogoHora.show()
                     }
@@ -387,7 +395,7 @@ fun PantallaCrearPartido(
 private fun SelectorLecturaSportPro(
     valor: String,
     placeholder: String,
-    icono: String,
+    icono: ImageVector,
     onClick: () -> Unit
 ) {
     Box {
@@ -400,10 +408,11 @@ private fun SelectorLecturaSportPro(
                 Text(placeholder)
             },
             trailingIcon = {
-                Text(
-                    text = icono,
-                    color = SportProNavy
-                )
+                Icon(
+                    imageVector = icono,
+                    contentDescription = null,
+                    tint = SportProNavy
+                    )
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -423,61 +432,8 @@ private fun SelectorLecturaSportPro(
 
 @Composable
 private fun CabeceraSportProSimple() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-
-            Surface(
-                modifier = Modifier.size(38.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = SportProNavyFondo
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "⚽",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-
-            Column {
-
-                Text(
-                    text = "SPORTPRO",
-                    color = SportProNavy,
-                    fontWeight = FontWeight.Black,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(
-                    text = "",
-                    color = SportProTextoSecundario,
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-
-        Surface(
-            modifier = Modifier.size(38.dp),
-            shape = CircleShape,
-            color = SportProVerdeClaro
-        ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Text("🔔")
-            }
-        }
-    }
+    // Línea de cal: la cabecera decorativa (logo ⚽ y campana 🔔 sin acción) se quitó;
+    // cada pantalla muestra su título y su botón de volver.
 }
 
 @Composable

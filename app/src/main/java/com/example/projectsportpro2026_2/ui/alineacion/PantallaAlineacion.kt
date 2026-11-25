@@ -1,5 +1,8 @@
 package com.example.projectsportpro2026_2.ui.alineacion
 
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
@@ -179,8 +182,9 @@ fun PantallaAlineacion(
                 TextButton(
                     onClick = onVolver
                 ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
                     Text(
-                        text = "← Partidos",
+                        text = "Partidos",
                         color = SportProVerde
                     )
                 }
@@ -967,7 +971,7 @@ private fun TarjetaTitular(
         shape = FormaTarjetaSportPro,
         border = BorderStroke(
             1.dp,
-            Color(0xFFB9E0C3)
+            LineaDeCal.colores.okBorde /* antes 0xFFB9E0C3 */
         )
     ) {
 
@@ -1349,64 +1353,8 @@ private fun TextoVacioAlineacion(
 
 @Composable
 private fun CabeceraAlineacionSportPro() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement =
-            Arrangement.SpaceBetween
-    ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement =
-                Arrangement.spacedBy(10.dp)
-        ) {
-
-            Surface(
-                modifier = Modifier.size(38.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = SportProNavyFondo
-            ) {
-                Box(
-                    contentAlignment =
-                        Alignment.Center
-                ) {
-                    Text("⚽")
-                }
-            }
-
-            Column {
-
-                Text(
-                    text = "SPORTPRO",
-                    color = SportProNavy,
-                    style =
-                        MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black
-                )
-
-                Text(
-                    text = "",
-                    color = SportProTextoSecundario,
-                    style =
-                        MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-
-        Surface(
-            modifier = Modifier.size(38.dp),
-            shape = CircleShape,
-            color = SportProVerdeClaro
-        ) {
-            Box(
-                contentAlignment =
-                    Alignment.Center
-            ) {
-                Text("🔔")
-            }
-        }
-    }
+    // Línea de cal: la cabecera decorativa (logo ⚽ y campana 🔔 sin acción) se quitó;
+    // cada pantalla muestra su título y su botón de volver.
 }
 
 private fun inicialesJugador(

@@ -1,5 +1,9 @@
 package com.example.projectsportpro2026_2.ui.eventospartido
 
+import androidx.compose.material.icons.rounded.CropPortrait
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -405,7 +409,7 @@ private fun DetalleEvento(
                         .isNotBlank()
                 ) {
                     DatoDetalle(
-                        "↓ Sale",
+                        "Sale",
                         evento.nombreJugadorSale
                     )
                 }
@@ -415,7 +419,7 @@ private fun DetalleEvento(
                         .isNotBlank()
                 ) {
                     DatoDetalle(
-                        "↑ Entra",
+                        "Entra",
                         evento.nombreJugadorEntra
                     )
                 }
@@ -734,7 +738,7 @@ private fun FormularioCorreccion(
                 seleccionado =
                     formulario.tipoTarjeta ==
                             TipoTarjeta.AMARILLA,
-                color = Color(0xFFD9A900),
+                color = LineaDeCal.colores.amarillo /* antes 0xFFD9A900 */,
                 modifier = Modifier.weight(1f),
                 onClick = {
                     onTipoTarjeta(
@@ -748,7 +752,7 @@ private fun FormularioCorreccion(
                 seleccionado =
                     formulario.tipoTarjeta ==
                             TipoTarjeta.ROJA,
-                color = Color(0xFFC62828),
+                color = LineaDeCal.colores.rojo /* antes 0xFFC62828 */,
                 modifier = Modifier.weight(1f),
                 onClick = {
                     onTipoTarjeta(
@@ -862,7 +866,7 @@ private fun FormularioCorreccion(
             } else {
 
                 Text(
-                    text = "↓ JUGADOR QUE SALE",
+                    text = "JUGADOR QUE SALE",
                     color = SportProRojo,
                     fontWeight = FontWeight.Bold
                 )
@@ -879,7 +883,7 @@ private fun FormularioCorreccion(
                 )
 
                 Text(
-                    text = "↑ JUGADOR QUE ENTRA",
+                    text = "JUGADOR QUE ENTRA",
                     color = SportProVerde,
                     fontWeight = FontWeight.Bold
                 )
@@ -1075,10 +1079,11 @@ private fun BotonTipoTarjetaCorreccion(
                 Arrangement.Center
         ) {
 
-            Text(
-                text = "▰",
-                color = color,
-                fontWeight = FontWeight.Black
+            Icon(
+                Icons.Rounded.CropPortrait,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(20.dp)
             )
 
             Spacer(

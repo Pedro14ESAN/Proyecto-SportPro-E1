@@ -1,5 +1,17 @@
 package com.example.projectsportpro2026_2.ui.eventospartido
 
+import androidx.compose.material.icons.rounded.CropPortrait
+import com.example.projectsportpro2026_2.ui.comun.MarcadorLed
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.WarningAmber
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -179,8 +191,9 @@ fun PantallaPartidoEnVivo(
                     onClick = onVolver,
                     contentPadding = PaddingValues(0.dp)
                 ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
                     Text(
-                        text = "← Partidos",
+                        text = "Partidos",
                         color = SportProVerde,
                         fontWeight = FontWeight.Bold
                     )
@@ -703,6 +716,7 @@ fun PantallaPartidoEnVivo(
 }
 
 @Composable
+@Composable
 private fun TarjetaMarcador(
     nombreEquipo: String,
     nombreRival: String,
@@ -712,99 +726,40 @@ private fun TarjetaMarcador(
     // HU16: advertencia de información no sincronizada
     avisoRevision: String? = null
 ) {
-    Card(
+    // Línea de cal (6.9, img 01/02): marcador LED grande con los mismos textos
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = SportProNavyFondo
-        )
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 18.dp,
-                    vertical = 20.dp
-                ),
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-            verticalArrangement =
-                Arrangement.spacedBy(12.dp)
-        ) {
-
-            Text(
-                text =
-                    if (
-                        estadoPartido ==
-                        EstadoPartido.EN_CURSO
-                    ) {
-                        "PARTIDO EN CURSO"
-                    } else {
-                        textoEstadoPartido(
-                            estadoPartido
-                        )
-                    },
-                color = SportProVerdeClaro,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment =
-                    Alignment.CenterVertically,
-                horizontalArrangement =
-                    Arrangement.SpaceBetween
-            ) {
-
-                Text(
-                    text =
-                        nombreEquipo.uppercase(),
-                    modifier = Modifier.weight(1f),
-                    color = Color.White,
-                    style =
-                        MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text =
-                        "$golesPropios–$golesRival",
-                    modifier = Modifier.padding(
-                        horizontal = 18.dp
-                    ),
-                    color = Color.White,
-                    style =
-                        MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Black
-                )
-
-                Text(
-                    text =
-                        nombreRival.uppercase(),
-                    modifier = Modifier.weight(1f),
-                    color = Color.White,
-                    style =
-                        MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            if (
+        MarcadorLed(
+            local = nombreEquipo,
+            rival = nombreRival,
+            golesLocal = golesPropios,
+            golesRival = golesRival,
+            etiquetaSuperior = if (
                 estadoPartido ==
                 EstadoPartido.EN_CURSO
             ) {
-                Text(
-                    text = "EN CURSO",
-                    color = SportProVerdeClaro,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
+                "PARTIDO EN CURSO"
+            } else {
+                textoEstadoPartido(
+                    estadoPartido
                 )
-            }
-
-            // HU16: el marcador no es definitivo
-            avisoRevision?.let { aviso ->
+            },
+            etiquetaInferior = if (estadoPartido == EstadoPartido.EN_CURSO) "EN CURSO" else null,
+            enVivo = estadoPartido == EstadoPartido.EN_CURSO,
+            provisional = avisoRevision != null
+        )
+        // HU16: el marcador no es definitivo
+        avisoRevision?.let { aviso ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = SyncNaranja,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(6.dp))
                 Text(
                     text = aviso,
                     color = SyncNaranja,
@@ -897,7 +852,7 @@ private fun BotonEventoRapido(
                     SportProSuperficie
                 }
             } else {
-                Color(0xFFE8ECEA)
+                LineaDeCal.colores.apagadoFondo /* antes 0xFFE8ECEA */
             },
         border =
             BorderStroke(
@@ -946,10 +901,11 @@ private fun BotonEventoRapido(
                         Alignment.Center
                 ) {
 
-                    Text(
-                        text =
+                    Icon(
+                        imageVector =
                             estilo.icono,
-                        color =
+                        contentDescription = null,
+                        tint =
                             if (
                                 destacado &&
                                 habilitado
@@ -958,10 +914,7 @@ private fun BotonEventoRapido(
                             } else {
                                 estilo.colorIcono
                             },
-                        style =
-                            MaterialTheme.typography.titleMedium,
-                        fontWeight =
-                            FontWeight.Black
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -1102,14 +1055,11 @@ private fun TarjetaCronologiaEvento(
                 }
             }
 
-            Text(
-                text = "›",
-                color =
-                    SportProTextoSecundario,
-                style =
-                    MaterialTheme.typography.titleLarge,
-                fontWeight =
-                    FontWeight.Bold
+            Icon(
+                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = null,
+                tint = SportProTextoSecundario,
+                modifier = Modifier.size(22.dp)
             )
         }
     }
@@ -1224,14 +1174,11 @@ private fun ModalRegistroEvento(
                                 contentAlignment = Alignment.Center
                             ) {
 
-                                Text(
-                                    text = estilo.icono,
-                        fontSize = 28.sp,
-                                    color = estilo.colorIcono,
-                                    style =
-                                        MaterialTheme.typography.titleLarge,
-                                    fontWeight =
-                                        FontWeight.Black
+                                Icon(
+                                    imageVector = estilo.icono,
+                                    contentDescription = null,
+                                    tint = estilo.colorIcono,
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
@@ -1262,11 +1209,11 @@ private fun ModalRegistroEvento(
                         contentAlignment =
                             Alignment.Center
                     ) {
-                        Text(
-                            text = "×",
-                            color = SportProNavy,
-                            fontWeight =
-                                FontWeight.Bold
+                        Icon(
+                            Icons.Rounded.Close,
+                            contentDescription = "Cerrar",
+                            tint = SportProNavy,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -1400,7 +1347,7 @@ private fun ModalRegistroEvento(
                 } else {
 
                     Text(
-                        text = "↓ JUGADOR QUE SALE",
+                        text = "JUGADOR QUE SALE",
                         color = SportProRojo,
                         fontWeight = FontWeight.Bold
                     )
@@ -1415,7 +1362,7 @@ private fun ModalRegistroEvento(
                     )
 
                     Text(
-                        text = "↑ JUGADOR QUE ENTRA",
+                        text = "JUGADOR QUE ENTRA",
                         color = SportProVerde,
                         fontWeight = FontWeight.Bold
                     )
@@ -1519,7 +1466,7 @@ private fun ModalRegistroEvento(
                         formulario.tipoTarjeta ==
                                 TipoTarjeta.AMARILLA,
                     habilitado = !registrando,
-                    color = Color(0xFFD9A900),
+                    color = LineaDeCal.colores.amarillo /* antes 0xFFD9A900 */,
                     modifier =
                         Modifier.weight(1f),
                     onClick = {
@@ -1536,7 +1483,7 @@ private fun ModalRegistroEvento(
                         formulario.tipoTarjeta ==
                                 TipoTarjeta.ROJA,
                     habilitado = !registrando,
-                    color = Color(0xFFC62828),
+                    color = LineaDeCal.colores.rojo /* antes 0xFFC62828 */,
                     modifier =
                         Modifier.weight(1f),
                     onClick = {
@@ -1705,11 +1652,11 @@ private fun BotonTipoTarjeta(
                 Arrangement.Center
         ) {
 
-            Text(
-                text = simbolo,
-                color = color,
-                fontWeight =
-                    FontWeight.Black
+            Icon(
+                Icons.Rounded.CropPortrait,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(20.dp)
             )
 
             Spacer(
@@ -1859,9 +1806,11 @@ private fun SelectorJugador(
                             TextOverflow.Ellipsis
                     )
 
-                    Text(
-                        text = "⌄",
-                        color = SportProNavy
+                    Icon(
+                        Icons.Rounded.ExpandMore,
+                        contentDescription = null,
+                        tint = SportProNavy,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -1956,7 +1905,11 @@ private fun CabeceraPartidoEnVivo(
                     contentAlignment =
                         Alignment.Center
                 ) {
-                    Text("⚽")
+                    Icon(
+                        Icons.Rounded.SportsSoccer,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
 

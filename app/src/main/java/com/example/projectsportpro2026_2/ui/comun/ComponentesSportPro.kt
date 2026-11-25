@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.comun
 
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.horizontalScroll
@@ -47,32 +48,8 @@ val EtiquetaGrisFondo: Color @Composable get() = LineaDeCal.colores.apagadoFondo
 
 @Composable
 fun CabeceraSportPro() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Surface(
-            modifier = Modifier.size(38.dp),
-            shape = RoundedCornerShape(10.dp),
-            color = SportProNavyFondo
-        ) {
-            Box(contentAlignment = Alignment.Center) { Text("⚽") }
-        }
-        Column {
-            Text(
-                text = "SPORTPRO",
-                color = SportProNavy,
-                fontWeight = FontWeight.Black,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "CLUB DEPORTIVO",
-                color = SportProTextoSecundario,
-                fontSize = 10.sp,
-                letterSpacing = 1.sp
-            )
-        }
-    }
+    // Línea de cal: la cabecera decorativa (logo ⚽ y "SPORTPRO") se quitó; cada pantalla
+    // muestra su cabecera de césped o su título con el botón de volver.
 }
 
 @Composable
@@ -102,7 +79,7 @@ fun EtiquetaSportPro(texto: String, color: Color, fondo: Color) {
         Text(
             text = texto,
             color = color,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -148,7 +125,7 @@ fun AvatarIniciales(
         Box(contentAlignment = Alignment.Center) {
             Text(
                 text = iniciales,
-                color = if (oscuro) Color(0xFFB8F28B) else SportProVerde,
+                color = if (oscuro) LineaDeCal.colores.lima /* antes 0xFFB8F28B */ else SportProVerde,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp
             )
@@ -161,8 +138,8 @@ fun TituloCampoSportPro(texto: String) {
     Text(
         text = texto,
         color = SportProTextoSecundario,
-        fontFamily = FontFamily.Monospace,
-        fontSize = 11.sp,
+        fontFamily = FamiliaEtiquetas,
+        fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.sp
     )

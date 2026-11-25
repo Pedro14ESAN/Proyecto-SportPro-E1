@@ -1,5 +1,13 @@
 package com.example.projectsportpro2026_2.ui.vinculaciones
 
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
 import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -81,15 +89,17 @@ fun PantallaMisJugadores(
                     viewModel.limpiarError()
                     mostrarDialogo = true
                 },
-                containerColor = VerdePrincipal,
-                contentColor = Color.White,
+                containerColor = LineaDeCal.colores.lima,
+                contentColor = LineaDeCal.colores.navy,
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text(
-                    "+ Solicitar",
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.Add, contentDescription = null)
+                    Text(" Solicitar", fontWeight = FontWeight.Bold)
+                }
             }
         }
     ) { relleno ->
@@ -97,43 +107,22 @@ fun PantallaMisJugadores(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(relleno)
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+                .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "← Volver",
-                color = VerdeOscuro,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-                modifier = Modifier.clickable(onClick = onVolver)
+            // Línea de cal: cabecera de césped (mismos textos y el mismo "Volver")
+            CabeceraCancha(
+                titulo = "Mis jugadores",
+                subtitulo = "Jugadores vinculados a tu cuenta y tus solicitudes.",
+                etiqueta = "APODERADO",
+                onVolver = onVolver,
+                descripcionVolver = "Volver"
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = "APODERADO",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        letterSpacing = 2.sp,
-                        color = VerdePrincipal
-                    )
-                )
-                Text(
-                    text = "Mis jugadores",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 30.sp,
-                        color = TituloOscuro
-                    )
-                )
-                Text(
-                    text = "Jugadores vinculados a tu cuenta y tus solicitudes.",
-                    color = TextoSecundario,
-                    fontSize = 14.sp
-                )
-            }
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
 
             // Pestañas de filtro: Activo, Pendiente, Inactivo, Todos
             Row(
@@ -210,6 +199,7 @@ fun PantallaMisJugadores(
                     )
                 }
             }
+            }
         }
     }
 
@@ -227,29 +217,15 @@ fun PantallaMisJugadores(
 
 @Composable
 private fun EtiquetaEstadoVinculacion(estado: EstadoVinculacion) {
-    val fondo = when (estado) {
-        EstadoVinculacion.PENDIENTE -> AvisoFondo
-        EstadoVinculacion.ACTIVA -> VerdeClaro
-        EstadoVinculacion.INACTIVA -> GrisInactivo
-    }
-    val texto = when (estado) {
-        EstadoVinculacion.PENDIENTE -> AvisoTexto
-        EstadoVinculacion.ACTIVA -> VerdeOscuro
-        EstadoVinculacion.INACTIVA -> TextoSecundario
-    }
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(fondo)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-        Text(
-            etiquetaEstado(estado),
-            color = texto,
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp
-        )
-    }
+    // Línea de cal: ChipEstado con los mismos estados y textos
+    ChipEstado(
+        etiquetaEstado(estado),
+        when (estado) {
+            EstadoVinculacion.PENDIENTE -> TipoEstado.PENDIENTE
+            EstadoVinculacion.ACTIVA -> TipoEstado.OK
+            EstadoVinculacion.INACTIVA -> TipoEstado.APAGADO
+        }
+    )
 }
 
 @Composable
@@ -258,9 +234,9 @@ private fun FilaDato(etiqueta: String, valor: String) {
         Text(
             text = etiqueta.uppercase(),
             style = TextStyle(
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FamiliaEtiquetas,
                 fontWeight = FontWeight.Bold,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 letterSpacing = 1.sp,
                 color = TextoEtiqueta
             )
@@ -401,7 +377,7 @@ private fun DialogoSolicitud(
             Text(
                 "Solicitar vinculación",
                 style = TextStyle(
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = FamiliaTitulos,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 22.sp,
                     color = TituloOscuro

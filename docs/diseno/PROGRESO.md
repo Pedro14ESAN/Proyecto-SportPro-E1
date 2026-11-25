@@ -142,3 +142,54 @@ HU tocadas: HU-02 (inicio por rol) y lo nuevo de la 7.1 (HU-08, HU-10, HU-11, HU
 
 - `style(HU-02): inicio de los 4 roles Línea de cal` (`PantallasInicio.kt`)
 - `feat(HU-02): InicioViewModel de solo lectura y contadores del inicio` (`InicioViewModel.kt`, `LogicaInicio.kt`, `LogicaInicioTest.kt`)
+
+---
+
+## Etapa 4 · Resto de pantallas, módulo por módulo (2026-11-25)
+
+Sección 6 de la espec. **No se compiló ni se corrieron tests** (pedido del usuario). Se revisó a mano y con scripts que llaves y paréntesis estén balanceados en cada archivo tocado.
+
+### En todos los módulos
+
+- Textos de 9 a 11 sp llevados a 12 sp (95 casos); `FontFamily.Serif` → `FamiliaTitulos` y `FontFamily.Monospace` → `FamiliaEtiquetas` (78 casos).
+- 81 colores escritos a mano dentro del código pasados a tokens del tema (`LineaDeCal.colores.*`, con el valor anterior en un comentario `/* antes … */`). Se dejó fijo el texto claro sobre la tarjeta oscura del partido en curso (`0xFFD7E5EC`), porque ese fondo es oscuro en los dos modos.
+- Emojis y flechas de texto que hacían de ícono → íconos Material Rounded (se conservan las reacciones ❤️ 👏 💪, que son de Comunidad, etapa 5).
+- "← Volver / ← Inicio / ← Partidos…" → ícono de flecha más el mismo texto (o el mismo texto como descripción de TalkBack en las cabeceras).
+- Las cabeceras decorativas propias (logo ⚽ + "SPORTPRO" + campana 🔔 **sin acción**) quedaron vacías: `Cabecera*SportPro()` de Crear/Editar/Detalle de partido, Convocatoria, Mis convocatorias, Alineación, Catálogo y Anuncios, y `CabeceraSportPro()` de `ComponentesSportPro`. No tenían ninguna acción; cada pantalla conserva su título y su botón de volver.
+- Kit: se agregaron `EscudoIniciales` (img 08) y `Modifier.anchoCompleto(margen)`, que deja la cabecera de césped a todo el ancho dentro de pantallas que ya tienen margen lateral, sin reestructurarlas.
+
+### Por módulo (comparado con el inventario de `PLAN.md`, sección 1)
+
+| # | Módulo | Qué cambió | Acciones del inventario |
+|---|---|---|---|
+| 1 | Autenticación | Bienvenida, Login, Registro y Recuperar con `FondoCancha`, `CampoSportPro` y `BotonPrincipal`. Íconos en la introducción y en las tarjetas de rol. `CampoFecha`: ícono de calendario | ✅ todas (Comenzar, Volver, Continuar / Ir a iniciar sesión, Saltar; Volver al inicio, Iniciar sesión, ¿Olvidaste…?, Crear cuenta; Enviar enlace; los 3 roles, aviso ADM, todos los campos y validaciones) |
+| 2 | Academias y equipos | `CabeceraCancha`, FAB lima con ícono, escudo de iniciales, `ChipEstado`, equipos inactivos apagados | ✅ todas (crear, editar, activar/inactivar, Equipos, Partidos, Catálogo, Directores técnicos, Jugadores, formularios) |
+| 3 | Jugadores, cuentas, mis jugadores, vinculaciones | Jugadores en cuadrícula de `CromoJugador` mini (foto, Inactivo, Menor de edad) con Editar e Inactivar debajo. Las demás pantallas: `CabeceraCancha` y `ChipEstado` | ✅ todas (alta, edición con foto y datos sensibles, Vincular, Solicitar, Solicitar desvinculación, pestañas, Autorizar, Rechazar, Desvincular) |
+| 4 | Mensualidades | `CabeceraCancha`, contadores como `ContadorLed`, un `TarjetaTicket` por mensualidad (periodo en el talón; verde = pagado, amarillo = pendiente), `ChipEstado`, `BotonPrincipal` "Registrar mensualidad". Sin montos | ✅ todas (búsqueda, chips de periodo y estado, detalle, Modificar estado, formulario, nota de solo consulta) |
+| 5 | Ejercicios y entrenamientos | `CabeceraCancha`. Ejercicios: `FichaTactica` según el objetivo, chip del objetivo, duración en Doto. Entrenamientos: `TarjetaTicket` (cancelados tachados), nota naranja del último cambio de horario (historial existente), caja LED "EJERCICIOS x/y" con barra en Planificar, ↑ ↓ como íconos | ✅ todas (selector, búsqueda, filtros, crear, editar, activar; editar y cancelar sesión, subir, bajar, quitar, agregar, publicar) |
+| 6 | Asistencias | `CabeceraCancha`, fichas redondas **P / A / J** (TalkBack lee "Presente", "Ausente" y "Justificado"), contadores como `ContadorLed`, `ChipEstado` en el historial | ✅ todas (registro rápido, guardar, corregir, cancelar corrección, historial por jugador) |
+| 7 | Partidos, convocatoria, alineación | Lista: `CabeceraCancha` y tickets (amarillo programado, oscuro en curso, tachado cancelado) con `ChipEstado`. Crear/Editar: íconos de calendario, hora y desplegable. Detalle: `MarcadorLed` e íconos en Editar, Abrir en vivo y Resumen | ✅ todas (todas las transiciones de estado y sus diálogos, convocar, responder, alineación completa) |
+| 8 | Catálogo de eventos | Menú "⋮" como `IconButton` con ícono | ✅ todas |
+| 9 | Partido en vivo y seguimiento | `MarcadorLed` grande (PROVISIONAL en naranja + aviso con ícono), aviso de sincronización con fondo naranja e íconos de nube y Reintentar, íconos Material por tipo de evento (`iconoEvento`) en la cronología, el panel, el resumen y la cancha. Seguimiento: marcador en Doto | ✅ todas. **HU-16 sin cambios de lógica** |
+| 10 | Anuncios, notificaciones, moderación, planes | Megáfono en anuncios, ícono por tipo de notificación (D-17), íconos en ofertas y en lo que incluye cada plan | ✅ todas |
+| 11 | Resumen con IA | `CabeceraCancha`, `MarcadorLed` del partido, íconos en los plegables, avisos, Generar, Aprobado, comentarios y audio | ✅ todas (generar con o sin IA, guardar, aprobar, rechazar, escuchar, comentarios, notas e historial) |
+| 12 | Estadísticas | `CabeceraCancha`, `CromoJugador` grande con edad y "MENOR" como insignia, métricas en Doto con íconos | ✅ todas (pestañas, selectores y aviso de datos protegidos) |
+
+### Decisiones y notas
+
+- **D-01**: `IndicadoresJugadorEnCancha` muestra un ícono de balón más "×N". `AlineacionReactivaTest` ahora comprueba el texto "×2". Las descripciones ("Ana Uno, 2 goles", etc.) no cambiaron.
+- **7.5 adelantada**: `CampoSportPro` ya trae el botón de mostrar u ocultar la contraseña, así que Login y Registro lo tienen desde esta etapa.
+- Textos: se quitaron solo los glifos ("Comenzar →" → "Comenzar" + ícono, "✓ Disponible" → ícono + "Disponible", "+ Nuevo" → ícono + "Nuevo"). El resto se conserva (D-09).
+- `simboloEvento()` (pública) se conserva sin cambios, pero la UI ya no la usa. La reemplaza `iconoEvento()`.
+- Quedan glifos que son contenido y no íconos: "Versión 1 → 2" en la auditoría, "Ajustes › Sistema › …" (ruta de ajustes), las estrellas ★☆ de la evaluación y "● EN VIVO" en Mis partidos. También queda `simbolo = "▰"`, un argumento que ya no se dibuja.
+
+### Pendiente (no es una regla rota; queda para las próximas etapas o la verificación final)
+
+- Detalles visuales de la sección 6 que no se hicieron: caja LED "RESPONDIERON x/y" en Convocatoria; colores del arquero y del jugador no disponible en la cancha de Alineación; cromo grande por jugador en Mis jugadores; tickets en Cuentas de jugadores y Vinculaciones (quedaron como tarjetas con `ChipEstado`).
+- `CampoFecha` abre el `DatePickerDialog` de Android (no el de Compose), que toma los colores de `themes.xml`, no del tema de Compose.
+- Comunidad (etapa 5) también usaba `CabeceraSportPro()`: hasta que se rediseñe, no muestra el logo arriba.
+- Compilar, correr los tests y revisar las pantallas en claro y en oscuro.
+
+### Commits sugeridos (uno por módulo)
+
+`style(HU-02): autenticación Línea de cal` · `style(HU-03): academias y equipos` · `style(HU-04/05): jugadores y vinculaciones` · `style(HU-06): mensualidades` · `style(HU-07/08): ejercicios y entrenamientos` · `style(HU-09): asistencias` · `style(HU-10/11/12): partidos, convocatoria y alineación` · `style(HU-13): catálogo de eventos` · `style(HU-14/16/17): partido en vivo y seguimiento` · `style(HU-19/20/24): anuncios, notificaciones, moderación y planes` · `style(HU-26/27): resumen con IA` · `style(HU-18): estadísticas`
