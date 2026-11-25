@@ -1,5 +1,19 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Place
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.LockOpen
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Verified
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.Icons
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -183,7 +197,7 @@ internal fun Desplegable(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                Text("▾", color = SportProTextoSecundario)
+                Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = SportProTextoSecundario, modifier = Modifier.size(20.dp))
             }
         }
 
@@ -225,6 +239,10 @@ internal fun Desplegable(
 private fun formatearFechaPrueba(millis: Long): String =
     SimpleDateFormat("EEE, dd MMM yyyy · HH:mm", Locale.forLanguageTag("es-PE")).format(Date(millis))
 
+/** Fecha corta para el chip amarillo: "sáb 5 dic · 09:00". */
+private fun fechaCortaPrueba(millis: Long): String =
+    SimpleDateFormat("EEE d MMM · HH:mm", Locale.forLanguageTag("es-PE")).format(Date(millis)).replace(".", "")
+
 @Composable
 private fun TarjetaAvisoPrueba(
     aviso: AvisoPrueba,
@@ -238,28 +256,25 @@ private fun TarjetaAvisoPrueba(
     val puedeReabrir = aviso.estado == EstadoAviso.CERRADO && aviso.fechaPrueba > System.currentTimeMillis()
     val hayAcciones = puedeGestionar && (vigente || puedeReabrir)
     var menuAbierto by remember { mutableStateOf(false) }
+    // D-13: "Ver detalles" despliega la descripción dentro de la misma tarjeta
+    var detallesAbiertos by remember(aviso.id) { mutableStateOf(false) }
 
+    // Línea de cal (6.10.3): el mismo molde de tarjeta que las publicaciones
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .alpha(if (vigente) 1f else 0.6f),
-        shape = FormaTarjetaSportPro,
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SportProSuperficie),
         border = BorderStroke(1.dp, if (vigente) SportProVerde else SportProBorde)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    modifier = Modifier.size(36.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    color = SportProNavyFondo
-                ) {
-                    Box(contentAlignment = Alignment.Center) { Text("⚽") }
-                }
+                AvatarIniciales(aviso.nombreAcademia, oscuro = true)
                 Spacer(Modifier.width(10.dp))
 
                 Column(Modifier.weight(1f)) {
@@ -277,26 +292,35 @@ private fun TarjetaAvisoPrueba(
                         )
                         EtiquetaSportPro(aviso.rolAutor.name, EtiquetaNaranja, EtiquetaNaranjaFondo)
                     }
-                    Text(
-                        text = "Publicación oficial verificada",
-                        color = SportProTextoSecundario,
-                        fontSize = 10.sp
-                    )
+                    // 6.10.3: "Aviso oficial" con el ícono verified
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Verified,
+                            contentDescription = null,
+                            tint = EtiquetaAzul,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Aviso oficial",
+                            color = EtiquetaAzul,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
 
+                // 6.10.7: menú ⋮. Autor o ADM: Cerrar / Reabrir convocatoria. Resto: la hoja actual.
                 if (hayAcciones) {
                     Box {
-                        Text(
-                            text = "•••",
-                            color = SportProTextoSecundario,
-                            modifier = Modifier
-                                .clickable { menuAbierto = true }
-                                .padding(8.dp)
-                        )
+                        BotonMas("Opciones del aviso") { menuAbierto = true }
                         DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) {
                             if (vigente) {
                                 DropdownMenuItem(
                                     text = { Text("Cerrar convocatoria", color = SportProRojo) },
+                                    leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null, tint = SportProRojo) },
                                     onClick = {
                                         menuAbierto = false
                                         onCerrar()
@@ -306,6 +330,7 @@ private fun TarjetaAvisoPrueba(
                             if (puedeReabrir) {
                                 DropdownMenuItem(
                                     text = { Text("Reabrir convocatoria") },
+                                    leadingIcon = { Icon(Icons.Rounded.LockOpen, contentDescription = null) },
                                     onClick = {
                                         menuAbierto = false
                                         onReabrir()
@@ -315,56 +340,102 @@ private fun TarjetaAvisoPrueba(
                         }
                     }
                 } else if (!puedeGestionar) {
-                    Text(
-                        text = "•••",
-                        color = SportProTextoSecundario,
-                        modifier = Modifier
-                            .clickable { onMas() }
-                            .padding(8.dp)
-                    )
+                    BotonMas("Opciones del aviso de ${aviso.nombreAcademia}") { onMas() }
                 }
             }
 
-            when (estadoVisible) {
-                EstadoAviso.ABIERTO -> EtiquetaSportPro("● PRUEBA ABIERTA", SportProVerde, SportProVerdeClaro)
-                EstadoAviso.CERRADO -> EtiquetaSportPro("CERRADA", EtiquetaGris, EtiquetaGrisFondo)
-                EstadoAviso.VENCIDO -> EtiquetaSportPro("VENCIDA", EtiquetaNaranja, EtiquetaNaranjaFondo)
-                EstadoAviso.OCULTO -> Unit
-            }
+            Column(
+                modifier = Modifier.padding(end = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // 6.10.5: estado según estadoEfectivo() y chip amarillo con la fecha
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    when (estadoVisible) {
+                        EstadoAviso.ABIERTO -> EtiquetaSportPro("● PRUEBA ABIERTA", SportProVerde, SportProVerdeClaro)
+                        EstadoAviso.CERRADO -> EtiquetaSportPro("CERRADA", EtiquetaGris, EtiquetaGrisFondo)
+                        EstadoAviso.VENCIDO -> EtiquetaSportPro("VENCIDA", EtiquetaGris, EtiquetaGrisFondo)
+                        EstadoAviso.OCULTO -> Unit
+                    }
+                    Spacer(Modifier.weight(1f))
+                    EtiquetaIcono(
+                        texto = fechaCortaPrueba(aviso.fechaPrueba),
+                        icono = Icons.Rounded.CalendarMonth,
+                        color = LineaDeCal.colores.navy,
+                        fondo = LineaDeCal.colores.amarillo
+                    )
+                }
 
-            Text(
-                text = aviso.titulo(),
-                color = SportProNavy,
-                fontWeight = FontWeight.Black,
-                fontSize = 16.sp
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                DatoAviso("🏆", "Categoría", aviso.categoria)
-                DatoAviso(
-                    "⚽", "Posición",
-                    if (aviso.posicionAbierta()) "Abierta (todas)" else aviso.posiciones.joinToString(" / ")
+                // 6.10.4: el título sale de AvisoPrueba.titulo() (no existe un título libre)
+                Text(
+                    text = aviso.titulo(),
+                    color = SportProNavy,
+                    fontFamily = FamiliaTitulos,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp
                 )
-                DatoAviso("📅", "Fecha", formatearFechaPrueba(aviso.fechaPrueba))
-                DatoAviso("📍", "Ubicación", aviso.ubicacion)
+
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    DatoAviso(Icons.Rounded.EmojiEvents, "Categoría", aviso.categoria)
+                    DatoAviso(
+                        Icons.Rounded.SportsSoccer, "Posición",
+                        if (aviso.posicionAbierta()) "Abierta (todas)" else aviso.posiciones.joinToString(" / ")
+                    )
+                    DatoAviso(Icons.Rounded.CalendarMonth, "Fecha", formatearFechaPrueba(aviso.fechaPrueba))
+                    DatoAviso(Icons.Rounded.Place, "Ubicación", aviso.ubicacion)
+                }
+
+                if (detallesAbiertos) {
+                    HorizontalDivider(color = SportProBorde)
+                    Text(
+                        text = aviso.descripcion,
+                        color = SportProTextoPrincipal,
+                        fontSize = 14.sp
+                    )
+                }
+
+                Button(
+                    onClick = { detallesAbiertos = !detallesAbiertos },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SportProNavyFondo,
+                        contentColor = LineaDeCal.colores.lima
+                    )
+                ) {
+                    Text(
+                        if (detallesAbiertos) "Ocultar detalles" else "Ver detalles",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Icon(
+                        if (detallesAbiertos) Icons.Rounded.ExpandLess else Icons.AutoMirrored.Rounded.ArrowForward,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
-
-            HorizontalDivider(color = SportProBorde)
-
-            Text(
-                text = aviso.descripcion,
-                color = SportProTextoPrincipal,
-                fontSize = 13.sp
-            )
         }
     }
 }
 
 @Composable
-private fun DatoAviso(emoji: String, etiqueta: String, valor: String) {
-    Text(
-        text = "$emoji $etiqueta: $valor",
-        color = SportProTextoSecundario,
-        fontSize = 13.sp
-    )
+private fun DatoAviso(icono: ImageVector, etiqueta: String, valor: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icono, contentDescription = null, tint = SportProVerde, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = "$etiqueta: ",
+            color = SportProTextoSecundario,
+            fontSize = 13.sp
+        )
+        Text(
+            text = valor,
+            color = SportProNavy,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
 }

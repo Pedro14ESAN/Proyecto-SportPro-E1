@@ -1,5 +1,17 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.Public
+import androidx.compose.material.icons.rounded.AccountBalance
+import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.AddPhotoAlternate
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.Icons
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -220,12 +232,14 @@ fun FormularioPublicacion(
                                 .align(Alignment.TopEnd)
                                 .padding(8.dp)
                         ) {
-                            Text(
-                                "✕ Quitar",
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Rounded.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Quitar", color = Color.White, fontSize = 12.sp)
+                            }
                         }
                     }
                     progresoImagen?.let { p ->
@@ -238,7 +252,7 @@ fun FormularioPublicacion(
                         Text(
                             "Subiendo imagen… ${(p * 100).toInt()} %",
                             color = SportProTextoSecundario,
-                            fontSize = 11.sp
+                            fontSize = 12.sp
                         )
                     }
                 } else {
@@ -266,14 +280,14 @@ fun FormularioPublicacion(
                                     color = SportProVerde
                                 )
                             } else {
-                                Text("📷", fontSize = 18.sp)
+                                Icon(Icons.Rounded.AddPhotoAlternate, contentDescription = null, tint = SportProNavy)
                             }
                             Column {
                                 Text("Añadir imagen", color = SportProNavy, fontWeight = FontWeight.SemiBold)
                                 Text(
                                     "Opcional · se quitan los datos de ubicación de la foto",
                                     color = SportProTextoSecundario,
-                                    fontSize = 11.sp
+                                    fontSize = 12.sp
                                 )
                             }
                         }
@@ -318,21 +332,21 @@ fun FormularioPublicacion(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OpcionVisibilidad(
-                        emoji = "👥", titulo = "Equipo", subtitulo = "Solo tu equipo",
+                        icono = Icons.Rounded.Groups, titulo = "Equipo", subtitulo = "Solo tu equipo",
                         seleccionado = visibilidad == VisibilidadPublicacion.EQUIPO,
                         habilitado = opciones.equipos.isNotEmpty(),
                         modifier = Modifier.weight(1f)
                     ) { visibilidadElegida = VisibilidadPublicacion.EQUIPO }
 
                     OpcionVisibilidad(
-                        emoji = "🏛", titulo = "Academia", subtitulo = "Todo el club",
+                        icono = Icons.Rounded.AccountBalance, titulo = "Academia", subtitulo = "Todo el club",
                         seleccionado = visibilidad == VisibilidadPublicacion.ACADEMIA,
                         habilitado = opciones.academias.isNotEmpty(),
                         modifier = Modifier.weight(1f)
                     ) { visibilidadElegida = VisibilidadPublicacion.ACADEMIA }
 
                     OpcionVisibilidad(
-                        emoji = "🌐", titulo = "Comunidad", subtitulo = "Red pública",
+                        icono = Icons.Rounded.Public, titulo = "Comunidad", subtitulo = "Red pública",
                         seleccionado = visibilidad == VisibilidadPublicacion.COMUNIDAD,
                         habilitado = true,
                         modifier = Modifier.weight(1f)
@@ -422,7 +436,7 @@ fun FormularioPublicacion(
 // Tarjeta de las 3 opciones de visibilidad (Equipo / Academia / Comunidad)
 @Composable
 private fun OpcionVisibilidad(
-    emoji: String,
+    icono: ImageVector,
     titulo: String,
     subtitulo: String,
     seleccionado: Boolean,
@@ -445,7 +459,7 @@ private fun OpcionVisibilidad(
             modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(emoji, fontSize = 18.sp)
+            Icon(icono, contentDescription = null, tint = if (seleccionado) SportProVerde else SportProNavy)
             Text(
                 text = titulo,
                 color = SportProNavy,
@@ -456,7 +470,7 @@ private fun OpcionVisibilidad(
             Text(
                 text = subtitulo,
                 color = SportProTextoSecundario,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 textAlign = TextAlign.Center
             )
         }

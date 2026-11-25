@@ -92,7 +92,7 @@ fun HojaUsuariosBloqueados(
                             Text(
                                 text = "Desde ${formatearFecha(bloqueo.fecha)}",
                                 color = SportProTextoSecundario,
-                                fontSize = 11.sp
+                                fontSize = 12.sp
                             )
                         }
                         OutlinedButton(

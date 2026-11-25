@@ -193,3 +193,43 @@ Sección 6 de la espec. **No se compiló ni se corrieron tests** (pedido del usu
 ### Commits sugeridos (uno por módulo)
 
 `style(HU-02): autenticación Línea de cal` · `style(HU-03): academias y equipos` · `style(HU-04/05): jugadores y vinculaciones` · `style(HU-06): mensualidades` · `style(HU-07/08): ejercicios y entrenamientos` · `style(HU-09): asistencias` · `style(HU-10/11/12): partidos, convocatoria y alineación` · `style(HU-13): catálogo de eventos` · `style(HU-14/16/17): partido en vivo y seguimiento` · `style(HU-19/20/24): anuncios, notificaciones, moderación y planes` · `style(HU-26/27): resumen con IA` · `style(HU-18): estadísticas`
+
+---
+
+## Etapa 5 · Comunidad (2026-11-25)
+
+HU-21 a HU-24. Sección 6.10 con las 11 correcciones; referencia img 10 (el texto manda). **No se compiló ni se corrieron tests** (pedido del usuario); se revisó a mano y con scripts que llaves y paréntesis estén balanceados.
+
+### Las 11 correcciones de la 6.10
+
+| # | Corrección | Cómo quedó |
+|---|---|---|
+| 1 | Pestañas actuales | Para ti, Academias y Pruebas (sin cambios de lógica) |
+| 2 | Bloqueados y Moderar arriba, sin bandera | `BarraSuperior` "Comunidad" con `AccionBarra` **block** ("Bloqueados") y **shield** destacado ("Moderar", solo ADM). El número sobre el escudo son los reportes **PENDIENTES**: `AccionesModeracionViewModel.reportesPendientes`, que reutiliza `RepositorioModeracion.listarReportes(uid)` (la misma consulta del panel, solo lectura). Si falla, el escudo va sin número. Se recarga al volver a la pantalla |
+| 3 | Mismo molde de tarjeta | Publicaciones y pruebas: avatar o logo con iniciales, nombre, chip de rol y menú ⋮. Las pruebas muestran "Aviso oficial" con el ícono **verified** |
+| 4 | Título de la prueba | `AvisoPrueba.titulo()` (no hay título libre) |
+| 5 | Estados según `estadoEfectivo()` | "● PRUEBA ABIERTA" (verde), "CERRADA" (gris) y "VENCIDA" (gris; antes era naranja), chip **amarillo** con la fecha, datos de categoría, posición, fecha y ubicación con íconos, y botón "Ver detalles" (D-13: despliega la descripción en la misma tarjeta; vuelve a ocultarla con "Ocultar detalles") |
+| 6 | Reacciones | Un solo botón: si reaccionaste, tu emoji resaltado, los demás emojis presentes y el total; si no, ♡ (ícono `FavoriteBorder`), los emojis presentes y el total (por ejemplo ❤️👏💪 37). Al tocarlo se abre el selector actual con ❤️ 👏 💪, el conteo de cada uno y "Toca tu reacción otra vez para quitarla". Sin botón de compartir |
+| 7 | Menú ⋮ en cada tarjeta | Ajenas: abre `HojaAccionesContenido` (Reportar, Bloquear y, para el ADM, Moderar directamente). Propias: Editar y Eliminar. Pruebas: Cerrar y Reabrir convocatoria (autor o ADM) |
+| 8 | Filtros de Pruebas | Categoría, Posición, Ubicación, Fecha, el interruptor "Mostrar cerradas y vencidas" y "Limpiar" (sin cambios; ▾ como ícono) |
+| 9 | FAB | `ExtendedFloatingActionButton` lima: ícono "+" con "Publicar" en Para ti y Academias, y con "Aviso" en Pruebas (mismas condiciones que antes) |
+| 10 | Espacio al final | 96 dp de margen inferior en la lista, para que el FAB no tape el último "Ver detalles" |
+| 11 | Se conserva | Mensaje para quien no pertenece a una academia ("Ver pruebas"), comentarios, hoja de bloqueados y panel de moderación |
+
+### Otros cambios
+
+- `HojaAccionesContenido`: opciones con ícono en círculo de color (flag, block, shield) y notas con ícono (lock, info).
+- `HojaComentarios`: ♡ como ícono; eliminar (ícono delete) y ⋮ como `IconButton` con descripción para TalkBack.
+- `FormularioPublicacion`: íconos en la visibilidad (groups, account_balance, public), "Añadir imagen" (add_photo_alternate) y "Quitar" (close).
+- `FormularioAvisoPrueba`: insignia oficial con ícono verified, "Volver" con flecha y el aviso de fecha sin "⚠".
+- Snackbars sin el "✓" delante del texto.
+- Pasada mecánica también en Comunidad: 11 textos de menos de 12 sp llevados a 12 sp.
+
+### Inventario (`PLAN.md` 1.27)
+
+✅ No falta ninguna acción: Inicio, Bloqueados (hoja con desbloquear), Moderar, Publicar/Aviso, pestañas, reaccionar y quitar la reacción, comentar y eliminar o reportar comentarios, Editar y Eliminar con su confirmación, Reportar, Bloquear, Moderar directamente, Cerrar y Reabrir convocatoria, filtros y Limpiar, "Ver pruebas", formularios con imagen y reintento o "Solo texto", y todos los mensajes.
+
+### Commits sugeridos
+
+- `style(HU-21..24): comunidad Línea de cal` (pantalla, pruebas, hojas y formularios)
+- `feat(HU-24): número de reportes pendientes en el escudo de Moderar` (`AccionesModeracionViewModel.kt` y su uso en la pantalla)

@@ -1,5 +1,23 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.ChatBubbleOutline
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.AccountBalance
+import androidx.compose.material.icons.rounded.Public
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -63,31 +81,57 @@ fun PantallaComunidad(
         // Al volver del panel de moderación, recarga lo que pudo cambiar
         viewModel.recargar()
         avisosViewModel.recargar()
+        // 6.10.2: número de reportes pendientes sobre el escudo (solo ADM)
+        accionesViewModel.cargarPendientes()
     }
 
     LaunchedEffect(estado.mensaje) {
         estado.mensaje?.let { texto ->
-            avisos.showSnackbar("✓ $texto")
+            avisos.showSnackbar(texto)
             viewModel.limpiarMensajes()
         }
     }
 
     LaunchedEffect(estadoAvisos.mensaje) {
         estadoAvisos.mensaje?.let { texto ->
-            avisos.showSnackbar("✓ $texto")
+            avisos.showSnackbar(texto)
             avisosViewModel.limpiarMensajes()
         }
     }
 
     LaunchedEffect(estadoAcciones.mensaje) {
         estadoAcciones.mensaje?.let { texto ->
-            avisos.showSnackbar("✓ $texto")
+            avisos.showSnackbar(texto)
             accionesViewModel.limpiarMensajes()
         }
     }
 
+    val enPruebas = estado.pestana == PestanaComunidad.PRUEBAS
+
     Scaffold(
         containerColor = SportProFondo,
+        // 6.10.9: FAB "+ Publicar" en Para ti y Academias, "+ Aviso" en Pruebas
+        floatingActionButton = {
+            if (!enPruebas || estadoAvisos.puedePublicar) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        if (enPruebas) {
+                            avisosViewModel.limpiarMensajes()
+                            formularioAvisoAbierto = true
+                        } else {
+                            enEdicion = null
+                            viewModel.limpiarMensajes()
+                            formularioAbierto = true
+                        }
+                    },
+                    containerColor = LineaDeCal.colores.lima,
+                    contentColor = LineaDeCal.colores.navy,
+                    shape = RoundedCornerShape(16.dp),
+                    icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
+                    text = { Text(if (enPruebas) "Aviso" else "Publicar", fontWeight = FontWeight.Bold) }
+                )
+            }
+        },
         snackbarHost = {
             SnackbarHost(avisos) { datos ->
                 Snackbar(
@@ -103,84 +147,41 @@ fun PantallaComunidad(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(relleno),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+            // 6.10.10: ~80 dp libres al final para que el FAB no tape el último "Ver detalles"
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            item { CabeceraSportPro() }
-
-            // "← Inicio" + Bloqueados + Moderar (solo ADM)
+            // Línea de cal (6.10.2, img 10): título, "Inicio", Bloqueados (block) y Moderar (shield, solo ADM)
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "← Inicio",
-                        color = SportProVerde,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable { onVolver() }
-                    )
-                    Spacer(Modifier.weight(1f))
-                    TextButton(onClick = {
-                        accionesViewModel.limpiarMensajes()
-                        accionesViewModel.cargarBloqueados()
-                        bloqueadosAbiertos = true
-                    }) {
-                        Text("🚫 Bloqueados", color = SportProTextoSecundario, fontSize = 12.sp)
-                    }
-                    if (estadoAcciones.puedeModerar) {
-                        Surface(
-                            onClick = onAbrirModeracion,
-                            shape = RoundedCornerShape(10.dp),
-                            color = EtiquetaNaranjaFondo
-                        ) {
-                            Text(
-                                text = "🛡 Moderar",
-                                color = EtiquetaNaranja,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                BarraSuperior(
+                    titulo = "Comunidad",
+                    onVolver = onVolver,
+                    descripcionVolver = "Inicio",
+                    modifier = Modifier.anchoCompleto(20.dp),
+                    acciones = {
+                        AccionBarra(
+                            icono = Icons.Rounded.Block,
+                            descripcion = "Bloqueados",
+                            onClick = {
+                                accionesViewModel.limpiarMensajes()
+                                accionesViewModel.cargarBloqueados()
+                                bloqueadosAbiertos = true
+                            }
+                        )
+                        if (estadoAcciones.puedeModerar) {
+                            AccionBarra(
+                                icono = Icons.Rounded.Shield,
+                                descripcion = estadoAcciones.reportesPendientes
+                                    ?.takeIf { it > 0 }
+                                    ?.let { "Moderar, $it reportes pendientes" } ?: "Moderar",
+                                onClick = onAbrirModeracion,
+                                contador = estadoAcciones.reportesPendientes,
+                                destacada = true
                             )
                         }
                     }
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Comunidad",
-                        color = SportProNavy,
-                        fontWeight = FontWeight.Black,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-
-                    val enPruebas = estado.pestana == PestanaComunidad.PRUEBAS
-
-                    if (!enPruebas || estadoAvisos.puedePublicar) {
-                        Button(
-                            onClick = {
-                                if (enPruebas) {
-                                    avisosViewModel.limpiarMensajes()
-                                    formularioAvisoAbierto = true
-                                } else {
-                                    enEdicion = null
-                                    viewModel.limpiarMensajes()
-                                    formularioAbierto = true
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = SportProVerde),
-                            shape = FormaBotonSportPro
-                        ) {
-                            Text(if (enPruebas) "+ Aviso" else "+ Publicar", fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
+                )
             }
 
             item {
@@ -216,7 +217,7 @@ fun PantallaComunidad(
                             Text(
                                 text = "Aún no perteneces a una academia. Explora las pruebas abiertas para unirte a un equipo.",
                                 color = EtiquetaAzul,
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 modifier = Modifier.weight(1f)
                             )
                             TextButton(onClick = { viewModel.cambiarPestana(PestanaComunidad.PRUEBAS) }) {
@@ -427,16 +428,46 @@ fun PantallaComunidad(
 
 // ---------- Tarjeta de publicación ----------
 
-private data class EstiloVisibilidad(val texto: String, val color: Color, val fondo: Color)
+private data class EstiloVisibilidad(val texto: String, val icono: ImageVector, val color: Color, val fondo: Color)
 
 @androidx.compose.runtime.Composable
 private fun estiloVisibilidad(p: Publicacion): EstiloVisibilidad = when (p.visibilidad) {
     VisibilidadPublicacion.COMUNIDAD ->
-        EstiloVisibilidad("🌐 Comunidad SportPro", EtiquetaAzul, EtiquetaAzulFondo)
+        EstiloVisibilidad("Comunidad SportPro", Icons.Rounded.Public, EtiquetaAzul, EtiquetaAzulFondo)
     VisibilidadPublicacion.ACADEMIA ->
-        EstiloVisibilidad("🏛 ${p.nombreAcademia.ifBlank { "Academia" }}", EtiquetaLila, EtiquetaLilaFondo)
+        EstiloVisibilidad(p.nombreAcademia.ifBlank { "Academia" }, Icons.Rounded.AccountBalance, EtiquetaLila, EtiquetaLilaFondo)
     VisibilidadPublicacion.EQUIPO ->
-        EstiloVisibilidad("👥 ${p.nombreEquipo.ifBlank { "Equipo" }}", SportProVerde, SportProVerdeClaro)
+        EstiloVisibilidad(p.nombreEquipo.ifBlank { "Equipo" }, Icons.Rounded.Groups, SportProVerde, SportProVerdeClaro)
+}
+
+/** Chip con ícono (visibilidad de la publicación, "Aviso oficial", fecha de la prueba). */
+@Composable
+internal fun EtiquetaIcono(texto: String, icono: ImageVector, color: Color, fondo: Color) {
+    Row(
+        modifier = Modifier
+            .background(fondo, RoundedCornerShape(50))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(icono, contentDescription = null, tint = color, modifier = Modifier.size(14.dp))
+        Text(
+            text = texto,
+            color = color,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+/** Botón ⋮ de cada tarjeta (6.10.7). */
+@Composable
+internal fun BotonMas(descripcion: String, onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(Icons.Rounded.MoreVert, contentDescription = descripcion, tint = SportProTextoSecundario)
+    }
 }
 
 @Composable
@@ -453,14 +484,15 @@ private fun TarjetaPublicacion(
     var menuAbierto by remember { mutableStateOf(false) }
     val visibilidad = estiloVisibilidad(publicacion)
 
+    // Línea de cal (6.10.3): mismo molde de tarjeta que las pruebas
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = FormaTarjetaSportPro,
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SportProSuperficie),
         border = BorderStroke(1.dp, SportProBorde)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
@@ -483,35 +515,26 @@ private fun TarjetaPublicacion(
                         )
                         EtiquetaSportPro(publicacion.rolAutor.name, EtiquetaGris, EtiquetaGrisFondo)
                     }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = tiempoRelativo(publicacion.fechaCreacion) +
-                                    if (publicacion.editada) " · editada" else "",
-                            color = SportProTextoSecundario,
-                            fontSize = 11.sp
-                        )
-                        EtiquetaSportPro(visibilidad.texto, visibilidad.color, visibilidad.fondo)
-                    }
+                    Text(
+                        text = tiempoRelativo(publicacion.fechaCreacion) +
+                                if (publicacion.editada) " · editada" else "",
+                        color = SportProTextoSecundario,
+                        fontSize = 12.sp
+                    )
                 }
 
+                // Menú ⋮ en cada tarjeta. Propias: Editar y Eliminar. Ajenas: la hoja actual
+                // (Reportar, Bloquear y, para el ADM, Moderar directamente).
                 if (puedeModificar) {
                     Box {
-                        Text(
-                            text = "•••",
-                            color = SportProTextoSecundario,
-                            modifier = Modifier
-                                .clickable { menuAbierto = true }
-                                .padding(8.dp)
-                        )
+                        BotonMas("Opciones de tu publicación") { menuAbierto = true }
                         DropdownMenu(
                             expanded = menuAbierto,
                             onDismissRequest = { menuAbierto = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Editar") },
+                                leadingIcon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
                                 onClick = {
                                     menuAbierto = false
                                     onEditar()
@@ -519,6 +542,7 @@ private fun TarjetaPublicacion(
                             )
                             DropdownMenuItem(
                                 text = { Text("Eliminar", color = SportProRojo) },
+                                leadingIcon = { Icon(Icons.Rounded.Delete, contentDescription = null, tint = SportProRojo) },
                                 onClick = {
                                     menuAbierto = false
                                     onEliminar()
@@ -527,50 +551,70 @@ private fun TarjetaPublicacion(
                         }
                     }
                 } else {
-                    Text(
-                        text = "•••",
-                        color = SportProTextoSecundario,
-                        modifier = Modifier
-                            .clickable { onMas() }
-                            .padding(8.dp)
-                    )
+                    BotonMas("Opciones de la publicación de ${publicacion.nombreAutor}") { onMas() }
                 }
             }
 
-            Text(
-                text = publicacion.texto,
-                color = SportProTextoPrincipal,
-                fontSize = 14.sp
-            )
-            // HU21: imagen guardada en Supabase Storage
-            if (publicacion.imagenUrl.isNotBlank()) {
-                ImagenRemota(
-                    url = publicacion.imagenUrl,
-                    descripcion = "Imagen de la publicación de ${publicacion.nombreAutor}"
-                )
-            }
-            HorizontalDivider(color = SportProBorde)
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Column(
+                modifier = Modifier.padding(end = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                BotonReaccion(publicacion, miReaccion, onReaccionar)
+                EtiquetaIcono(visibilidad.texto, visibilidad.icono, visibilidad.color, visibilidad.fondo)
 
-                val n = publicacion.cantidadComentarios
                 Text(
-                    text = "💬 $n ${if (n == 1) "comentario" else "comentarios"}",
-                    color = SportProTextoSecundario,
-                    fontSize = 13.sp,
-                    modifier = Modifier
-                        .clickable { onComentarios() }
-                        .padding(vertical = 4.dp)
+                    text = publicacion.texto,
+                    color = SportProTextoPrincipal,
+                    fontSize = 14.sp
                 )
+                // HU21: imagen guardada en Supabase Storage
+                if (publicacion.imagenUrl.isNotBlank()) {
+                    ImagenRemota(
+                        url = publicacion.imagenUrl,
+                        descripcion = "Imagen de la publicación de ${publicacion.nombreAutor}"
+                    )
+                }
+                HorizontalDivider(color = SportProBorde)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    BotonReaccion(publicacion, miReaccion, onReaccionar)
+
+                    Spacer(Modifier.weight(1f))
+
+                    val n = publicacion.cantidadComentarios
+                    Row(
+                        modifier = Modifier
+                            .clickable { onComentarios() }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Rounded.ChatBubbleOutline,
+                            contentDescription = null,
+                            tint = SportProTextoSecundario,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "$n ${if (n == 1) "comentario" else "comentarios"}",
+                            color = SportProTextoSecundario,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
             }
         }
     }
 }
 
+/*
+ * 6.10.6 · Un solo botón de reacción por tarjeta. Si el usuario reaccionó, se resalta SU emoji
+ * y el total; si no, se muestra ♡ (ícono) y el total. Junto al total van los emojis presentes
+ * (por ejemplo ❤️👏💪 37), para que no parezca que son 37 corazones. Al tocarlo se abre el
+ * selector actual con ❤️ 👏 💪, el conteo de cada uno y "Toca tu reacción otra vez para quitarla".
+ */
 @Composable
 private fun BotonReaccion(
     publicacion: Publicacion,
@@ -578,17 +622,47 @@ private fun BotonReaccion(
     onReaccionar: (TipoReaccion) -> Unit
 ) {
     var selectorAbierto by remember { mutableStateOf(false) }
+    val total = publicacion.totalReacciones()
+    // Emojis presentes, con el propio primero
+    val presentes = TipoReaccion.entries
+        .filter { publicacion.conteoDe(it) > 0 && it != miReaccion }
+        .joinToString("") { it.emoji }
+    val descripcion = buildString {
+        append(if (miReaccion != null) "Tu reacción: ${miReaccion.emoji}. " else "Reaccionar. ")
+        append("$total reacciones")
+    }
 
     Box {
-        Text(
-            text = "${miReaccion?.emoji ?: "♡"} ${publicacion.totalReacciones()}",
-            color = if (miReaccion != null) SportProVerde else SportProTextoSecundario,
-            fontWeight = if (miReaccion != null) FontWeight.Bold else FontWeight.Normal,
-            fontSize = 13.sp,
+        Row(
             modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(if (miReaccion != null) SportProVerdeClaro else Color.Transparent)
                 .clickable { selectorAbierto = true }
-                .padding(vertical = 4.dp)
-        )
+                .semantics(mergeDescendants = true) { contentDescription = descripcion }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            if (miReaccion != null) {
+                Text(miReaccion.emoji, fontSize = 18.sp)
+            } else {
+                Icon(
+                    Icons.Rounded.FavoriteBorder,
+                    contentDescription = null,
+                    tint = SportProTextoSecundario,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            if (presentes.isNotEmpty()) {
+                Text(presentes, fontSize = 14.sp)
+            }
+            Text(
+                text = "$total",
+                color = if (miReaccion != null) SportProVerde else SportProTextoSecundario,
+                fontWeight = if (miReaccion != null) FontWeight.Bold else FontWeight.Normal,
+                fontSize = 14.sp
+            )
+        }
 
         DropdownMenu(
             expanded = selectorAbierto,
@@ -615,7 +689,7 @@ private fun BotonReaccion(
                             Text(
                                 text = "${publicacion.conteoDe(tipo)}",
                                 color = SportProTextoSecundario,
-                                fontSize = 11.sp
+                                fontSize = 12.sp
                             )
                         }
                     }
@@ -625,7 +699,7 @@ private fun BotonReaccion(
                 Text(
                     text = "Toca tu reacción otra vez para quitarla",
                     color = SportProTextoSecundario,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                 )
             }
