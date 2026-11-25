@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.partidos
 
+import com.example.projectsportpro2026_2.ui.comun.FilaContadores
 import com.example.projectsportpro2026_2.ui.comun.TipoEstado
 import com.example.projectsportpro2026_2.ui.comun.ChipEstado
 import com.example.projectsportpro2026_2.ui.comun.VarianteTicket
@@ -113,7 +114,14 @@ fun PantallaPartidos(
             item {
                 EncabezadoPantallaPartidos(
                     nombreAcademia = nombreAcademia,
-                    onVolver = onVolver
+                    onVolver = onVolver,
+                    // 7.4: contadores con los datos ya cargados
+                    jugados = finalizados.size,
+                    ganados = finalizados.count { p ->
+                        val m = estado.marcadoresPorPartido[p.id]
+                        m != null && m.propio > m.rival
+                    },
+                    proximos = proximos.size
                 )
             }
 
@@ -191,7 +199,10 @@ fun PantallaPartidos(
 @Composable
 private fun EncabezadoPantallaPartidos(
     nombreAcademia: String,
-    onVolver: () -> Unit
+    onVolver: () -> Unit,
+    jugados: Int = 0,
+    ganados: Int = 0,
+    proximos: Int = 0
 ) {
     // Línea de cal (6.8, img 07): cabecera de césped (mismos textos y el mismo "Volver")
     CabeceraCancha(
@@ -200,7 +211,15 @@ private fun EncabezadoPantallaPartidos(
         etiqueta = "TEMPORADA 2026",
         onVolver = onVolver,
         modifier = Modifier.anchoCompleto(20.dp)
-    )
+    ) {
+        FilaContadores(
+            listOf(
+                "$jugados" to "Jugados",
+                "$ganados" to "Ganados",
+                "$proximos" to "Próximos"
+            )
+        )
+    }
 }
 
 private fun LazyListScope.seccionPartidos(

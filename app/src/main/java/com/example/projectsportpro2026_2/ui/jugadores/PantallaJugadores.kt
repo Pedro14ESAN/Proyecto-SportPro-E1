@@ -1,5 +1,10 @@
 package com.example.projectsportpro2026_2.ui.jugadores
 
+import com.example.projectsportpro2026_2.ui.comun.FiltroChipsActivos
+import com.example.projectsportpro2026_2.ui.comun.FiltroActivos
+import androidx.compose.material.icons.rounded.Search
+import com.example.projectsportpro2026_2.ui.comun.CampoSportPro
+import com.example.projectsportpro2026_2.ui.comun.FilaContadores
 import com.example.projectsportpro2026_2.ui.comun.TamanoCromo
 import com.example.projectsportpro2026_2.ui.comun.CromoJugador
 import com.example.projectsportpro2026_2.ui.comun.TipoEstado
@@ -104,6 +109,13 @@ fun PantallaJugadores(
     viewModel: JugadoresViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
+    // D-04 / 7.4: búsqueda por nombre y chips Todos / Activos / Inactivos (en el cliente)
+    var busqueda by remember { mutableStateOf("") }
+    var filtroJugadores by remember { mutableStateOf(FiltroActivos.TODOS) }
+    val jugadoresVisibles = estado.jugadores.filter { j ->
+        filtroJugadores.incluye(j.activo) &&
+            (busqueda.isBlank() || j.nombreCompleto().contains(busqueda.trim(), ignoreCase = true))
+    }
     var mostrarFormulario by remember { mutableStateOf(false) }
     var enEdicion by remember { mutableStateOf<Jugador?>(null) }
     var privadosEdicion by remember { mutableStateOf<DatosPrivadosJugador?>(null) }
@@ -138,7 +150,16 @@ fun PantallaJugadores(
                 subtitulo = "Jugadores registrados en este equipo.",
                 etiqueta = "JUGADORES",
                 onVolver = onVolver
-            )
+            ) {
+                // 7.4: contadores con los datos ya cargados
+                FilaContadores(
+                    listOf(
+                        "${estado.jugadores.size}" to "Jugadores",
+                        "${estado.jugadores.count { it.activo }}" to "Activos",
+                        "${estado.jugadores.count { !it.activo }}" to "Inactivos"
+                    )
+                )
+            }
 
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -158,6 +179,20 @@ fun PantallaJugadores(
                 )
             }
 
+            if (estado.jugadores.isNotEmpty()) {
+                CampoSportPro(
+                    valor = busqueda,
+                    onValorChange = { busqueda = it },
+                    etiqueta = "Buscar jugador",
+                    placeholder = "Nombre o apellido",
+                    icono = { Icon(Icons.Rounded.Search, contentDescription = null) }
+                )
+                FiltroChipsActivos(filtroJugadores) { filtroJugadores = it }
+                if (jugadoresVisibles.isEmpty()) {
+                    Text("No hay jugadores con esa búsqueda o filtro.", color = TextoSecundario)
+                }
+            }
+
             // Línea de cal (6.4): cuadrícula de cromos mini
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -166,7 +201,7 @@ fun PantallaJugadores(
                 contentPadding = PaddingValues(bottom = 88.dp)
             ) {
                 itemsIndexed(
-                    estado.jugadores,
+                    jugadoresVisibles,
                     key = { indice, jugador -> jugador.id.ifBlank { "sin-id-$indice" } }
                 ) { _, jugador ->
                     TarjetaJugador(

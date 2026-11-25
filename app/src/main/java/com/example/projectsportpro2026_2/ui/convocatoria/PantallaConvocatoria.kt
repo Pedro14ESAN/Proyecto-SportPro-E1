@@ -1,5 +1,10 @@
 package com.example.projectsportpro2026_2.ui.convocatoria
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import com.example.projectsportpro2026_2.ui.comun.FilaDeChipsSportPro
+import com.example.projectsportpro2026_2.ui.comun.ChipSportPro
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.Icons
@@ -71,6 +76,8 @@ fun PantallaConvocatoria(
     viewModel: ConvocatoriaViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
+    // 7.4: filtro Todos / Disponibles / Pendientes (en el cliente, sobre la disponibilidad ya cargada)
+    var filtroConvocatoria by remember { mutableStateOf("Todos") }
 
     LaunchedEffect(idPartido) {
         viewModel.iniciar(idPartido)
@@ -240,8 +247,34 @@ fun PantallaConvocatoria(
 
                 } else {
 
+                    item {
+                        val disponibles = estado.jugadores.count {
+                            estado.convocados[it.id]?.estado == EstadoDisponibilidad.DISPONIBLE
+                        }
+                        val pendientes = estado.jugadores.count {
+                            estado.convocados[it.id]?.estado == EstadoDisponibilidad.PENDIENTE
+                        }
+                        FilaDeChipsSportPro {
+                            ChipSportPro("Todos ${estado.jugadores.size}", filtroConvocatoria == "Todos") {
+                                filtroConvocatoria = "Todos"
+                            }
+                            ChipSportPro("Disponibles $disponibles", filtroConvocatoria == "Disponibles") {
+                                filtroConvocatoria = "Disponibles"
+                            }
+                            ChipSportPro("Pendientes $pendientes", filtroConvocatoria == "Pendientes") {
+                                filtroConvocatoria = "Pendientes"
+                            }
+                        }
+                    }
+
                     items(
-                        items = estado.jugadores,
+                        items = estado.jugadores.filter {
+                            when (filtroConvocatoria) {
+                                "Disponibles" -> estado.convocados[it.id]?.estado == EstadoDisponibilidad.DISPONIBLE
+                                "Pendientes" -> estado.convocados[it.id]?.estado == EstadoDisponibilidad.PENDIENTE
+                                else -> true
+                            }
+                        },
                         key = { it.id }
                     ) { jugador ->
 

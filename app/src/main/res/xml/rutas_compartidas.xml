@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Línea de cal 7.3: carpeta de la caché donde se guarda el cromo antes de compartirlo -->
+<paths>
+    <cache-path name="compartidos" path="compartidos/" />
+</paths>

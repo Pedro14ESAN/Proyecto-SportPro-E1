@@ -233,3 +233,52 @@ HU-21 a HU-24. Sección 6.10 con las 11 correcciones; referencia img 10 (el text
 
 - `style(HU-21..24): comunidad Línea de cal` (pantalla, pruebas, hojas y formularios)
 - `feat(HU-24): número de reportes pendientes en el escudo de Moderar` (`AccionesModeracionViewModel.kt` y su uso en la pantalla)
+
+---
+
+## Etapa 6 · Estadísticas, listas y login (2026-11-25)
+
+Secciones 7.3, 7.4 y 7.5 y las decisiones de `PLAN.md`. **No se compiló ni se corrieron tests** (pedido del usuario); se revisó a mano y con scripts que llaves y paréntesis estén balanceados.
+
+### 1 · Estadísticas del jugador (7.3, HU-18)
+
+- **`CalculadoraEstadisticas.kt`** (lógica pura):
+  - `minutosJugados(idJugador, eventos, titulares)`: un titular cuenta desde el minuto 0; si entra por un CAMBIO, desde el minuto del cambio; termina cuando sale por un CAMBIO o en el minuto del FIN. **Sin FIN** (D-12): hasta el último evento válido (sin eventos, 0). **Sin alineación confirmada**: `null`, que se muestra como "—". Solo cuenta eventos válidos y cambios del equipo propio (ignora los anulados y los del rival). Admite entrar y volver a salir.
+  - `partidosDelJugador(...)`: un `PartidoJugador` por partido FINALIZADO del periodo, con resultado, goles del jugador, minutos y si fue titular.
+  - `EstadisticasJugador` suma `minutosJugados` (solo de partidos con alineación confirmada; `null` si ninguno la tiene) y `partidos`.
+  - `DatosFuenteEquipo` suma `titularesPorPartido`. Es un dato en memoria, **no un campo de Firestore** (decisión "no agregues campos").
+- **`RepositorioEstadisticas.cargarEquipo`**: en la misma lectura de la alineación de cada partido, ahora también lee el documento `alineaciones/{partido}` para saber si está `confirmada`, y toma sus titulares (`tipo == TITULAR`). `alineadosPorPartido` (participaciones) sigue igual que antes. Si no se puede leer, el partido queda sin minutos ("—").
+- **`PantallaEstadisticas`**:
+  - `CromoJugador` con la **foto** (`fotoUrl`) o la silueta, el equipo y el periodo.
+  - Métrica **Minutos** ("—" si no hay alineación confirmada).
+  - **Goles por fecha**: un balón por gol en cada partido (F1, F2…) y "—" cuando no hubo.
+  - **Último partido**: un ticket con el resultado, los goles, los minutos y si fue titular, suplente o no tiene alineación confirmada.
+- **Compartir el cromo como imagen** (al final, opcional): el cromo se dibuja en una `GraphicsLayer`. "Compartir cromo" lo guarda en `cache/compartidos/cromo.png` y abre `Intent.ACTION_SEND` mediante un `FileProvider` (`${applicationId}.archivos`, `res/xml/rutas_compartidas.xml`, declarado en `AndroidManifest.xml`). Solo aparece en Estadísticas, que ya muestra únicamente a los jugadores que el usuario puede ver.
+- **Tests** (no se corrieron): `app/src/test/.../estadisticas/MinutosJugadosTest.kt`, con 11 casos: titular hasta el FIN, entra por cambio, sale por cambio, sin FIN, sin FIN ni eventos, sin alineación (null), suplente que no entra, cambios anulados y del rival, entra y vuelve a salir, goles por fecha y último partido, y la suma en `calcularJugador`.
+
+### 2 · Contadores LED y filtros en chips (7.4)
+
+Todo se calcula en el cliente con los datos que ya carga cada ViewModel. Nuevos en el kit: `FilaContadores`, `FiltroActivos` y `FiltroChipsActivos`.
+
+| Pantalla | Contadores en la cabecera | Filtro nuevo |
+|---|---|---|
+| Academias | Academias, Activas | — |
+| Equipos | Equipos, Activos, DT (D-07: sin jugadores, no están cargados) | Todos / Activos / Inactivos (con "Todos" para no ocultar equipos por defecto) |
+| Jugadores | Jugadores, Activos, Inactivos | **Búsqueda por nombre** y chips Todos / Activos / Inactivos (D-04) |
+| Entrenamientos | Esta semana (publicados de lunes a domingo), Minutos, Cancelados | Ya existía (Todos / Publicados / Cancelados, D-05) |
+| Partidos | Jugados, Ganados, Próximos | Ya existían las secciones (D-06) |
+| Mensualidades | Ya existían (Pagadas / Pendientes / Vencidas) | Ya existía |
+| Convocatoria | — | Todos N / Disponibles N / Pendientes N |
+| Historial de asistencia | — | Todas / Ausencias / Justificadas |
+
+- El selector de equipo en las cabeceras ("Equipo ▾") no se agregó: las pantallas que ya permiten elegir equipo conservan su selector actual. Queda como pendiente visual opcional (`PildoraCabecera` ya está en el kit).
+
+### 3 · Mostrar y ocultar la contraseña (7.5, HU-01)
+
+Ya quedó en la etapa 4: Login y Registro usan `CampoSportPro(esContrasena = true)`, con el botón visibility / visibility_off ("Mostrar contraseña" / "Ocultar contraseña" para TalkBack). En esta etapa no hubo cambios.
+
+### Commits sugeridos
+
+- `feat(HU-18): minutos jugados, goles por fecha y último partido` (calculadora, repositorio, pantalla y `MinutosJugadosTest`)
+- `feat(HU-18): compartir el cromo del jugador como imagen` (`PantallaEstadisticas` "Compartir cromo", `AndroidManifest.xml` y `rutas_compartidas.xml`)
+- `feat(ui): contadores LED y filtros en chips (7.4)` (kit, academias, equipos, jugadores, entrenamientos, partidos, convocatoria y asistencias)

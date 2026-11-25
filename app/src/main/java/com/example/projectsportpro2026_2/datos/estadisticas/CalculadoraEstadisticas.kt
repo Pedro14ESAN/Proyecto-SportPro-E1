@@ -115,6 +115,10 @@ data class ConteoAsistencia(
 
 data class EstadisticasJugador(
     val idJugador: String,
+    // 7.3: suma de minutos de los partidos con alineación confirmada (null = ninguno → "—")
+    val minutosJugados: Int? = null,
+    // 7.3: un elemento por partido finalizado (goles por fecha y último partido)
+    val partidos: List<PartidoJugador> = emptyList(),
     val participaciones: Int = 0,
     val goles: Int = 0,
     val tarjetasAmarillas: Int = 0,
@@ -138,7 +142,21 @@ data class DatosFuenteEquipo(
     // Jugadores alineados (titulares y suplentes) por id de partido
     val alineadosPorPartido: Map<String, Set<String>> = emptyMap(),
     val entrenamientos: List<Entrenamiento> = emptyList(),
-    val asistencias: List<Asistencia> = emptyList()
+    val asistencias: List<Asistencia> = emptyList(),
+    // 7.3: titulares de cada partido, SOLO si su alineación está confirmada
+    // (un partido sin alineación confirmada no aparece aquí → minutos "—")
+    val titularesPorPartido: Map<String, Set<String>> = emptyMap()
+)
+
+/** 7.3 · Lo que hizo un jugador en un partido finalizado. */
+data class PartidoJugador(
+    val partido: Partido,
+    val golesPropios: Int,
+    val golesRival: Int,
+    val goles: Int,
+    // null = el partido no tiene alineación confirmada (se muestra "—")
+    val minutos: Int?,
+    val titular: Boolean?
 )
 
 object CalculadoraEstadisticas {
@@ -265,6 +283,70 @@ object CalculadoraEstadisticas {
         )
     }
 
+    /*
+     * 7.3 · Minutos jugados en un partido (RN-18: sale solo de datos registrados).
+     *  - Titular: desde el minuto 0 (juega desde el minuto 1).
+     *  - Entra por un CAMBIO: desde el minuto del cambio.
+     *  - Hasta que sale por un CAMBIO o hasta el minuto del FIN.
+     *  - Sin FIN (D-12): hasta el minuto del último evento válido; sin eventos, 0.
+     *  - null si el partido no tiene alineación confirmada (titulares == null).
+     * Solo cuenta eventos válidos (sin anulados) y los cambios del equipo propio.
+     */
+    fun minutosJugados(
+        idJugador: String,
+        eventos: List<EventoPartido>,
+        titulares: Set<String>?
+    ): Int? {
+        if (titulares == null) return null
+        val validos = eventosValidos(eventos)
+        val fin = validos.filter { it.codigoTipoEvento == "FIN" }.maxOfOrNull { it.minuto }
+            ?: validos.maxOfOrNull { it.minuto }
+            ?: 0
+        val cambios = validos
+            .filter { esCambio(it) && it.equipoEvento != EquipoEvento.RIVAL }
+            .sortedWith(compareBy<EventoPartido> { it.minuto }.thenBy { it.fechaCaptura })
+
+        var enCancha = idJugador in titulares
+        var desde = 0
+        var total = 0
+        for (cambio in cambios) {
+            if (cambio.minuto > fin) break
+            if (enCancha && cambio.idJugadorSale == idJugador) {
+                total += maxOf(0, cambio.minuto - desde)
+                enCancha = false
+            } else if (!enCancha && cambio.idJugadorEntra == idJugador) {
+                desde = cambio.minuto
+                enCancha = true
+            }
+        }
+        if (enCancha) total += maxOf(0, fin - desde)
+        return total
+    }
+
+    /** 7.3 · Partidos finalizados del periodo, del más antiguo al más reciente. */
+    fun partidosDelJugador(
+        idJugador: String,
+        fuente: DatosFuenteEquipo,
+        periodo: PeriodoEstadisticas
+    ): List<PartidoJugador> =
+        partidosJugados(fuente, periodo)
+            .sortedWith(compareBy<Partido> { it.fecha }.thenBy { it.hora })
+            .map { partido ->
+                val todos = fuente.eventosPorPartido[partido.id].orEmpty()
+                val validos = eventosValidos(todos)
+                val titulares = fuente.titularesPorPartido[partido.id]
+                PartidoJugador(
+                    partido = partido,
+                    golesPropios = validos.count { esGol(it) && it.equipoEvento == EquipoEvento.PROPIO },
+                    golesRival = validos.count { esGol(it) && it.equipoEvento == EquipoEvento.RIVAL },
+                    goles = validos.count {
+                        esGol(it) && it.idJugador == idJugador && it.equipoEvento != EquipoEvento.RIVAL
+                    },
+                    minutos = minutosJugados(idJugador, todos, titulares),
+                    titular = titulares?.let { idJugador in it }
+                )
+            }
+
     fun calcularJugador(
         idJugador: String,
         fuente: DatosFuenteEquipo,
@@ -303,8 +385,13 @@ object CalculadoraEstadisticas {
             }
         )
 
+        val partidos = partidosDelJugador(idJugador, fuente, periodo)
+        val conMinutos = partidos.mapNotNull { it.minutos }
+
         return EstadisticasJugador(
             idJugador = idJugador,
+            minutosJugados = if (conMinutos.isEmpty()) null else conMinutos.sum(),
+            partidos = partidos,
             participaciones = participaciones,
             goles = goles,
             tarjetasAmarillas = amarillas,

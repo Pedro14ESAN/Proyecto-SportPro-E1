@@ -1,5 +1,7 @@
 package com.example.projectsportpro2026_2.ui.asistencias
 
+import com.example.projectsportpro2026_2.ui.comun.FilaDeChipsSportPro
+import com.example.projectsportpro2026_2.ui.comun.ChipSportPro
 import com.example.projectsportpro2026_2.ui.comun.ContadorLed
 import com.example.projectsportpro2026_2.ui.comun.TipoEstado
 import com.example.projectsportpro2026_2.ui.comun.ChipEstado
@@ -100,6 +102,9 @@ fun PantallaAsistencias(
     remember {
         mutableStateOf(false)
     }
+
+    // 7.4: filtro del historial Todas / Ausencias / Justificadas (en el cliente)
+    var filtroHistorial by remember { mutableStateOf("Todas") }
 
     LaunchedEffect(Unit) {
         viewModel.iniciar()
@@ -732,9 +737,22 @@ fun PantallaAsistencias(
                         )
                     }
                 } else {
+                    item {
+                        FilaDeChipsSportPro {
+                            ChipSportPro("Todas", filtroHistorial == "Todas") { filtroHistorial = "Todas" }
+                            ChipSportPro("Ausencias", filtroHistorial == "Ausencias") { filtroHistorial = "Ausencias" }
+                            ChipSportPro("Justificadas", filtroHistorial == "Justificadas") { filtroHistorial = "Justificadas" }
+                        }
+                    }
                     items(
                         items =
-                            estado.historial,
+                            estado.historial.filter {
+                                when (filtroHistorial) {
+                                    "Ausencias" -> it.estado == EstadoAsistencia.AUSENTE
+                                    "Justificadas" -> it.estado == EstadoAsistencia.JUSTIFICADO
+                                    else -> true
+                                }
+                            },
                         key = {
                             it.id
                         }

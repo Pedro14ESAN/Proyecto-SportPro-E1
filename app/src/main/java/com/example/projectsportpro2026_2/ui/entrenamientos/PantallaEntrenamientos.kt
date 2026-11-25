@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.entrenamientos
 
+import com.example.projectsportpro2026_2.ui.comun.FilaContadores
 import com.example.projectsportpro2026_2.ui.theme.EstiloMarcador
 import com.example.projectsportpro2026_2.ui.theme.EstiloEtiqueta
 import com.example.projectsportpro2026_2.ui.comun.TipoEstado
@@ -124,6 +125,20 @@ fun PantallaEntrenamientos(
     val esDt =
         estado.rol == Rol.DT
 
+    // 7.4: contadores con los datos ya cargados (semana actual, de lunes a domingo)
+    val inicioSemana = java.time.LocalDate.now().with(java.time.DayOfWeek.MONDAY)
+    val deEstaSemana = estado.entrenamientos.filter { e ->
+        val dia = java.time.Instant.ofEpochMilli(e.fechaHoraEpochMillis)
+            .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        e.estado == EstadoEntrenamiento.PUBLICADO &&
+            !dia.isBefore(inicioSemana) && dia.isBefore(inicioSemana.plusDays(7))
+    }
+    val contadoresEntrenamientos = listOf(
+        "${deEstaSemana.size}" to "Esta semana",
+        "${deEstaSemana.sumOf { it.duracionTotalMinutos }}" to "Minutos",
+        "${estado.entrenamientos.count { it.estado == EstadoEntrenamiento.CANCELADO }}" to "Cancelados"
+    )
+
     val equipo =
         estado.equipos
             .firstOrNull {
@@ -205,7 +220,9 @@ fun PantallaEntrenamientos(
                     onVolver = onVolver,
                     descripcionVolver = "Volver",
                     modifier = Modifier.anchoCompleto(16.dp)
-                )
+                ) {
+                    FilaContadores(contadoresEntrenamientos)
+                }
             }
 
             if (esDt) {

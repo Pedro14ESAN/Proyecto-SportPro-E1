@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.academias
 
+import com.example.projectsportpro2026_2.ui.comun.FilaContadores
 import com.example.projectsportpro2026_2.ui.comun.EscudoIniciales
 import com.example.projectsportpro2026_2.ui.comun.TipoEstado
 import com.example.projectsportpro2026_2.ui.comun.ChipEstado
@@ -107,7 +108,15 @@ fun PantallaAcademias(
                 subtitulo = "Administra tus academias, equipos y partidos.",
                 etiqueta = "GESTIÓN",
                 onVolver = onVolver
-            )
+            ) {
+                // 7.4: contadores con los datos ya cargados
+                FilaContadores(
+                    listOf(
+                        "${estado.academias.size}" to "Academias",
+                        "${estado.academias.count { it.activa }}" to "Activas"
+                    )
+                )
+            }
 
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),

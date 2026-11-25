@@ -1,5 +1,8 @@
 package com.example.projectsportpro2026_2.ui.equipos
 
+import com.example.projectsportpro2026_2.ui.comun.FiltroChipsActivos
+import com.example.projectsportpro2026_2.ui.comun.FiltroActivos
+import com.example.projectsportpro2026_2.ui.comun.FilaContadores
 import com.example.projectsportpro2026_2.ui.comun.EscudoIniciales
 import com.example.projectsportpro2026_2.ui.comun.TipoEstado
 import com.example.projectsportpro2026_2.ui.comun.ChipEstado
@@ -87,6 +90,8 @@ fun PantallaEquipos(
     var mostrarFormulario by remember { mutableStateOf(false) }
     var mostrarEntrenadores by remember { mutableStateOf(false) }
     var enEdicion by remember { mutableStateOf<Equipo?>(null) }
+    // 7.4: filtro en chips (en el cliente). "Todos" por defecto para no ocultar equipos.
+    var filtroEquipos by remember { mutableStateOf(FiltroActivos.TODOS) }
 
     LaunchedEffect(idAcademia) { viewModel.iniciar(idAcademia) }
 
@@ -117,7 +122,16 @@ fun PantallaEquipos(
                 subtitulo = "Equipos y directores técnicos de la academia.",
                 etiqueta = "EQUIPOS",
                 onVolver = onVolver
-            )
+            ) {
+                // 7.4: contadores con los datos ya cargados (D-07: sin conteo de jugadores, no está cargado)
+                FilaContadores(
+                    listOf(
+                        "${estado.equipos.size}" to "Equipos",
+                        "${estado.equipos.count { it.activo }}" to "Activos",
+                        "${estado.entrenadores.size}" to "DT"
+                    )
+                )
+            }
 
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -145,11 +159,15 @@ fun PantallaEquipos(
                 )
             }
 
+            if (estado.equipos.isNotEmpty()) {
+                FiltroChipsActivos(filtroEquipos) { filtroEquipos = it }
+            }
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 88.dp)
             ) {
-                items(estado.equipos, key = { it.id }) { equipo ->
+                items(estado.equipos.filter { filtroEquipos.incluye(it.activo) }, key = { it.id }) { equipo ->
                     TarjetaEquipo(
                         equipo = equipo,
                         nombreEntrenador = estado.entrenadores

@@ -1305,6 +1305,40 @@ fun FondoCancha(
 }
 
 // =====================================================================
+// Extra · FilaContadores (7.4: contadores LED de las cabeceras)
+// =====================================================================
+
+/** Fila de ContadorLed del mismo ancho. Cada par es (valor, etiqueta). */
+@Composable
+fun FilaContadores(contadores: List<Pair<String, String>>, modifier: Modifier = Modifier) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        contadores.forEach { (valor, etiqueta) ->
+            ContadorLed(valor = valor, etiqueta = etiqueta, modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+/** 7.4: filtro en chips Todos / Activos / Inactivos (se filtra en el cliente). */
+enum class FiltroActivos(val texto: String) {
+    TODOS("Todos"), ACTIVOS("Activos"), INACTIVOS("Inactivos");
+
+    fun incluye(activo: Boolean): Boolean = when (this) {
+        TODOS -> true
+        ACTIVOS -> activo
+        INACTIVOS -> !activo
+    }
+}
+
+@Composable
+fun FiltroChipsActivos(seleccionado: FiltroActivos, onElegir: (FiltroActivos) -> Unit) {
+    FilaDeChipsSportPro {
+        FiltroActivos.entries.forEach { filtro ->
+            ChipSportPro(filtro.texto, filtro == seleccionado) { onElegir(filtro) }
+        }
+    }
+}
+
+// =====================================================================
 // Extra · anchoCompleto
 // =====================================================================
 

@@ -1,5 +1,32 @@
 package com.example.projectsportpro2026_2.ui.estadisticas
 
+import com.example.projectsportpro2026_2.ui.comun.TarjetaTicket
+import com.example.projectsportpro2026_2.datos.estadisticas.PartidoJugador
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import androidx.core.content.FileProvider
+import java.io.File
+import android.graphics.Bitmap
+import android.content.Intent
+import android.content.Context
 import com.example.projectsportpro2026_2.ui.comun.CromoJugador
 import androidx.compose.material.icons.rounded.PanTool
 import androidx.compose.material.icons.rounded.HowToReg
@@ -204,6 +231,9 @@ fun PantallaEstadisticas(
                                 SeccionJugador(
                                     nombre = seleccionado.jugador.nombreCompleto(),
                                     posicion = seleccionado.jugador.posicion,
+                                    fotoUrl = seleccionado.jugador.fotoUrl,
+                                    nombreEquipo = estado.equipo?.nombre.orEmpty(),
+                                    etiquetaPeriodo = estado.periodo.etiqueta,
                                     fechaNacimiento = seleccionado.jugador.fechaNacimiento,
                                     esMenor = seleccionado.jugador.esMenorDeEdad(),
                                     completo = seleccionado.nivel == NivelAcceso.COMPLETO,
@@ -329,18 +359,34 @@ private fun MetricasEquipo(r: EstadisticasEquipo) {
 private fun SeccionJugador(
     nombre: String,
     posicion: String,
+    fotoUrl: String,
+    nombreEquipo: String,
+    etiquetaPeriodo: String,
     fechaNacimiento: String,
     esMenor: Boolean,
     completo: Boolean,
     hayPartidos: Boolean,
     r: EstadisticasJugador
 ) {
+    // 7.3 (opcional): el cromo se dibuja también en una capa para poder compartirlo como imagen
+    val capaCromo = rememberGraphicsLayer()
+    val alcance = rememberCoroutineScope()
+    val contexto = LocalContext.current
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Línea de cal (6.11, img 01): cromo grande del jugador (la foto y lo nuevo de 7.3 van en la etapa 6)
+        // Línea de cal (6.11, img 01): cromo grande con la foto (fotoUrl) o la silueta (7.3)
         CromoJugador(
             nombre = nombre,
             posicion = posicion,
-            modifier = Modifier.fillMaxWidth(),
+            fotoUrl = fotoUrl,
+            equipo = nombreEquipo,
+            estado = etiquetaPeriodo,
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawWithContent {
+                    capaCromo.record { this@drawWithContent.drawContent() }
+                    drawLayer(capaCromo)
+                },
             insignia = {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     // La edad es dato sensible: solo con acceso completo
@@ -361,6 +407,14 @@ private fun SeccionJugador(
                 icono = Icons.Rounded.HowToReg)
             TarjetaMetrica("Goles", if (hayPartidos) r.goles.toString() else null,
                 icono = Icons.Rounded.SportsSoccer, colorValor = SportProVerde)
+            // 7.3: minutos jugados (solo partidos con alineación confirmada; "—" si no hay)
+            TarjetaMetrica("Minutos", if (hayPartidos) (r.minutosJugados?.toString() ?: "—") else null,
+                icono = Icons.Rounded.Timer)
+        }
+
+        if (r.partidos.isNotEmpty()) {
+            GolesPorFecha(r.partidos)
+            UltimoPartido(r.partidos.size, r.partidos.last())
         }
 
         if (completo) {
@@ -407,7 +461,125 @@ private fun SeccionJugador(
                     "Solo el DT, el apoderado vinculado y el propio jugador ven asistencia, disciplina y edad."
             )
         }
+
+        // 7.3 (opcional): compartir el cromo como imagen. Solo lo ve quien ya puede ver al jugador.
+        OutlinedButton(
+            onClick = {
+                alcance.launch {
+                    runCatching {
+                        val imagen = capaCromo.toImageBitmap().asAndroidBitmap()
+                        compartirCromo(contexto, imagen, nombre)
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(Icons.Rounded.Share, contentDescription = null, tint = SportProNavy, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Compartir cromo", color = SportProNavy, fontWeight = FontWeight.SemiBold)
+        }
     }
+}
+
+/** 7.3 · Un balón por gol en cada partido finalizado y "—" cuando no hubo. */
+@Composable
+private fun GolesPorFecha(partidos: List<PartidoJugador>) {
+    TarjetaBlanca {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Goles por fecha",
+                color = SportProNavy,
+                fontFamily = FamiliaTitulos,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.weight(1f)
+            )
+            Text("— SIN GOLES", color = SportProTextoSecundario, fontFamily = FamiliaEtiquetas, fontSize = 12.sp)
+        }
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            partidos.forEachIndexed { i, p ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.semantics(mergeDescendants = true) {
+                        contentDescription = "Fecha ${i + 1}, vs ${p.partido.nombreRival}: " +
+                            if (p.goles == 0) "sin goles" else "${p.goles} " + if (p.goles == 1) "gol" else "goles"
+                    }
+                ) {
+                    if (p.goles == 0) {
+                        Text("—", color = SportProTextoSecundario, fontSize = 16.sp)
+                    } else {
+                        repeat(p.goles) {
+                            Icon(
+                                Icons.Rounded.SportsSoccer,
+                                contentDescription = null,
+                                tint = SportProVerde,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text("F${i + 1}", color = SportProTextoSecundario, fontFamily = FamiliaEtiquetas, fontSize = 12.sp)
+                }
+            }
+        }
+    }
+}
+
+/** 7.3 · Último partido: resultado, goles, minutos y si fue titular. */
+@Composable
+private fun UltimoPartido(numero: Int, p: PartidoJugador) {
+    TarjetaTicket(
+        hora = "${p.golesPropios}:${p.golesRival}",
+        fecha = "F$numero"
+    ) {
+        Text(
+            "vs ${p.partido.nombreRival}" + when (p.goles) {
+                0 -> ""
+                1 -> " · 1 gol"
+                else -> " · ${p.goles} goles"
+            },
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp
+        )
+        Text(
+            listOf(
+                p.minutos?.let { "$it min" } ?: "— min",
+                when (p.titular) {
+                    true -> "titular"
+                    false -> "suplente"
+                    null -> "sin alineación confirmada"
+                }
+            ).joinToString(" · "),
+            color = SportProTextoSecundario,
+            fontSize = 13.sp
+        )
+    }
+}
+
+/** Guarda el cromo en la caché de la app y abre el selector de Android para compartirlo. */
+private suspend fun compartirCromo(contexto: Context, imagen: Bitmap, nombre: String) {
+    val archivo = withContext(Dispatchers.IO) {
+        val carpeta = File(contexto.cacheDir, "compartidos").apply { mkdirs() }
+        File(carpeta, "cromo.png").also { destino ->
+            destino.outputStream().use { imagen.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }
+    }
+    val uri = FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
+    val intento = Intent(Intent.ACTION_SEND).apply {
+        type = "image/png"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_TEXT, "Cromo de $nombre · SportPro")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    contexto.startActivity(Intent.createChooser(intento, "Compartir cromo"))
 }
 
 @Composable
