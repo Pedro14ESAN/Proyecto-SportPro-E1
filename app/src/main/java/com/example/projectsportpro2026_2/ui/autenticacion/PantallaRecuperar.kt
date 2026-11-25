@@ -75,7 +75,6 @@ fun PantallaRecuperar(
 }
 
 @Composable
-@Composable
 fun ContenidoRecuperar(
     estado: EstadoRecuperar,
     onCorreo: (String) -> Unit,

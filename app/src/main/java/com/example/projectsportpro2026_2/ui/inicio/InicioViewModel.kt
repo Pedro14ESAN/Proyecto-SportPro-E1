@@ -22,7 +22,7 @@ import com.example.projectsportpro2026_2.datos.repositorio.evento.MarcadorPartid
 import com.example.projectsportpro2026_2.datos.repositorio.evento.RepositorioEventosPartido
 import com.example.projectsportpro2026_2.datos.repositorio.seguimiento.PartidoSeguible
 import com.example.projectsportpro2026_2.datos.repositorio.seguimiento.RepositorioSeguimientoPartido
-import com.example.projectsportpro2026_2.datos.repositorio.sincronizacion.RepositorioNotificaciones
+import com.example.projectsportpro2026_2.datos.repositorio.RepositorioNotificaciones
 import com.example.projectsportpro2026_2.datos.repositorio.sincronizacion.RepositorioSincronizacion
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

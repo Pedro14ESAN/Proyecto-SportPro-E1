@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.partidos
 
+import com.example.projectsportpro2026_2.ui.theme.TokenOscuroTexto2
 import com.example.projectsportpro2026_2.ui.comun.FilaContadores
 import com.example.projectsportpro2026_2.ui.comun.TipoEstado
 import com.example.projectsportpro2026_2.ui.comun.ChipEstado
@@ -323,7 +324,7 @@ private fun TarjetaPartidoSportPro(
 
     val textoSecundario = when (partido.estado) {
         EstadoPartido.EN_CURSO ->
-            Color(0xFFD7E5EC)
+            TokenOscuroTexto2 // texto claro fijo: el ticket en curso es oscuro en los dos modos (antes 0xFFD7E5EC)
 
         EstadoPartido.CANCELADO ->
             SportProRojo

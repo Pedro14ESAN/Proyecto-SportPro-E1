@@ -1150,9 +1150,9 @@ fun CampoSportPro(
     }
     val textoInferior = error ?: ayuda
     val placeholderFinal: (@Composable () -> Unit)? =
-        if (placeholder != null) @Composable { Text(placeholder, fontFamily = FamiliaCuerpo) } else null
+        if (placeholder != null) { @Composable { Text(placeholder, fontFamily = FamiliaCuerpo) } } else { null }
     val inferiorFinal: (@Composable () -> Unit)? =
-        if (textoInferior != null) @Composable { Text(textoInferior, fontSize = 12.sp) } else null
+        if (textoInferior != null) { @Composable { Text(textoInferior, fontSize = 12.sp) } } else { null }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         EtiquetaMono(etiqueta, if (error != null) c.errorTexto else c.textoSecundario)

@@ -1514,7 +1514,6 @@ private fun ModalRegistroEvento(
 
                 BotonTipoTarjeta(
                     texto = "Amarilla",
-                    simbolo = "▰",
                     seleccionado =
                         formulario.tipoTarjeta ==
                                 TipoTarjeta.AMARILLA,
@@ -1531,7 +1530,6 @@ private fun ModalRegistroEvento(
 
                 BotonTipoTarjeta(
                     texto = "Roja",
-                    simbolo = "▰",
                     seleccionado =
                         formulario.tipoTarjeta ==
                                 TipoTarjeta.ROJA,
@@ -1656,7 +1654,6 @@ private fun ModalRegistroEvento(
 @Composable
 private fun BotonTipoTarjeta(
     texto: String,
-    simbolo: String,
     seleccionado: Boolean,
     habilitado: Boolean,
     color: Color,
