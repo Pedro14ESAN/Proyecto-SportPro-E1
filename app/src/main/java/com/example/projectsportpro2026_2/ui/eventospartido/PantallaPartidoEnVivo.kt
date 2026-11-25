@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.eventospartido
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -715,7 +716,7 @@ private fun TarjetaMarcador(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = SportProNavy
+            containerColor = SportProNavyFondo
         )
     ) {
 
@@ -1948,7 +1949,7 @@ private fun CabeceraPartidoEnVivo(
             Surface(
                 modifier = Modifier.size(38.dp),
                 shape = RoundedCornerShape(10.dp),
-                color = SportProNavy
+                color = SportProNavyFondo
             ) {
 
                 Box(

@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -91,7 +92,7 @@ fun PantallaComunidad(
             SnackbarHost(avisos) { datos ->
                 Snackbar(
                     snackbarData = datos,
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -428,6 +429,7 @@ fun PantallaComunidad(
 
 private data class EstiloVisibilidad(val texto: String, val color: Color, val fondo: Color)
 
+@androidx.compose.runtime.Composable
 private fun estiloVisibilidad(p: Publicacion): EstiloVisibilidad = when (p.visibilidad) {
     VisibilidadPublicacion.COMUNIDAD ->
         EstiloVisibilidad("🌐 Comunidad SportPro", EtiquetaAzul, EtiquetaAzulFondo)

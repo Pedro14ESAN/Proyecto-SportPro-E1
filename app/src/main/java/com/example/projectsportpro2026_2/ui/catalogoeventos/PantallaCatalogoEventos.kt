@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.catalogoeventos
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -733,7 +734,7 @@ private fun DialogoFormularioEvento(
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor =
-                            SportProNavy,
+                            SportProNavyFondo,
                         contentColor =
                             Color.White
                     )
@@ -887,7 +888,7 @@ private fun CabeceraCatalogoSportPro() {
             Surface(
                 modifier = Modifier.size(38.dp),
                 shape = RoundedCornerShape(10.dp),
-                color = SportProNavy
+                color = SportProNavyFondo
             ) {
 
                 Box(

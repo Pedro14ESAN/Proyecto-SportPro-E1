@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.autenticacion
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,13 +44,13 @@ import com.example.projectsportpro2026_2.datos.modelo.PerfilUsuario
 import com.example.projectsportpro2026_2.ui.theme.ProjectSportPro2026_2Theme
 
 // Colores locales de esta pantalla (no se modifica el tema global)
-private val VerdePrincipal = Color(0xFF1B9A5C)
-private val VerdeOscuro = Color(0xFF14804B)
-private val FondoPantalla = Color(0xFFFAFAF7)
-private val TituloOscuro = Color(0xFF0F2438)
-private val TextoEtiqueta = Color(0xFF5B6B73)
-private val BordeCampo = Color(0xFFD5E3DC)
-private val TextoSecundario = Color(0xFF6B7A80)
+private val VerdePrincipal: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF1B9A5C)
+private val VerdeOscuro: Color @Composable get() = LineaDeCal.colores.okTexto // antes Color(0xFF14804B)
+private val FondoPantalla: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFFAFAF7)
+private val TituloOscuro: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0F2438)
+private val TextoEtiqueta: Color @Composable get() = LineaDeCal.colores.textoSecundario // antes Color(0xFF5B6B73)
+private val BordeCampo: Color @Composable get() = LineaDeCal.colores.borde // antes Color(0xFFD5E3DC)
+private val TextoSecundario: Color @Composable get() = LineaDeCal.colores.textoSecundario // antes Color(0xFF6B7A80)
 
 @Composable
 fun PantallaLogin(
@@ -104,8 +105,8 @@ fun ContenidoLogin(
 ) {
     val formaCampo = RoundedCornerShape(16.dp)
     val coloresCampo = OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White,
+        focusedContainerColor = LineaDeCal.colores.superficie,
+        unfocusedContainerColor = LineaDeCal.colores.superficie,
         focusedBorderColor = VerdePrincipal,
         unfocusedBorderColor = BordeCampo,
         cursorColor = VerdePrincipal,

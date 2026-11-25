@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.academias
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,14 +49,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.Academia
 
 // Colores locales de esta pantalla (no se modifica el tema global)
-private val VerdePrincipal = Color(0xFF1B9A5C)
-private val VerdeOscuro = Color(0xFF14804B)
-private val VerdeClaro = Color(0xFFEAF7EF)
-private val FondoPantalla = Color(0xFFFAFAF7)
-private val TituloOscuro = Color(0xFF0F2438)
-private val BordeCampo = Color(0xFFD5E3DC)
-private val TextoSecundario = Color(0xFF6B7A80)
-private val GrisInactivo = Color(0xFFEEF1F0)
+private val VerdePrincipal: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF1B9A5C)
+private val VerdeOscuro: Color @Composable get() = LineaDeCal.colores.okTexto // antes Color(0xFF14804B)
+private val VerdeClaro: Color @Composable get() = LineaDeCal.colores.okFondo // antes Color(0xFFEAF7EF)
+private val FondoPantalla: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFFAFAF7)
+private val TituloOscuro: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0F2438)
+private val BordeCampo: Color @Composable get() = LineaDeCal.colores.borde // antes Color(0xFFD5E3DC)
+private val TextoSecundario: Color @Composable get() = LineaDeCal.colores.textoSecundario // antes Color(0xFF6B7A80)
+private val GrisInactivo: Color @Composable get() = LineaDeCal.colores.apagadoFondo // antes Color(0xFFEEF1F0)
 
 @Composable
 fun PantallaAcademias(
@@ -219,7 +220,7 @@ private fun TarjetaAcademia(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = LineaDeCal.colores.superficie),
         border = BorderStroke(1.dp, BordeCampo)
     ) {
         Column(
@@ -303,8 +304,8 @@ private fun FormularioAcademia(
 
     val formaCampo = RoundedCornerShape(16.dp)
     val coloresCampo = OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White,
+        focusedContainerColor = LineaDeCal.colores.superficie,
+        unfocusedContainerColor = LineaDeCal.colores.superficie,
         focusedBorderColor = VerdePrincipal,
         unfocusedBorderColor = BordeCampo,
         focusedLabelColor = VerdeOscuro,

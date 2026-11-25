@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -255,7 +256,7 @@ private fun TarjetaAvisoPrueba(
                 Surface(
                     modifier = Modifier.size(36.dp),
                     shape = RoundedCornerShape(10.dp),
-                    color = SportProNavy
+                    color = SportProNavyFondo
                 ) {
                     Box(contentAlignment = Alignment.Center) { Text("⚽") }
                 }

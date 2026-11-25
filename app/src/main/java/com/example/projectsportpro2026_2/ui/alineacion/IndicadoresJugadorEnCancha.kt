@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.alineacion
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -27,7 +28,7 @@ internal fun IndicadoresJugadorEnCancha(
 ) {
     Surface(
         modifier = modifier,
-        color = Color.White,
+        color = LineaDeCal.colores.superficie,
         shape = RoundedCornerShape(6.dp),
         shadowElevation = 1.dp
     ) {

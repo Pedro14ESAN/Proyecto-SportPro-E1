@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.estadisticas
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,10 +39,10 @@ import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
 // Piezas visuales de HU18 y HU26/HU27 (Pedro), alineadas al Figma:
 // overline verde monoespaciado, títulos serif, tarjetas blancas con borde suave.
 
-val VerdeFigma = Color(0xFF1E9B5F)
-val AmarilloAviso = Color(0xFF8A6100)
-val AmarilloAvisoFondo = Color(0xFFFFF6D9)
-val AmarilloAvisoBorde = Color(0xFFF1D98A)
+val VerdeFigma: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF1E9B5F)
+val AmarilloAviso: Color @Composable get() = LineaDeCal.colores.amarilloTexto // antes Color(0xFF8A6100)
+val AmarilloAvisoFondo: Color @Composable get() = LineaDeCal.colores.amarilloFondo // antes Color(0xFFFFF6D9)
+val AmarilloAvisoBorde: Color @Composable get() = LineaDeCal.colores.amarilloBorde // antes Color(0xFFF1D98A)
 
 @Composable
 fun EncabezadoSeccion(

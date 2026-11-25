@@ -1,5 +1,7 @@
 package com.example.projectsportpro2026_2.ui.comun
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -32,14 +34,14 @@ import java.util.Locale
 
 // ---------- Colores de etiquetas (Figma) ----------
 
-val EtiquetaAzul = Color(0xFF3550A0)
-val EtiquetaAzulFondo = Color(0xFFE8EEFF)
-val EtiquetaLila = Color(0xFF6B4FA0)
-val EtiquetaLilaFondo = Color(0xFFF1ECFA)
-val EtiquetaNaranja = Color(0xFFA35F00)
-val EtiquetaNaranjaFondo = Color(0xFFFFF1DD)
-val EtiquetaGris = Color(0xFF66737E)
-val EtiquetaGrisFondo = Color(0xFFEEF0F1)
+val EtiquetaAzul: Color @Composable get() = LineaDeCal.colores.azulTexto // antes Color(0xFF3550A0)
+val EtiquetaAzulFondo: Color @Composable get() = LineaDeCal.colores.azulFondo // antes Color(0xFFE8EEFF)
+val EtiquetaLila: Color @Composable get() = LineaDeCal.colores.lilaTexto // antes Color(0xFF6B4FA0)
+val EtiquetaLilaFondo: Color @Composable get() = LineaDeCal.colores.lilaFondo // antes Color(0xFFF1ECFA)
+val EtiquetaNaranja: Color @Composable get() = LineaDeCal.colores.pendienteTexto // antes Color(0xFFA35F00)
+val EtiquetaNaranjaFondo: Color @Composable get() = LineaDeCal.colores.pendienteFondo // antes Color(0xFFFFF1DD)
+val EtiquetaGris: Color @Composable get() = LineaDeCal.colores.apagadoTexto // antes Color(0xFF66737E)
+val EtiquetaGrisFondo: Color @Composable get() = LineaDeCal.colores.apagadoFondo // antes Color(0xFFEEF0F1)
 
 // ---------- Componentes ----------
 
@@ -52,7 +54,7 @@ fun CabeceraSportPro() {
         Surface(
             modifier = Modifier.size(38.dp),
             shape = RoundedCornerShape(10.dp),
-            color = SportProNavy
+            color = SportProNavyFondo
         ) {
             Box(contentAlignment = Alignment.Center) { Text("⚽") }
         }
@@ -82,7 +84,7 @@ fun ChipSportPro(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
-        color = if (seleccionado) SportProNavy else SportProVerdeClaro
+        color = if (seleccionado) SportProNavyFondo else SportProVerdeClaro
     ) {
         Text(
             text = texto,
@@ -141,7 +143,7 @@ fun AvatarIniciales(
     Surface(
         modifier = Modifier.size(tamano),
         shape = CircleShape,
-        color = if (oscuro) SportProNavy else SportProVerdeClaro
+        color = if (oscuro) SportProNavyFondo else SportProVerdeClaro
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(

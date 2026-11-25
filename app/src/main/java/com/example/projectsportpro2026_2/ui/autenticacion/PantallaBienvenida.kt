@@ -1,5 +1,7 @@
 package com.example.projectsportpro2026_2.ui.autenticacion
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -47,9 +49,9 @@ import kotlinx.coroutines.launch
  * Portada → Introducción (3 pasos) → Login.
  */
 
-private val VerdeLima = Color(0xFFA8F06A)
-private val VerdeLimaSuave = Color(0xFFE3F5D9)
-private val NavyPortada = Color(0xFF122C3D)
+private val VerdeLima: Color @Composable get() = LineaDeCal.colores.lima // antes Color(0xFFA8F06A)
+private val VerdeLimaSuave: Color @Composable get() = LineaDeCal.colores.okFondo // antes Color(0xFFE3F5D9)
+private val NavyPortada: Color @Composable get() = LineaDeCal.colores.navy // antes Color(0xFF122C3D)
 
 // ---------------- 1. Portada ----------------
 
@@ -225,7 +227,7 @@ fun PantallaIntroduccion(
                 else alcance.launch { estadoPager.animateScrollToPage(pagina + 1) }
             },
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = SportProNavy),
+            colors = ButtonDefaults.buttonColors(containerColor = SportProNavyFondo),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp)

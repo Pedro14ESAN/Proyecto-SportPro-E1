@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.planes
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -173,7 +174,7 @@ private fun TarjetaPlan(p: Plan, onElegir: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        color = if (p.recomendado) SportProNavy else SportProSuperficie,
+        color = if (p.recomendado) SportProNavyFondo else SportProSuperficie,
         border = if (p.recomendado) null else BorderStroke(1.dp, SportProBorde)
     ) {
         val texto = if (p.recomendado) Color.White else SportProNavy

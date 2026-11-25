@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -214,7 +215,7 @@ fun FormularioPublicacion(
                             },
                             enabled = !guardando,
                             shape = RoundedCornerShape(50),
-                            color = SportProNavy.copy(alpha = 0.8f),
+                            color = SportProNavyFondo.copy(alpha = 0.8f),
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(8.dp)

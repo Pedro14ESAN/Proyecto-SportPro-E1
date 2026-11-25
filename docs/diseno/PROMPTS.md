@@ -42,12 +42,12 @@ Crea el kit de la sección 5 en ui/comun/LineaDeCal.kt: CabeceraCancha, Marcador
 Todavía no cambies ninguna pantalla. Compila, haz un commit "feat(ui): kit de componentes Línea de cal" y actualiza PROGRESO.md.
 ```
 
-## Prompt 4 · Etapa 3: inicio de los 4 roles y la tablet
+## Prompt 4 · Etapa 3: inicio de los 4 roles
 
 ```
-Sigue docs/diseno/ESPECIFICACION.md (secciones 6.2 y 7.1) y docs/diseno/PLAN.md. Referencias: img/03_inicio_roles.png e img/04_inicio_adm_tablet.png.
+Sigue docs/diseno/ESPECIFICACION.md (secciones 6.2 y 7.1) y docs/diseno/PLAN.md. Referencia: img/03_inicio_roles.png.
 
-Rediseña PantallasInicio.kt para ADM, DT, JUG y PAD, y también PantallaCuentaPendiente. Conserva TODOS los destinos actuales de cada rol (ADM 12, DT 9, JUG 9, PAD 10): Notificaciones pasa a la campana, Partidos en vivo al MarcadorLed, y Cerrar sesión va en el menú del avatar y también como botón discreto al final. Agrega lo de la sección 7.1 (tarjeta EN VIVO, contadores, "Requiere tu atención", "Tu jornada", "Para ti", "Mis jugadores" y la agenda en tablet). Todo eso solo lee datos; si algo falla, esa sección se oculta. En pantallas de 600 dp o más, usa el diseño de tablet. No agregues la barra inferior.
+Rediseña PantallasInicio.kt para ADM, DT, JUG y PAD, y también PantallaCuentaPendiente. Conserva TODOS los destinos actuales de cada rol (ADM 12, DT 9, JUG 9, PAD 10): Notificaciones pasa a la campana, Partidos en vivo al MarcadorLed, y Cerrar sesión va en el menú del avatar y también como botón discreto al final. Agrega lo de la sección 7.1 (tarjeta EN VIVO, contadores, "Requiere tu atención", "Tu jornada", "Para ti" y "Mis jugadores"). Todo eso solo lee datos; si algo falla, esa sección se oculta. No hay vista de tablet: en cualquier tamaño se usa el diseño de celular, centrado con widthIn(max = 600.dp). No agregues la barra inferior.
 
 Agrega tests para la lógica nueva de los contadores. Compila, corre los tests, haz commits separados para el estilo y para lo nuevo, y actualiza PROGRESO.md.
 ```

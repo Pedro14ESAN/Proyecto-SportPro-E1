@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.asistencias
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,32 +47,23 @@ import com.example.projectsportpro2026_2.datos.modelo.EstadoAsistencia
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.Rol
 
-private val AzulSportPro =
-    Color(0xFF0B3547)
+private val AzulSportPro: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0B3547)
 
-private val VerdeSportPro =
-    Color(0xFF168F5B)
+private val VerdeSportPro: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF168F5B)
 
-private val RojoSportPro =
-    Color(0xFFB83232)
+private val RojoSportPro: Color @Composable get() = LineaDeCal.colores.rojo // antes Color(0xFFB83232)
 
-private val AmarilloSportPro =
-    Color(0xFF8A6814)
+private val AmarilloSportPro: Color @Composable get() = LineaDeCal.colores.amarilloTexto // antes Color(0xFF8A6814)
 
-private val VerdeClaro =
-    Color(0xFFE6F5EC)
+private val VerdeClaro: Color @Composable get() = LineaDeCal.colores.okFondo // antes Color(0xFFE6F5EC)
 
-private val RojoClaro =
-    Color(0xFFFFE9E9)
+private val RojoClaro: Color @Composable get() = LineaDeCal.colores.errorFondo // antes Color(0xFFFFE9E9)
 
-private val AmarilloClaro =
-    Color(0xFFFFF4D6)
+private val AmarilloClaro: Color @Composable get() = LineaDeCal.colores.amarilloFondo // antes Color(0xFFFFF4D6)
 
-private val GrisClaro =
-    Color(0xFFF0F2F3)
+private val GrisClaro: Color @Composable get() = LineaDeCal.colores.apagadoFondo // antes Color(0xFFF0F2F3)
 
-private val FondoSportPro =
-    Color(0xFFF7F9F8)
+private val FondoSportPro: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFF7F9F8)
 
 @Composable
 fun PantallaAsistencias(
@@ -454,7 +446,7 @@ fun PantallaAsistencias(
                                     ButtonDefaults
                                         .buttonColors(
                                             containerColor =
-                                                AzulSportPro,
+                                                LineaDeCal.colores.superficieOscura,
                                             contentColor =
                                                 Color.White
                                         )
@@ -604,7 +596,7 @@ fun PantallaAsistencias(
                                     ButtonDefaults
                                         .buttonColors(
                                             containerColor =
-                                                AzulSportPro,
+                                                LineaDeCal.colores.superficieOscura,
                                             contentColor =
                                                 Color.White
                                         )
@@ -808,7 +800,7 @@ private fun TarjetaJugadorEditable(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    Color.White,
+                    LineaDeCal.colores.superficie,
                 contentColor =
                     AzulSportPro
             )
@@ -975,7 +967,7 @@ private fun TarjetaJugadorRegistrado(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    Color.White
+                    LineaDeCal.colores.superficie
             )
     ) {
         Row(
@@ -1160,7 +1152,7 @@ private fun TarjetaHistorial(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    Color.White
+                    LineaDeCal.colores.superficie
             )
     ) {
         Row(
@@ -1243,7 +1235,7 @@ private fun TextoVacio(
         modifier =
             Modifier.fillMaxWidth(),
         color =
-            Color.White,
+            LineaDeCal.colores.superficie,
         shape =
             RoundedCornerShape(
                 12.dp

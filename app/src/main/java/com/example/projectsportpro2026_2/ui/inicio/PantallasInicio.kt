@@ -1,5 +1,7 @@
 package com.example.projectsportpro2026_2.ui.inicio
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,11 +35,11 @@ import androidx.compose.ui.unit.sp
 import com.example.projectsportpro2026_2.ui.partidos.SportProNavy
 
 // Colores locales de estas pantallas (no se modifica el tema global)
-private val VerdePrincipal = Color(0xFF1B9A5C)
-private val FondoPantalla = Color(0xFFFAFAF7)
-private val TituloOscuro = Color(0xFF0F2438)
-private val BordeCampo = Color(0xFFD5E3DC)
-private val TextoSecundario = Color(0xFF6B7A80)
+private val VerdePrincipal: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF1B9A5C)
+private val FondoPantalla: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFFAFAF7)
+private val TituloOscuro: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0F2438)
+private val BordeCampo: Color @Composable get() = LineaDeCal.colores.borde // antes Color(0xFFD5E3DC)
+private val TextoSecundario: Color @Composable get() = LineaDeCal.colores.textoSecundario // antes Color(0xFF6B7A80)
 
 @Composable
 private fun PantallaBaseInicio(
@@ -65,7 +67,7 @@ private fun PantallaBaseInicio(
                     Modifier
                         .size(44.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(SportProNavy),
+                        .background(SportProNavyFondo),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -160,7 +162,7 @@ private fun BotonInicio(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (destacado) VerdePrincipal else Color.White,
+            containerColor = if (destacado) VerdePrincipal else LineaDeCal.colores.superficie,
             contentColor = if (destacado) Color.White else TituloOscuro
         ),
         border = if (destacado) null else BorderStroke(1.dp, BordeCampo),

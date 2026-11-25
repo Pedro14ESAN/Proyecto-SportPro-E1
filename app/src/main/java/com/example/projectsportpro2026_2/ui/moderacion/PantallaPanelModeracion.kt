@@ -1,5 +1,7 @@
 package com.example.projectsportpro2026_2.ui.moderacion
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -61,7 +63,7 @@ fun PantallaPanelModeracion(
             SnackbarHost(avisos) { datos ->
                 Snackbar(
                     snackbarData = datos,
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -320,7 +322,7 @@ private fun TarjetaReporte(
                         Button(
                             onClick = { onDecidir(DecisionModeracion.CERRADO) },
                             shape = FormaBotonSportPro,
-                            colors = ButtonDefaults.buttonColors(containerColor = EtiquetaNaranja),
+                            colors = ButtonDefaults.buttonColors(containerColor = LineaDeCal.colores.naranja),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Cerrar", fontSize = 12.sp, fontWeight = FontWeight.Bold)

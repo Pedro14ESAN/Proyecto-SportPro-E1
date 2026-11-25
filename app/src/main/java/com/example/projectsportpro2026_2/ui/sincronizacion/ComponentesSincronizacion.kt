@@ -60,6 +60,7 @@ private data class ColoresEstado(
     val texto: Color
 )
 
+@androidx.compose.runtime.Composable
 private fun coloresGenerales(
     estado: EstadoConexionPartido
 ): ColoresEstado =

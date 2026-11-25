@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.notificaciones
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -115,7 +116,7 @@ fun PantallaNotificaciones(
                     )
                     if (estado.noLeidas > 0) {
                         Spacer(Modifier.width(8.dp))
-                        Surface(shape = CircleShape, color = EtiquetaNaranja) {
+                        Surface(shape = CircleShape, color = LineaDeCal.colores.naranja) {
                             Text(
                                 text = "${estado.noLeidas}",
                                 color = androidx.compose.ui.graphics.Color.White,
@@ -197,7 +198,7 @@ private fun BannerPermiso(rechazado: Boolean, onActivar: () -> Unit) {
                 Button(
                     onClick = onActivar,
                     shape = FormaBotonSportPro,
-                    colors = ButtonDefaults.buttonColors(containerColor = EtiquetaAzul)
+                    colors = ButtonDefaults.buttonColors(containerColor = LineaDeCal.colores.superficieOscura)
                 ) {
                     Text("Activar notificaciones", fontWeight = FontWeight.Bold)
                 }

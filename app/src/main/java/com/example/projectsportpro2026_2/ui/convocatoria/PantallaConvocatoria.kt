@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.convocatoria
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -534,10 +535,10 @@ private fun BarraPublicarConvocatoria(
                     .height(52.dp),
                 shape = FormaBotonSportPro,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White,
                     disabledContainerColor =
-                        SportProNavy.copy(
+                        SportProNavyFondo.copy(
                             alpha = 0.45f
                         )
                 )
@@ -587,7 +588,7 @@ private fun CabeceraConvocatoriaSportPro() {
             Surface(
                 modifier = Modifier.size(38.dp),
                 shape = RoundedCornerShape(10.dp),
-                color = SportProNavy
+                color = SportProNavyFondo
             ) {
 
                 Box(

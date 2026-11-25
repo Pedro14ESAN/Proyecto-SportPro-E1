@@ -65,6 +65,7 @@ data class EstiloEventoEnVivo(
     val borde: Color
 )
 
+@androidx.compose.runtime.Composable
 fun estiloEventoEnVivo(
     codigo: String
 ): EstiloEventoEnVivo =

@@ -308,7 +308,7 @@ private fun TarjetaPartidoSportPro(
     val marcadorVisible = if (enCurso) marcadorEnVivo else marcador
     val fondo = when (partido.estado) {
         EstadoPartido.EN_CURSO ->
-            SportProNavy
+            SportProNavyFondo
 
         EstadoPartido.CANCELADO ->
             SportProRojoClaro

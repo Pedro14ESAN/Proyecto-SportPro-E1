@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.entrenamientos
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.horizontalScroll
@@ -58,23 +59,17 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-private val AzulEntrenamiento =
-    Color(0xFF0B3547)
+private val AzulEntrenamiento: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0B3547)
 
-private val VerdeEntrenamiento =
-    Color(0xFF168F5B)
+private val VerdeEntrenamiento: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF168F5B)
 
-private val RojoEntrenamiento =
-    Color(0xFFB83232)
+private val RojoEntrenamiento: Color @Composable get() = LineaDeCal.colores.rojo // antes Color(0xFFB83232)
 
-private val AmarilloEntrenamiento =
-    Color(0xFF8A6814)
+private val AmarilloEntrenamiento: Color @Composable get() = LineaDeCal.colores.amarilloTexto // antes Color(0xFF8A6814)
 
-private val FondoEntrenamiento =
-    Color(0xFFF7F9F8)
+private val FondoEntrenamiento: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFF7F9F8)
 
-private val GrisEntrenamiento =
-    Color(0xFF5F666A)
+private val GrisEntrenamiento: Color @Composable get() = LineaDeCal.colores.textoSecundario // antes Color(0xFF5F666A)
 
 @Composable
 fun PantallaEntrenamientos(
@@ -416,7 +411,7 @@ fun PantallaEntrenamientos(
                         modifier =
                             Modifier.fillMaxWidth(),
                         color =
-                            Color.White,
+                            LineaDeCal.colores.superficie,
                         shape =
                             RoundedCornerShape(
                                 12.dp
@@ -528,7 +523,7 @@ private fun FiltroEntrenamiento(
             ButtonDefaults.buttonColors(
                 containerColor =
                     if (seleccionado) {
-                        AzulEntrenamiento
+                        LineaDeCal.colores.superficieOscura
                     } else {
                         Color(0xFFEDEFF0)
                     },
@@ -566,7 +561,7 @@ private fun TarjetaEntrenamiento(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    Color.White,
+                    LineaDeCal.colores.superficie,
                 contentColor =
                     AzulEntrenamiento
             )
@@ -1349,7 +1344,7 @@ private fun FormularioEntrenamiento(
                         colors =
                             CardDefaults.cardColors(
                                 containerColor =
-                                    Color.White
+                                    LineaDeCal.colores.superficie
                             )
                     ) {
                         Column(

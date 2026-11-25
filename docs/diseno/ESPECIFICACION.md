@@ -26,7 +26,7 @@ Rama de trabajo: `feature/nahim-diseno-linea-de-cal` (creada desde `main` en `f4
 | `01_estilo_claro.png` | Concepto: inicio, partido en vivo y cromo del jugador (modo claro) |
 | `02_estilo_oscuro.png` | Las mismas pantallas en modo oscuro |
 | `03_inicio_roles.png` | Inicio de ADM, DT, JUG y PAD (sin barra inferior) |
-| `04_inicio_adm_tablet.png` | Panel del ADM en tablet y las 3 ideas de mejora |
+| `04_inicio_adm_tablet.png` | Panel del ADM en tablet y las 3 ideas de mejora. **La vista de tablet ya no se implementa** (ver 6.2); la imagen queda solo como referencia de estilo |
 | `05_entrenamientos_ejercicios.png` | Entrenamientos, planificar entrenamiento y ejercicios |
 | `06_asistencia_mensualidades.png` | Registrar asistencia, historial del jugador y mensualidades |
 | `07_partidos_convocatoria_alineacion.png` | Partidos, convocatoria y alineación |
@@ -129,13 +129,13 @@ Para cada pantalla se mantiene **todo** lo que tiene hoy y se aplican el kit y l
 ### 6.1 Bienvenida, login, registro y recuperar (img 09)
 Se usa `FondoCancha` arriba con el logo y el lema; los campos usan `CampoSportPro` y el botón principal es lima. El registro y la recuperación siguen el mismo estilo, con todos sus campos y validaciones actuales.
 
-### 6.2 Inicio de los 4 roles (img 03, y img 04 en tablet)
+### 6.2 Inicio de los 4 roles (img 03)
 - Cabecera de césped con el rol en mono, el saludo con el **nombre real** del perfil, la campana (Notificaciones) y el avatar con las iniciales.
 - Debajo, el `MarcadorLed` del partido en curso (ver 7.1). Al tocarlo se abre la misma acción que hoy tiene "Partidos en vivo".
 - **Pizarra**: **todos** los botones actuales del rol, como fichas, con el mismo destino. ADM: 12 destinos; DT: 9; JUG: 9; PAD: 10 (ver `PantallasInicio.kt`). "Notificaciones" pasa a la campana y "Partidos en vivo" al marcador; "Planes y ofertas" (ADM) queda como tarjeta debajo de la pizarra.
 - **Cerrar sesión**: se abre desde el avatar (menú con el nombre y "Cerrar sesión"). Además se mantiene un botón "Cerrar sesión" discreto al final de la pantalla, para no perderlo.
 - `PantallaCuentaPendiente`: mismo estilo, mismo texto.
-- **Tablet** (ancho de 600 dp o más; usar `LocalConfiguration.current.screenWidthDp` o `BoxWithConstraints`): cabecera ancha con el LED a la derecha, pizarra de 4 columnas en grupos (Gestión, Deporte y Club en el ADM) y, a la derecha, "Requiere tu atención" y los contadores. Debajo va la agenda.
+- **Pantallas anchas**: **no hay vista de tablet**. En cualquier tamaño se usa el mismo diseño que en celular. En pantallas anchas, el contenido va centrado con un ancho máximo de unos 600 dp (`Modifier.widthIn(max = 600.dp)`), para que no se estire.
 
 ### 6.3 Academias y equipos (img 08)
 `CabeceraCancha` con contadores; cada equipo es una tarjeta con escudo de iniciales y su categoría. Los equipos inactivos se ven apagados. Se mantienen crear, editar, inactivar y la gestión de entrenadores.
@@ -198,7 +198,6 @@ Las marcadas con ⚠️ cambian el flujo de un compañero: se implementan en un 
 - **DT · "Tu jornada"**: el próximo entrenamiento PUBLICADO (usar `listarParaUsuario()`: objetivo, hora, `duracionTotalMinutos` y número de ejercicios; **no mostrar lugar**, porque `Entrenamiento` no lo guarda) y el próximo partido con "respondieron x/y" de su convocatoria.
 - **JUG · "Para ti"**: convocatoria pendiente de responder (abre Mis convocatorias), porcentaje de asistencia, goles de la temporada y estado de la mensualidad.
 - **PAD · "Mis jugadores"**: cromo mini de cada jugador vinculado con el estado de su mensualidad.
-- **Tablet · agenda**: entrenamientos y partidos de los próximos 7 días, y pruebas abiertas.
 - Todo esto **solo lee** datos existentes. Si una consulta falla o no hay datos, esa sección se oculta y el inicio sigue funcionando.
 
 ### 7.2 Partido en vivo (HU-14, HU-16)

@@ -1,5 +1,8 @@
 package com.example.projectsportpro2026_2.ui.resumen
 
+import com.example.projectsportpro2026_2.ui.theme.PaletaLineaDeCal
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -123,7 +126,7 @@ fun PantallaResumenPartido(
             SnackbarHost(avisos) { datos ->
                 Snackbar(
                     snackbarData = datos,
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -293,7 +296,7 @@ fun PantallaResumenPartido(
                                 onValueChange = { if (it.length <= 4000) viewModel.editarTexto(it) },
                                 minLines = 8,
                                 // Mismo resaltado que la narración publicada
-                                visualTransformation = TransformacionResaltado,
+                                visualTransformation = LineaDeCal.colores.let { paleta -> remember(paleta) { transformacionResaltado(paleta) } },
                                 shape = FormaCampoSportPro,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -492,7 +495,7 @@ private fun TarjetaBorrador(
                 )
             }
             Text(
-                remember(resumen.textoOriginalIA) { ResaltadoNarracion.resaltar(resumen.textoOriginalIA) },
+                LineaDeCal.colores.let { paleta -> remember(resumen.textoOriginalIA, paleta) { ResaltadoNarracion.resaltar(resumen.textoOriginalIA, paleta) } },
                 color = SportProNavy, fontSize = 14.sp, lineHeight = 20.sp
             )
             Text(
@@ -521,7 +524,7 @@ private fun TarjetaAprobado(resumen: ResumenPartido, lector: LectorNarracion) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("✓ Resumen aprobado", color = VerdeFigma, fontWeight = FontWeight.ExtraBold)
             Text(
-                remember(resumen.textoFinal) { ResaltadoNarracion.resaltar(resumen.textoFinal) },
+                LineaDeCal.colores.let { paleta -> remember(resumen.textoFinal, paleta) { ResaltadoNarracion.resaltar(resumen.textoFinal, paleta) } },
                 color = SportProNavy, fontSize = 14.sp, lineHeight = 20.sp
             )
             Text(
@@ -536,8 +539,8 @@ private fun TarjetaAprobado(resumen: ResumenPartido, lector: LectorNarracion) {
 }
 
 // Resalta minutos, goles y tarjetas mientras el DT edita (sin cambiar el texto)
-private val TransformacionResaltado = VisualTransformation { texto ->
-    TransformedText(ResaltadoNarracion.resaltar(texto.text), OffsetMapping.Identity)
+private fun transformacionResaltado(paleta: PaletaLineaDeCal) = VisualTransformation { texto ->
+    TransformedText(ResaltadoNarracion.resaltar(texto.text, paleta), OffsetMapping.Identity)
 }
 
 /*
@@ -619,7 +622,7 @@ private fun TarjetaComentarios(
             onClick = onEnviar,
             enabled = nuevo.isNotBlank() && !enviando,
             shape = FormaBotonSportPro,
-            colors = ButtonDefaults.buttonColors(containerColor = SportProNavy),
+            colors = ButtonDefaults.buttonColors(containerColor = SportProNavyFondo),
             modifier = Modifier.fillMaxWidth().height(46.dp)
         ) {
             if (enviando) {
@@ -835,7 +838,7 @@ private fun FormularioEvaluacion(
                 Surface(
                     onClick = { onCambiar(evaluacion.copy(utilidad = n)) },
                     shape = RoundedCornerShape(10.dp),
-                    color = if (activo) SportProNavy else SportProVerdeClaro,
+                    color = if (activo) SportProNavyFondo else SportProVerdeClaro,
                     modifier = Modifier.size(42.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {

@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.ejercicios
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,20 +50,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.Ejercicio
 
-private val AzulEjercicios =
-    Color(0xFF0B3547)
+private val AzulEjercicios: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0B3547)
 
-private val VerdeEjercicios =
-    Color(0xFF168F5B)
+private val VerdeEjercicios: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF168F5B)
 
-private val RojoEjercicios =
-    Color(0xFFB83232)
+private val RojoEjercicios: Color @Composable get() = LineaDeCal.colores.rojo // antes Color(0xFFB83232)
 
-private val FondoEjercicios =
-    Color(0xFFF7F9F8)
+private val FondoEjercicios: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFF7F9F8)
 
-private val GrisEjercicios =
-    Color(0xFF5F666A)
+private val GrisEjercicios: Color @Composable get() = LineaDeCal.colores.textoSecundario // antes Color(0xFF5F666A)
 
 @Composable
 fun PantallaEjercicios(
@@ -393,7 +389,7 @@ fun PantallaEjercicios(
                         modifier =
                             Modifier.fillMaxWidth(),
                         color =
-                            Color.White,
+                            LineaDeCal.colores.superficie,
                         shape =
                             RoundedCornerShape(
                                 12.dp
@@ -507,7 +503,7 @@ private fun FiltroEjercicio(
             ButtonDefaults.buttonColors(
                 containerColor =
                     if (seleccionado) {
-                        AzulEjercicios
+                        LineaDeCal.colores.superficieOscura
                     } else {
                         Color(0xFFEDEFF0)
                     },
@@ -545,7 +541,7 @@ private fun TarjetaEjercicio(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    Color.White,
+                    LineaDeCal.colores.superficie,
                 contentColor =
                     AzulEjercicios
             )

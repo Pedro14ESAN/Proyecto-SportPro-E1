@@ -346,10 +346,10 @@ fun PantallaCrearPartido(
                     idEquipoSeleccionado.isNotBlank(),
             shape = FormaBotonSportPro,
             colors = ButtonDefaults.buttonColors(
-                containerColor = SportProNavy,
+                containerColor = SportProNavyFondo,
                 contentColor = Color.White,
                 disabledContainerColor =
-                    SportProNavy.copy(alpha = 0.45f)
+                    SportProNavyFondo.copy(alpha = 0.45f)
             )
         ) {
 
@@ -437,7 +437,7 @@ private fun CabeceraSportProSimple() {
             Surface(
                 modifier = Modifier.size(38.dp),
                 shape = RoundedCornerShape(10.dp),
-                color = SportProNavy
+                color = SportProNavyFondo
             ) {
                 Box(
                     contentAlignment = Alignment.Center

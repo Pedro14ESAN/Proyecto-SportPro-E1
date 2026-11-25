@@ -263,7 +263,7 @@ fun PantallaDetallePartido(
                     .height(52.dp),
                 shape = FormaBotonSportPro,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White
                 )
             ) {
@@ -320,7 +320,7 @@ fun PantallaDetallePartido(
                     .height(52.dp),
                 shape = FormaBotonSportPro,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White
                 )
             ) {
@@ -379,7 +379,7 @@ fun PantallaDetallePartido(
                     .height(52.dp),
                 shape = FormaBotonSportPro,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White
                 )
             ) {
@@ -468,7 +468,7 @@ private fun TarjetaMarcadorDetalle(
         modifier = Modifier.fillMaxWidth(),
         shape = FormaTarjetaSportPro,
         colors = CardDefaults.cardColors(
-            containerColor = SportProNavy
+            containerColor = SportProNavyFondo
         )
     ) {
 
@@ -673,7 +673,7 @@ private fun CabeceraDetalleSportPro() {
             Surface(
                 modifier = Modifier.size(38.dp),
                 shape = RoundedCornerShape(10.dp),
-                color = SportProNavy
+                color = SportProNavyFondo
             ) {
                 Box(
                     contentAlignment = Alignment.Center

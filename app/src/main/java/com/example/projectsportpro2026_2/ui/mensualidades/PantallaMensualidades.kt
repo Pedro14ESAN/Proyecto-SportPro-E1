@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.mensualidades
 
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,23 +58,17 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val AzulSportPro =
-    Color(0xFF0B3547)
+private val AzulSportPro: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0B3547)
 
-private val VerdeSportPro =
-    Color(0xFF18A668)
+private val VerdeSportPro: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF18A668)
 
-private val Fondo =
-    Color(0xFFF8FAF9)
+private val Fondo: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFF8FAF9)
 
-private val VerdeClaro =
-    Color(0xFFE8F8E9)
+private val VerdeClaro: Color @Composable get() = LineaDeCal.colores.okFondo // antes Color(0xFFE8F8E9)
 
-private val AmarilloClaro =
-    Color(0xFFFFF6DC)
+private val AmarilloClaro: Color @Composable get() = LineaDeCal.colores.amarilloFondo // antes Color(0xFFFFF6DC)
 
-private val RojoClaro =
-    Color(0xFFFFE7E7)
+private val RojoClaro: Color @Composable get() = LineaDeCal.colores.errorFondo // antes Color(0xFFFFE7E7)
 
 @OptIn(
     ExperimentalMaterial3Api::class
@@ -829,7 +824,7 @@ private fun TarjetaMensualidad(
             CardDefaults
                 .cardColors(
                     containerColor =
-                        Color.White
+                        LineaDeCal.colores.superficie
                 )
     ) {
 
@@ -1567,6 +1562,7 @@ private fun textoEstado(
     }
 }
 
+@androidx.compose.runtime.Composable
 private fun colorEstadoClaro(
     estado: EstadoMensualidad
 ): Color {

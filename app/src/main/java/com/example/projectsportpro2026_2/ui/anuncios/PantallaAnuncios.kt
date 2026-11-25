@@ -1,5 +1,8 @@
 package com.example.projectsportpro2026_2.ui.anuncios
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import androidx.compose.runtime.Composable
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -42,12 +45,12 @@ import java.util.Date
 import java.util.Locale
 
 // Colores de las etiquetas de audiencia (tomados del Figma)
-private val AzulEtiqueta = Color(0xFF3550A0)
-private val AzulEtiquetaFondo = Color(0xFFE8EEFF)
-private val NaranjaEtiqueta = Color(0xFFA35F00)
-private val NaranjaEtiquetaFondo = Color(0xFFFFF1DD)
-private val GrisEtiqueta = Color(0xFF66737E)
-private val GrisEtiquetaFondo = Color(0xFFEEF0F1)
+private val AzulEtiqueta: Color @Composable get() = LineaDeCal.colores.azulTexto // antes Color(0xFF3550A0)
+private val AzulEtiquetaFondo: Color @Composable get() = LineaDeCal.colores.azulFondo // antes Color(0xFFE8EEFF)
+private val NaranjaEtiqueta: Color @Composable get() = LineaDeCal.colores.pendienteTexto // antes Color(0xFFA35F00)
+private val NaranjaEtiquetaFondo: Color @Composable get() = LineaDeCal.colores.pendienteFondo // antes Color(0xFFFFF1DD)
+private val GrisEtiqueta: Color @Composable get() = LineaDeCal.colores.apagadoTexto // antes Color(0xFF66737E)
+private val GrisEtiquetaFondo: Color @Composable get() = LineaDeCal.colores.apagadoFondo // antes Color(0xFFEEF0F1)
 
 @Composable
 fun PantallaAnuncios(
@@ -121,7 +124,7 @@ fun PantallaAnuncios(
                                 viewModel.limpiarMensajes()
                                 formularioAbierto = true
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = SportProNavy),
+                            colors = ButtonDefaults.buttonColors(containerColor = SportProNavyFondo),
                             shape = FormaBotonSportPro
                         ) {
                             Text("+ Nuevo", fontWeight = FontWeight.Bold)
@@ -225,7 +228,7 @@ private fun CabeceraSportPro() {
         Surface(
             modifier = Modifier.size(38.dp),
             shape = RoundedCornerShape(10.dp),
-            color = SportProNavy
+            color = SportProNavyFondo
         ) {
             Box(contentAlignment = Alignment.Center) { Text("⚽") }
         }
@@ -256,7 +259,7 @@ internal fun ChipAnuncio(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
-        color = if (seleccionado) SportProNavy else SportProVerdeClaro
+        color = if (seleccionado) SportProNavyFondo else SportProVerdeClaro
     ) {
         Text(
             text = texto,
@@ -288,6 +291,7 @@ private data class EstiloAudiencia(
     val fondo: Color
 )
 
+@androidx.compose.runtime.Composable
 private fun estiloAudiencia(anuncio: Anuncio): EstiloAudiencia =
     when (anuncio.tipoAudiencia) {
         TipoAudiencia.ACADEMIA ->

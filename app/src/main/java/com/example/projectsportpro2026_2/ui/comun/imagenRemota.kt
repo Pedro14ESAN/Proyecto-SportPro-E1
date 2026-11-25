@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.comun
 
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.LruCache
@@ -171,7 +172,7 @@ fun ImagenRemota(
         Box(
             modifier = modifier
                 .clip(CircleShape)
-                .background(SportProNavy),
+                .background(SportProNavyFondo),
             contentAlignment =
                 Alignment.Center
         ) {
