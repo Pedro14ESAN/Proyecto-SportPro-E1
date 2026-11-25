@@ -1,5 +1,14 @@
 package com.example.projectsportpro2026_2.ui.sincronizacion
 
+import com.example.projectsportpro2026_2.ui.theme.EstiloMarcador
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
 import com.example.projectsportpro2026_2.datos.partido.eventosValidos
 
 import androidx.compose.foundation.BorderStroke
@@ -30,10 +39,11 @@ fun IconoEvento(codigo: String, tipoTarjeta: TipoTarjeta = TipoTarjeta.NINGUNA) 
         color = if (roja) SportProRojoClaro else estilo.fondoIcono
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = simboloEvento(codigo, tipoTarjeta),
-                fontSize = 28.sp,
-                color = if (roja) SportProRojo else estilo.colorIcono
+            Icon(
+                imageVector = iconoEvento(codigo, tipoTarjeta),
+                contentDescription = null,
+                tint = if (roja) SportProRojo else estilo.colorIcono,
+                modifier = Modifier.size(26.dp)
             )
         }
     }
@@ -45,12 +55,20 @@ fun JugadoresEvento(evento: EventoPartido) {
         if (evento.codigoTipoEvento == "CAMBIO" &&
             (evento.nombreJugadorSale.isNotBlank() || evento.nombreJugadorEntra.isNotBlank())) {
             if (evento.nombreJugadorSale.isNotBlank()) {
-                Text("↓ Sale: ${evento.nombreJugadorSale}", color = SportProRojo,
-                    style = MaterialTheme.typography.bodyMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.ArrowDownward, contentDescription = null, tint = SportProRojo,
+                        modifier = Modifier.size(16.dp))
+                    Text(" Sale: ${evento.nombreJugadorSale}", color = SportProRojo,
+                        style = MaterialTheme.typography.bodyMedium)
+                }
             }
             if (evento.nombreJugadorEntra.isNotBlank()) {
-                Text("↑ Entra: ${evento.nombreJugadorEntra}", color = SportProVerde,
-                    style = MaterialTheme.typography.bodyMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.ArrowUpward, contentDescription = null, tint = SportProVerde,
+                        modifier = Modifier.size(16.dp))
+                    Text(" Entra: ${evento.nombreJugadorEntra}", color = SportProVerde,
+                        style = MaterialTheme.typography.bodyMedium)
+                }
             }
         } else if (evento.nombreJugador.isNotBlank()) {
             Text(evento.nombreJugador, color = SportProNavy,
@@ -59,12 +77,13 @@ fun JugadoresEvento(evento: EventoPartido) {
     }
 }
 data class EstiloEventoEnVivo(
-    val icono: String,
+    val icono: ImageVector,
     val fondoIcono: Color,
     val colorIcono: Color,
     val borde: Color
 )
 
+@androidx.compose.runtime.Composable
 fun estiloEventoEnVivo(
     codigo: String
 ): EstiloEventoEnVivo =
@@ -72,20 +91,20 @@ fun estiloEventoEnVivo(
 
         "INICIO" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
                     SportProVerdeClaro,
                 colorIcono =
                     SportProVerde,
                 borde =
-                    Color(0xFFB9E0C3)
+                    LineaDeCal.colores.okBorde /* antes 0xFFB9E0C3 */
             )
 
         "FIN" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
-                    Color(0xFFE8ECEF),
+                    LineaDeCal.colores.apagadoFondo /* antes 0xFFE8ECEF */,
                 colorIcono =
                     SportProNavy,
                 borde =
@@ -94,86 +113,86 @@ fun estiloEventoEnVivo(
 
         "GOL" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
                     SportProVerdeClaro,
                 colorIcono =
                     SportProVerde,
                 borde =
-                    Color(0xFFB9E0C3)
+                    LineaDeCal.colores.okBorde /* antes 0xFFB9E0C3 */
             )
 
         "TARJETA" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
-                    Color(0xFFFFF3C4),
+                    LineaDeCal.colores.amarilloFondo /* antes 0xFFFFF3C4 */,
                 colorIcono =
-                    Color(0xFF9A7200),
+                    LineaDeCal.colores.amarilloTexto /* antes 0xFF9A7200 */,
                 borde =
-                    Color(0xFFE8D17A)
+                    LineaDeCal.colores.amarilloBorde /* antes 0xFFE8D17A */
             )
 
         "CAMBIO" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
-                    Color(0xFFE7F0F8),
+                    LineaDeCal.colores.azulFondo /* antes 0xFFE7F0F8 */,
                 colorIcono =
-                    Color(0xFF28659A),
+                    LineaDeCal.colores.azulTexto /* antes 0xFF28659A */,
                 borde =
-                    Color(0xFFB9D2E7)
+                    LineaDeCal.colores.borde /* antes 0xFFB9D2E7 */
             )
 
         "FUERA_JUEGO" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
-                    Color(0xFFF0EBF8),
+                    LineaDeCal.colores.lilaFondo /* antes 0xFFF0EBF8 */,
                 colorIcono =
-                    Color(0xFF67508A),
+                    LineaDeCal.colores.lilaTexto /* antes 0xFF67508A */,
                 borde =
-                    Color(0xFFD4C8E8)
+                    LineaDeCal.colores.borde /* antes 0xFFD4C8E8 */
             )
 
         "FALTA" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
                     SportProRojoClaro,
                 colorIcono =
                     SportProRojo,
                 borde =
-                    Color(0xFFF0C6C2)
+                    LineaDeCal.colores.errorBorde /* antes 0xFFF0C6C2 */
             )
 
         "PENAL" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
-                    Color(0xFFFFEEDB),
+                    LineaDeCal.colores.pendienteFondo /* antes 0xFFFFEEDB */,
                 colorIcono =
-                    Color(0xFFA85D16),
+                    LineaDeCal.colores.pendienteTexto /* antes 0xFFA85D16 */,
                 borde =
-                    Color(0xFFF0D0A9)
+                    LineaDeCal.colores.pendienteBorde /* antes 0xFFF0D0A9 */
             )
 
         "TIRO_ESQUINA" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
-                    Color(0xFFE7F0F8),
+                    LineaDeCal.colores.azulFondo /* antes 0xFFE7F0F8 */,
                 colorIcono =
-                    Color(0xFF28659A),
+                    LineaDeCal.colores.azulTexto /* antes 0xFF28659A */,
                 borde =
-                    Color(0xFFB9D2E7)
+                    LineaDeCal.colores.borde /* antes 0xFFB9D2E7 */
             )
 
         "SAQUE_META" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
-                    Color(0xFFEAF1EC),
+                    LineaDeCal.colores.apagadoFondo /* antes 0xFFEAF1EC */,
                 colorIcono =
                     SportProNavy,
                 borde =
@@ -182,9 +201,9 @@ fun estiloEventoEnVivo(
 
         "SAQUE_LATERAL" ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
-                    Color(0xFFEAF1EC),
+                    LineaDeCal.colores.apagadoFondo /* antes 0xFFEAF1EC */,
                 colorIcono =
                     SportProNavy,
                 borde =
@@ -193,7 +212,7 @@ fun estiloEventoEnVivo(
 
         else ->
             EstiloEventoEnVivo(
-                icono = simboloEvento(codigo),
+                icono = iconoEvento(codigo),
                 fondoIcono =
                     SportProVerdeClaro,
                 colorIcono =
@@ -214,9 +233,9 @@ internal fun ResumenEventosEnVivo(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = Color(0xFFF3F6F5),
+        color = LineaDeCal.colores.apagadoFondo /* antes 0xFFF3F6F5 */,
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFE2E8E6))
+        border = BorderStroke(1.dp, LineaDeCal.colores.borde /* antes 0xFFE2E8E6 */)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -224,9 +243,9 @@ internal fun ResumenEventosEnVivo(
             Text(
                 text = "Resumen de eventos",
                 color = SportProTextoSecundario,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FamiliaEtiquetas,
                 fontWeight = FontWeight.Bold,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 letterSpacing = 1.sp
             )
 
@@ -262,8 +281,7 @@ private fun CifraResumen(
         Text(
             text = "$valor",
             color = SportProNavy,
-            fontWeight = FontWeight.Black,
-            fontSize = 26.sp
+            style = EstiloMarcador.copy(fontSize = 26.sp, lineHeight = 28.sp)
         )
 
         Text(

@@ -1,5 +1,10 @@
 package com.example.projectsportpro2026_2.ui.alineacion
 
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -71,8 +76,8 @@ import com.example.projectsportpro2026_2.ui.partidos.SportProTextoSecundario
 import com.example.projectsportpro2026_2.ui.partidos.SportProVerde
 import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
 
-private val VerdeCancha = Color(0xFF328653)
-private val VerdeCanchaOscuro = Color(0xFF287344)
+private val VerdeCancha: Color @Composable get() = LineaDeCal.colores.cesped // antes Color(0xFF328653)
+private val VerdeCanchaOscuro: Color @Composable get() = LineaDeCal.colores.cespedAlterno // antes Color(0xFF287344)
 
 @Composable
 fun PantallaAlineacion(
@@ -177,8 +182,9 @@ fun PantallaAlineacion(
                 TextButton(
                     onClick = onVolver
                 ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
                     Text(
-                        text = "← Partidos",
+                        text = "Partidos",
                         color = SportProVerde
                     )
                 }
@@ -527,9 +533,9 @@ private fun SelectorFormato(
                     ),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = SportProNavy,
+                        containerColor = SportProNavyFondo,
                         contentColor = Color.White,
-                        disabledContainerColor = SportProNavy,
+                        disabledContainerColor = SportProNavyFondo,
                         disabledContentColor = Color.White
                     )
                 ) {
@@ -790,7 +796,7 @@ private fun JugadorEnCancha(
             Surface(
                 modifier = Modifier.size(54.dp),
                 shape = CircleShape,
-                color = SportProNavy,
+                color = SportProNavyFondo,
                 border = BorderStroke(
                     2.dp,
                     Color.White
@@ -965,7 +971,7 @@ private fun TarjetaTitular(
         shape = FormaTarjetaSportPro,
         border = BorderStroke(
             1.dp,
-            Color(0xFFB9E0C3)
+            LineaDeCal.colores.okBorde /* antes 0xFFB9E0C3 */
         )
     ) {
 
@@ -1169,10 +1175,10 @@ private fun BarraConfirmarAlineacion(
                 shape = FormaBotonSportPro,
                 colors =
                     ButtonDefaults.buttonColors(
-                        containerColor = SportProNavy,
+                        containerColor = SportProNavyFondo,
                         contentColor = Color.White,
                         disabledContainerColor =
-                            SportProNavy.copy(
+                            SportProNavyFondo.copy(
                                 alpha = 0.4f
                             )
                     )
@@ -1347,64 +1353,8 @@ private fun TextoVacioAlineacion(
 
 @Composable
 private fun CabeceraAlineacionSportPro() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement =
-            Arrangement.SpaceBetween
-    ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement =
-                Arrangement.spacedBy(10.dp)
-        ) {
-
-            Surface(
-                modifier = Modifier.size(38.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = SportProNavy
-            ) {
-                Box(
-                    contentAlignment =
-                        Alignment.Center
-                ) {
-                    Text("⚽")
-                }
-            }
-
-            Column {
-
-                Text(
-                    text = "SPORTPRO",
-                    color = SportProNavy,
-                    style =
-                        MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black
-                )
-
-                Text(
-                    text = "",
-                    color = SportProTextoSecundario,
-                    style =
-                        MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-
-        Surface(
-            modifier = Modifier.size(38.dp),
-            shape = CircleShape,
-            color = SportProVerdeClaro
-        ) {
-            Box(
-                contentAlignment =
-                    Alignment.Center
-            ) {
-                Text("🔔")
-            }
-        }
-    }
+    // Línea de cal: la cabecera decorativa (logo ⚽ y campana 🔔 sin acción) se quitó;
+    // cada pantalla muestra su título y su botón de volver.
 }
 
 private fun inicialesJugador(

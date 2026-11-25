@@ -1,5 +1,20 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Flag
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -93,15 +108,15 @@ fun HojaAccionesContenido(
             when (paso) {
 
                 PasoAcciones.MENU -> {
-                    OpcionAccion("🚩", "Reportar $tipoTexto", SportProRojo) { paso = PasoAcciones.REPORTAR }
+                    OpcionAccion(Icons.Rounded.Flag, "Reportar $tipoTexto", SportProRojo) { paso = PasoAcciones.REPORTAR }
                     // Los avisos son de la academia, no de una persona: no se bloquean
                     if (!esAviso) {
-                        OpcionAccion("⊘", "Bloquear a ${seleccionado.nombreAutor}", SportProNavy) {
+                        OpcionAccion(Icons.Rounded.Block, "Bloquear a ${seleccionado.nombreAutor}", SportProNavy) {
                             paso = PasoAcciones.BLOQUEAR
                         }
                     }
                     if (puedeModerar) {
-                        OpcionAccion("🛡", "Moderar directamente", SportProVerde) { paso = PasoAcciones.MODERAR }
+                        OpcionAccion(Icons.Rounded.Shield, "Moderar directamente", SportProVerde) { paso = PasoAcciones.MODERAR }
                     }
                 }
 
@@ -119,7 +134,7 @@ fun HojaAccionesContenido(
                         shape = FormaCampoSportPro,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    NotaInfo("🔒 Tu identidad no se mostrará a la persona reportada.")
+                    NotaInfo("Tu identidad no se mostrará a la persona reportada.", Icons.Rounded.Lock)
                     MensajeErrorHoja(error)
                     BotonesHoja(
                         textoConfirmar = "Enviar reporte",
@@ -195,14 +210,22 @@ private fun TituloHoja(texto: String) {
 }
 
 @Composable
-private fun OpcionAccion(emoji: String, texto: String, color: Color, onClick: () -> Unit) {
+private fun OpcionAccion(icono: ImageVector, texto: String, color: Color, onClick: () -> Unit) {
     Surface(onClick = onClick, color = SportProFondo, shape = FormaCampoSportPro, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(emoji, fontSize = 18.sp)
+            // Línea de cal (img 10): ícono en círculo de color
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(color.copy(alpha = 0.14f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icono, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+            }
             Text(texto, color = color, fontWeight = FontWeight.SemiBold)
         }
     }
@@ -226,9 +249,13 @@ private fun FilaRadio(texto: String, seleccionado: Boolean, onClick: () -> Unit)
 }
 
 @Composable
-private fun NotaInfo(texto: String) {
+private fun NotaInfo(texto: String, icono: ImageVector = Icons.Rounded.Info) {
     Surface(color = EtiquetaAzulFondo, shape = FormaCampoSportPro, modifier = Modifier.fillMaxWidth()) {
-        Text(texto, color = EtiquetaAzul, fontSize = 12.sp, modifier = Modifier.padding(12.dp))
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icono, contentDescription = null, tint = EtiquetaAzul, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(texto, color = EtiquetaAzul, fontSize = 12.sp)
+        }
     }
 }
 

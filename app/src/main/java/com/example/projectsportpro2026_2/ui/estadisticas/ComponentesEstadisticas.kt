@@ -1,5 +1,16 @@
 package com.example.projectsportpro2026_2.ui.estadisticas
 
+import com.example.projectsportpro2026_2.ui.theme.EstiloMarcador
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.comun.anchoCompleto
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,10 +49,10 @@ import com.example.projectsportpro2026_2.ui.partidos.SportProVerdeClaro
 // Piezas visuales de HU18 y HU26/HU27 (Pedro), alineadas al Figma:
 // overline verde monoespaciado, títulos serif, tarjetas blancas con borde suave.
 
-val VerdeFigma = Color(0xFF1E9B5F)
-val AmarilloAviso = Color(0xFF8A6100)
-val AmarilloAvisoFondo = Color(0xFFFFF6D9)
-val AmarilloAvisoBorde = Color(0xFFF1D98A)
+val VerdeFigma: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF1E9B5F)
+val AmarilloAviso: Color @Composable get() = LineaDeCal.colores.amarilloTexto // antes Color(0xFF8A6100)
+val AmarilloAvisoFondo: Color @Composable get() = LineaDeCal.colores.amarilloFondo // antes Color(0xFFFFF6D9)
+val AmarilloAvisoBorde: Color @Composable get() = LineaDeCal.colores.amarilloBorde // antes Color(0xFFF1D98A)
 
 @Composable
 fun EncabezadoSeccion(
@@ -51,36 +62,16 @@ fun EncabezadoSeccion(
     titulo: String,
     subtitulo: String? = null
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = "← $textoVolver",
-            color = VerdeFigma,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .clip(RoundedCornerShape(6.dp))
-                .clickable { onVolver() }
-                .padding(vertical = 4.dp)
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = overline,
-            color = VerdeFigma,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            fontSize = 11.sp,
-            letterSpacing = 1.5.sp
-        )
-        Text(
-            text = titulo,
-            color = SportProNavy,
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 28.sp
-        )
-        if (!subtitulo.isNullOrBlank()) {
-            Text(subtitulo, color = SportProTextoSecundario, fontSize = 13.sp)
-        }
-    }
+    // Línea de cal: cabecera de césped a todo el ancho (las pantallas que la usan tienen 20 dp de margen).
+    // Mismos textos: etiqueta, título, subtítulo y el botón de volver ("textoVolver" como descripción).
+    CabeceraCancha(
+        titulo = titulo,
+        subtitulo = subtitulo?.takeIf { it.isNotBlank() },
+        etiqueta = overline,
+        onVolver = onVolver,
+        descripcionVolver = textoVolver,
+        modifier = Modifier.anchoCompleto(20.dp)
+    )
 }
 
 // Tarjeta blanca con borde suave (como en el Figma)
@@ -108,7 +99,7 @@ fun RowScope.TarjetaMetrica(
     titulo: String,
     valor: String?,
     detalle: String? = null,
-    icono: String = "",
+    icono: ImageVector? = null,
     colorValor: Color = SportProNavy
 ) {
     Surface(
@@ -123,25 +114,30 @@ fun RowScope.TarjetaMetrica(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = if (icono.isBlank()) titulo.uppercase() else "$icono  ${titulo.uppercase()}",
-                color = SportProTextoSecundario,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.8.sp,
-                maxLines = 2
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (icono != null) {
+                    Icon(icono, contentDescription = null, tint = SportProTextoSecundario, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(
+                    text = titulo.uppercase(),
+                    color = SportProTextoSecundario,
+                    fontFamily = FamiliaEtiquetas,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.8.sp,
+                    maxLines = 2
+                )
+            }
             if (valor == null) {
                 Text("Sin datos", color = SportProTextoSecundario, fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold)
             } else {
+                // Línea de cal: contadores en Doto (números de 18 sp o más)
                 Text(
                     text = valor,
                     color = colorValor,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 28.sp
+                    style = EstiloMarcador.copy(fontSize = 28.sp, lineHeight = 30.sp)
                 )
             }
             if (!detalle.isNullOrBlank()) {
@@ -222,7 +218,7 @@ fun AvisoAmarillo(titulo: String, texto: String) {
             modifier = Modifier.padding(14.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("🔒", fontSize = 16.sp)
+            Icon(Icons.Rounded.Lock, contentDescription = null, tint = AmarilloAviso, modifier = Modifier.size(18.dp))
             Column {
                 Text(titulo, color = AmarilloAviso, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Text(texto, color = AmarilloAviso, fontSize = 12.sp)
@@ -237,8 +233,8 @@ fun PieSoloLectura(texto: String) {
     Text(
         text = texto,
         color = SportProTextoSecundario,
-        fontFamily = FontFamily.Monospace,
-        fontSize = 10.sp,
+        fontFamily = FamiliaEtiquetas,
+        fontSize = 12.sp,
         letterSpacing = 1.sp,
         textAlign = TextAlign.Center,
         modifier = Modifier

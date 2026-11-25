@@ -80,6 +80,9 @@ object Rutas {
 
     // HU26/HU27: resumen narrativo del partido (Pedro)
     const val RESUMEN_PARTIDO = "partido/{idPartido}/resumen"
+
+    // Línea de cal: perfil de solo lectura (pestaña "Perfil" de la barra inferior)
+    const val PERFIL = "perfil"
 }
 
 fun rutaResumenPartido(

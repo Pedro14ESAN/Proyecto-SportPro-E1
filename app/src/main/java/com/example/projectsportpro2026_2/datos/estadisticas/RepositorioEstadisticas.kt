@@ -1,5 +1,7 @@
 package com.example.projectsportpro2026_2.datos.estadisticas
 
+import com.example.projectsportpro2026_2.datos.modelo.alineacion.TipoJugadorAlineacion
+import com.example.projectsportpro2026_2.datos.modelo.alineacion.Alineacion
 import com.example.projectsportpro2026_2.datos.modelo.Asistencia
 import com.example.projectsportpro2026_2.datos.modelo.Entrenamiento
 import com.example.projectsportpro2026_2.datos.modelo.Equipo
@@ -147,19 +149,34 @@ class RepositorioEstadisticas(
                 }
             }.awaitAll().toMap()
 
-            val alineados = jugados.map { partido ->
+            val lecturasAlineacion = jugados.map { partido ->
                 async {
-                    partido.id to try {
+                    val jugadoresAlineacion = try {
                         alineaciones.document(partido.id).collection("jugadores")
                             .get().await()
                             .toObjects(JugadorAlineacion::class.java)
-                            .map { it.idJugador }
-                            .toSet()
                     } catch (e: Exception) {
-                        emptySet()
+                        emptyList()
                     }
+                    // 7.3: los minutos solo se calculan con una alineación confirmada
+                    val confirmada = try {
+                        alineaciones.document(partido.id).get().await()
+                            .toObject(Alineacion::class.java)?.confirmada == true
+                    } catch (e: Exception) {
+                        false
+                    }
+                    Triple(partido.id, jugadoresAlineacion, confirmada)
                 }
-            }.awaitAll().toMap()
+            }.awaitAll()
+            // Igual que antes: todos los alineados (titulares y suplentes) cuentan como participación
+            val alineados = lecturasAlineacion.associate { (id, lista, _) ->
+                id to lista.map { it.idJugador }.toSet()
+            }
+            val titulares = lecturasAlineacion
+                .filter { (_, _, confirmada) -> confirmada }
+                .associate { (id, lista, _) ->
+                    id to lista.filter { it.tipo == TipoJugadorAlineacion.TITULAR }.map { it.idJugador }.toSet()
+                }
 
             val listaJugadores = plantel.await()
                 .map { JugadorEstadistico(it, ControlAcceso.nivelSobreJugador(contexto, it)) }
@@ -173,6 +190,7 @@ class RepositorioEstadisticas(
                     partidos = listaPartidos,
                     eventosPorPartido = eventosPorPartido,
                     alineadosPorPartido = alineados,
+                    titularesPorPartido = titulares,
                     entrenamientos = sesiones.await(),
                     asistencias = listaAsistencias
                 ),

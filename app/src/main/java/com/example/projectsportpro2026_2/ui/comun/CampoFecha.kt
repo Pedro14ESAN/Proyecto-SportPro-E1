@@ -1,5 +1,8 @@
 package com.example.projectsportpro2026_2.ui.comun
 
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
 import android.app.DatePickerDialog
 import android.content.DialogInterface
 import androidx.compose.foundation.clickable
@@ -82,7 +85,7 @@ fun CampoFecha(
             label = if (etiqueta != null) { { Text(etiqueta) } } else null,
             placeholder = { Text(placeholder) },
             supportingText = if (textoAyuda != null) { { Text(textoAyuda) } } else null,
-            trailingIcon = { Text("📅") },
+            trailingIcon = { Icon(Icons.Rounded.CalendarMonth, contentDescription = "Elegir fecha") },
             singleLine = true,
             shape = shape,
             colors = colors,

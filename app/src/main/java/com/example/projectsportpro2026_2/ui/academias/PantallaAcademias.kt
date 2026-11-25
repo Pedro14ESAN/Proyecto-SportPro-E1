@@ -1,5 +1,17 @@
 package com.example.projectsportpro2026_2.ui.academias
 
+import com.example.projectsportpro2026_2.ui.comun.FilaContadores
+import com.example.projectsportpro2026_2.ui.comun.EscudoIniciales
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,14 +60,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projectsportpro2026_2.datos.modelo.Academia
 
 // Colores locales de esta pantalla (no se modifica el tema global)
-private val VerdePrincipal = Color(0xFF1B9A5C)
-private val VerdeOscuro = Color(0xFF14804B)
-private val VerdeClaro = Color(0xFFEAF7EF)
-private val FondoPantalla = Color(0xFFFAFAF7)
-private val TituloOscuro = Color(0xFF0F2438)
-private val BordeCampo = Color(0xFFD5E3DC)
-private val TextoSecundario = Color(0xFF6B7A80)
-private val GrisInactivo = Color(0xFFEEF1F0)
+private val VerdePrincipal: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF1B9A5C)
+private val VerdeOscuro: Color @Composable get() = LineaDeCal.colores.okTexto // antes Color(0xFF14804B)
+private val VerdeClaro: Color @Composable get() = LineaDeCal.colores.okFondo // antes Color(0xFFEAF7EF)
+private val FondoPantalla: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFFAFAF7)
+private val TituloOscuro: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0F2438)
+private val BordeCampo: Color @Composable get() = LineaDeCal.colores.borde // antes Color(0xFFD5E3DC)
+private val TextoSecundario: Color @Composable get() = LineaDeCal.colores.textoSecundario // antes Color(0xFF6B7A80)
+private val GrisInactivo: Color @Composable get() = LineaDeCal.colores.apagadoFondo // antes Color(0xFFEEF1F0)
 
 @Composable
 fun PantallaAcademias(
@@ -78,55 +90,38 @@ fun PantallaAcademias(
                     enEdicion = null
                     mostrarFormulario = true
                 },
-                containerColor = VerdePrincipal,
-                contentColor = Color.White,
+                containerColor = LineaDeCal.colores.lima,
+                contentColor = LineaDeCal.colores.navy,
                 shape = RoundedCornerShape(16.dp)
-            ) { Text("+", fontSize = 26.sp, fontWeight = FontWeight.Bold) }
+            ) { Icon(Icons.Rounded.Add, contentDescription = "Nueva academia") }
         }
     ) { relleno ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(relleno)
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+                .padding(relleno),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "← Volver",
-                color = VerdeOscuro,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-                modifier = Modifier.clickable(onClick = onVolver)
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = "GESTIÓN",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        letterSpacing = 2.sp,
-                        color = VerdePrincipal
+            // Línea de cal (6.3, img 08): cabecera de césped
+            CabeceraCancha(
+                titulo = "Mis academias",
+                subtitulo = "Administra tus academias, equipos y partidos.",
+                etiqueta = "GESTIÓN",
+                onVolver = onVolver
+            ) {
+                // 7.4: contadores con los datos ya cargados
+                FilaContadores(
+                    listOf(
+                        "${estado.academias.size}" to "Academias",
+                        "${estado.academias.count { it.activa }}" to "Activas"
                     )
-                )
-                Text(
-                    text = "Mis academias",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 30.sp,
-                        color = TituloOscuro
-                    )
-                )
-                Text(
-                    text = "Administra tus academias, equipos y partidos.",
-                    color = TextoSecundario,
-                    fontSize = 14.sp
                 )
             }
 
-            Spacer(Modifier.height(4.dp))
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
 
             if (!mostrarFormulario) {
                 estado.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -168,6 +163,7 @@ fun PantallaAcademias(
                         onCambiarEstado = { viewModel.cambiarEstado(academia) }
                     )
                 }
+            }
             }
         }
     }
@@ -218,8 +214,8 @@ private fun TarjetaAcademia(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = LineaDeCal.colores.superficie),
         border = BorderStroke(1.dp, BordeCampo)
     ) {
         Column(
@@ -231,26 +227,20 @@ private fun TarjetaAcademia(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                EscudoIniciales(academia.nombre, activo = academia.activa)
+                Spacer(Modifier.width(12.dp))
                 Text(
                     academia.nombre,
                     color = TituloOscuro,
+                    fontFamily = FamiliaTitulos,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     modifier = Modifier.weight(1f)
                 )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(if (academia.activa) VerdeClaro else GrisInactivo)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        if (academia.activa) "Activa" else "Inactiva",
-                        color = if (academia.activa) VerdeOscuro else TextoSecundario,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
+                ChipEstado(
+                    if (academia.activa) "Activa" else "Inactiva",
+                    if (academia.activa) TipoEstado.OK else TipoEstado.APAGADO
+                )
             }
             if (academia.direccion.isNotBlank()) {
                 Text(academia.direccion, color = TextoSecundario, fontSize = 14.sp)
@@ -303,8 +293,8 @@ private fun FormularioAcademia(
 
     val formaCampo = RoundedCornerShape(16.dp)
     val coloresCampo = OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White,
+        focusedContainerColor = LineaDeCal.colores.superficie,
+        unfocusedContainerColor = LineaDeCal.colores.superficie,
         focusedBorderColor = VerdePrincipal,
         unfocusedBorderColor = BordeCampo,
         focusedLabelColor = VerdeOscuro,
@@ -321,7 +311,7 @@ private fun FormularioAcademia(
             Text(
                 if (inicial == null) "Nueva academia" else "Editar academia",
                 style = TextStyle(
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = FamiliaTitulos,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 22.sp,
                     color = TituloOscuro

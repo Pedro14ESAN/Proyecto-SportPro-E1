@@ -290,7 +290,7 @@ class ResumenPartidoViewModel : ViewModel() {
             _estado.update { it.copy(procesando = true, error = null) }
             repositorio.aprobar(contexto, resumen, e.textoEditado, e.evaluacion, e.eventos)
                 .onSuccess {
-                    _estado.update { it.copy(procesando = false, mensaje = "✓ Resumen aprobado y nota de evaluación guardada") }
+                    _estado.update { it.copy(procesando = false, mensaje = "Resumen aprobado y nota de evaluación guardada") }
                     cargarHistorial()
                 }
                 .onFailure { error ->

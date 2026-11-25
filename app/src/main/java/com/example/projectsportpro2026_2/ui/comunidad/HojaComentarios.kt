@@ -1,5 +1,15 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -93,11 +103,20 @@ fun HojaComentarios(
                             maxLines = 3,
                             overflow = TextOverflow.Ellipsis
                         )
-                        Text(
-                            text = "♡ ${publicacion.totalReacciones()}",
-                            color = SportProTextoSecundario,
-                            fontSize = 11.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Rounded.FavoriteBorder,
+                                contentDescription = null,
+                                tint = SportProTextoSecundario,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "${publicacion.totalReacciones()}",
+                                color = SportProTextoSecundario,
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
             }
@@ -211,7 +230,7 @@ private fun FilaComentario(
                 Text(
                     text = tiempoRelativo(comentario.fechaCreacion),
                     color = SportProTextoSecundario,
-                    fontSize = 10.sp
+                    fontSize = 12.sp
                 )
             }
             Text(
@@ -222,20 +241,17 @@ private fun FilaComentario(
         }
 
         if (esMio) {
-            Text(
-                text = "🗑",
-                modifier = Modifier
-                    .clickable { onEliminar() }
-                    .padding(4.dp)
-            )
+            IconButton(onClick = onEliminar) {
+                Icon(Icons.Rounded.Delete, contentDescription = "Eliminar comentario", tint = SportProRojo)
+            }
         } else {
-            Text(
-                text = "•••",
-                color = SportProTextoSecundario,
-                modifier = Modifier
-                    .clickable { onMas() }
-                    .padding(4.dp)
-            )
+            IconButton(onClick = onMas) {
+                Icon(
+                    Icons.Rounded.MoreVert,
+                    contentDescription = "Opciones del comentario de ${comentario.nombreAutor}",
+                    tint = SportProTextoSecundario
+                )
+            }
         }
     }
 }

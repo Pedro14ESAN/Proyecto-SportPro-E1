@@ -1,5 +1,20 @@
 package com.example.projectsportpro2026_2.ui.notificaciones
 
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.Campaign
+import androidx.compose.material.icons.rounded.EventBusy
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
+import androidx.compose.material.icons.automirrored.rounded.Undo
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -94,12 +109,18 @@ fun PantallaNotificaciones(
             item { CabeceraSportPro() }
 
             item {
-                Text(
-                    text = "← Inicio",
-                    color = SportProVerde,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onVolver() }
-                )
+                Row(
+                    modifier = Modifier.clickable { onVolver() }.padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, tint = SportProVerde, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = "Inicio",
+                        color = SportProVerde,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
             item {
@@ -115,7 +136,7 @@ fun PantallaNotificaciones(
                     )
                     if (estado.noLeidas > 0) {
                         Spacer(Modifier.width(8.dp))
-                        Surface(shape = CircleShape, color = EtiquetaNaranja) {
+                        Surface(shape = CircleShape, color = LineaDeCal.colores.naranja) {
                             Text(
                                 text = "${estado.noLeidas}",
                                 color = androidx.compose.ui.graphics.Color.White,
@@ -187,7 +208,7 @@ private fun BannerPermiso(rechazado: Boolean, onActivar: () -> Unit) {
                     "Sin el permiso no verás avisos en la barra del celular, pero igual quedan aquí. " +
                             "Puedes activarlo después en los ajustes del celular."
                 } else {
-                    "🔔 Activa las notificaciones para enterarte al instante de convocatorias, " +
+                    "Activa las notificaciones para enterarte al instante de convocatorias, " +
                             "entrenamientos y anuncios."
                 },
                 color = EtiquetaAzul,
@@ -197,7 +218,7 @@ private fun BannerPermiso(rechazado: Boolean, onActivar: () -> Unit) {
                 Button(
                     onClick = onActivar,
                     shape = FormaBotonSportPro,
-                    colors = ButtonDefaults.buttonColors(containerColor = EtiquetaAzul)
+                    colors = ButtonDefaults.buttonColors(containerColor = LineaDeCal.colores.superficieOscura)
                 ) {
                     Text("Activar notificaciones", fontWeight = FontWeight.Bold)
                 }
@@ -205,6 +226,16 @@ private fun BannerPermiso(rechazado: Boolean, onActivar: () -> Unit) {
         }
     }
 }
+
+private fun iconoNotificacion(tipo: TipoNotificacion): ImageVector =
+    when (tipo) {
+        TipoNotificacion.CONVOCATORIA -> Icons.Rounded.SportsSoccer
+        TipoNotificacion.CONVOCATORIA_RETIRADA -> Icons.AutoMirrored.Rounded.Undo
+        TipoNotificacion.ENTRENAMIENTO_PUBLICADO -> Icons.AutoMirrored.Rounded.DirectionsRun
+        TipoNotificacion.ENTRENAMIENTO_CAMBIADO -> Icons.Rounded.Schedule
+        TipoNotificacion.ENTRENAMIENTO_CANCELADO -> Icons.Rounded.EventBusy
+        TipoNotificacion.ANUNCIO -> Icons.Rounded.Campaign
+    }
 
 @Composable
 private fun FilaNotificacion(notificacion: Notificacion, onClick: () -> Unit) {
@@ -226,7 +257,13 @@ private fun FilaNotificacion(notificacion: Notificacion, onClick: () -> Unit) {
                 color = SportProFondo
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(notificacion.tipo.emoji, fontSize = 18.sp)
+                    // D-17: el modelo conserva TipoNotificacion.emoji; en la UI se muestra un ícono
+                    Icon(
+                        iconoNotificacion(notificacion.tipo),
+                        contentDescription = null,
+                        tint = SportProVerde,
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
             }
 
@@ -241,7 +278,7 @@ private fun FilaNotificacion(notificacion: Notificacion, onClick: () -> Unit) {
                 Text(
                     text = tiempoRelativo(notificacion.fechaCreacion),
                     color = SportProTextoSecundario,
-                    fontSize = 10.sp
+                    fontSize = 12.sp
                 )
             }
 

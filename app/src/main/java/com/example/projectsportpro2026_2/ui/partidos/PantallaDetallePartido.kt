@@ -1,5 +1,16 @@
 package com.example.projectsportpro2026_2.ui.partidos
 
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.MarcadorLed
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -93,8 +104,9 @@ fun PantallaDetallePartido(
         TextButton(
             onClick = onVolver
         ) {
+            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
             Text(
-                text = "← Partidos",
+                text = "Partidos",
                 color = SportProVerde
             )
         }
@@ -235,22 +247,24 @@ fun PantallaDetallePartido(
                     contentColor = SportProNavy
                 )
             ) {
+                Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "✎  Editar partido",
+                    text = "Editar partido",
                     fontWeight = FontWeight.Medium
                 )
             }
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFFFFF5DF),
+                color = LineaDeCal.colores.amarilloFondo /* antes 0xFFFFF5DF */,
                 shape = FormaCampoSportPro
             ) {
                 Text(
                     text = "El partido está listo para iniciarse cuando corresponda.",
                     modifier = Modifier.padding(14.dp),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF9A6514)
+                    color = LineaDeCal.colores.amarilloTexto /* antes 0xFF9A6514 */
                 )
             }
 
@@ -263,7 +277,7 @@ fun PantallaDetallePartido(
                     .height(52.dp),
                 shape = FormaBotonSportPro,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White
                 )
             ) {
@@ -305,8 +319,10 @@ fun PantallaDetallePartido(
                     contentColor = Color.White
                 )
             ) {
+                Icon(Icons.Rounded.SportsSoccer, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "⚽  Abrir partido en vivo",
+                    text = "Abrir partido en vivo",
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -320,7 +336,7 @@ fun PantallaDetallePartido(
                     .height(52.dp),
                 shape = FormaBotonSportPro,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White
                 )
             ) {
@@ -359,7 +375,7 @@ fun PantallaDetallePartido(
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFFECEFF1),
+                color = LineaDeCal.colores.apagadoFondo /* antes 0xFFECEFF1 */,
                 shape = FormaCampoSportPro
             ) {
                 Text(
@@ -379,7 +395,7 @@ fun PantallaDetallePartido(
                     .height(52.dp),
                 shape = FormaBotonSportPro,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White
                 )
             ) {
@@ -401,12 +417,14 @@ fun PantallaDetallePartido(
                     .height(52.dp),
                 shape = FormaBotonSportPro,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1E9B5F),
+                    containerColor = LineaDeCal.colores.verde /* antes 0xFF1E9B5F */,
                     contentColor = Color.White
                 )
             ) {
+                Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "✨ Resumen del partido",
+                    text = "Resumen del partido",
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -464,78 +482,19 @@ private fun TarjetaMarcadorDetalle(
     golesRival: Int,
     finalizado: Boolean
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = FormaTarjetaSportPro,
-        colors = CardDefaults.cardColors(
-            containerColor = SportProNavy
-        )
-    ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-            verticalArrangement =
-                Arrangement.spacedBy(10.dp)
-        ) {
-
-            Text(
-                text =
-                    if (finalizado) {
-                        "RESULTADO FINAL"
-                    } else {
-                        "MARCADOR ACTUAL"
-                    },
-                color = SportProVerdeClaro,
-                style =
-                    MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            Row(
-                modifier =
-                    Modifier.fillMaxWidth(),
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-
-                Text(
-                    text = nombreEquipo,
-                    modifier =
-                        Modifier.weight(1f),
-                    color = Color.White,
-                    fontWeight =
-                        FontWeight.Bold
-                )
-
-                Text(
-                    text =
-                        "$golesPropios–$golesRival",
-                    modifier =
-                        Modifier.padding(
-                            horizontal = 16.dp
-                        ),
-                    color = Color.White,
-                    style =
-                        MaterialTheme.typography.headlineLarge,
-                    fontWeight =
-                        FontWeight.Black
-                )
-
-                Text(
-                    text = nombreRival,
-                    modifier =
-                        Modifier.weight(1f),
-                    color = Color.White,
-                    fontWeight =
-                        FontWeight.Bold
-                )
-            }
-        }
-    }
+    // Línea de cal: marcador LED (mismas etiquetas "RESULTADO FINAL" / "MARCADOR ACTUAL")
+    MarcadorLed(
+        local = nombreEquipo,
+        rival = nombreRival,
+        golesLocal = golesPropios,
+        golesRival = golesRival,
+        etiquetaSuperior = if (finalizado) {
+            "RESULTADO FINAL"
+        } else {
+            "MARCADOR ACTUAL"
+        },
+        enVivo = !finalizado
+    )
 }
 @Composable
 private fun TarjetaInformacionPartido(
@@ -619,10 +578,10 @@ private fun ChipEstadoDetalle(
             SportProVerdeClaro
 
         EstadoPartido.EN_CURSO ->
-            Color(0xFFCBFFA7)
+            LineaDeCal.colores.lima /* antes 0xFFCBFFA7 */
 
         EstadoPartido.FINALIZADO ->
-            Color(0xFFE9ECEE)
+            LineaDeCal.colores.apagadoFondo /* antes 0xFFE9ECEE */
 
         EstadoPartido.CANCELADO ->
             SportProRojoClaro
@@ -640,77 +599,23 @@ private fun ChipEstadoDetalle(
             SportProRojo
     }
 
-    Surface(
-        color = fondo,
-        shape = CircleShape
-    ) {
-        Text(
-            text = textoEstadoDetalle(estado),
-            modifier = Modifier.padding(
-                horizontal = 12.dp,
-                vertical = 6.dp
-            ),
-            style = MaterialTheme.typography.labelSmall,
-            color = texto,
-            fontWeight = FontWeight.Bold
-        )
-    }
+    // Línea de cal: ChipEstado
+    ChipEstado(
+        textoEstadoDetalle(estado),
+        when (estado) {
+            EstadoPartido.EN_CURSO -> TipoEstado.OK
+            EstadoPartido.PROGRAMADO -> TipoEstado.NEUTRO
+            EstadoPartido.FINALIZADO -> TipoEstado.APAGADO
+            EstadoPartido.CANCELADO -> TipoEstado.ERROR
+        },
+        conPunto = estado == EstadoPartido.EN_CURSO
+    )
 }
 
 @Composable
 private fun CabeceraDetalleSportPro() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-
-            Surface(
-                modifier = Modifier.size(38.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = SportProNavy
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("⚽")
-                }
-            }
-
-            Column {
-
-                Text(
-                    text = "SPORTPRO",
-                    color = SportProNavy,
-                    fontWeight = FontWeight.Black,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(
-                    text = "",
-                    color = SportProTextoSecundario,
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-
-        Surface(
-            modifier = Modifier.size(38.dp),
-            color = SportProVerdeClaro,
-            shape = CircleShape
-        ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Text("🔔 (editar)")
-            }
-        }
-    }
+    // Línea de cal: la cabecera decorativa (logo ⚽ y campana 🔔 sin acción) se quitó;
+    // cada pantalla muestra su título y su botón de volver.
 }
 
 @Composable

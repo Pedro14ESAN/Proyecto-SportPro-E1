@@ -1,5 +1,24 @@
 package com.example.projectsportpro2026_2.ui.entrenamientos
 
+import com.example.projectsportpro2026_2.ui.comun.FilaContadores
+import com.example.projectsportpro2026_2.ui.theme.EstiloMarcador
+import com.example.projectsportpro2026_2.ui.theme.EstiloEtiqueta
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.VarianteTicket
+import com.example.projectsportpro2026_2.ui.comun.TarjetaTicket
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.comun.anchoCompleto
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.horizontalScroll
@@ -58,23 +77,17 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-private val AzulEntrenamiento =
-    Color(0xFF0B3547)
+private val AzulEntrenamiento: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0B3547)
 
-private val VerdeEntrenamiento =
-    Color(0xFF168F5B)
+private val VerdeEntrenamiento: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF168F5B)
 
-private val RojoEntrenamiento =
-    Color(0xFFB83232)
+private val RojoEntrenamiento: Color @Composable get() = LineaDeCal.colores.rojo // antes Color(0xFFB83232)
 
-private val AmarilloEntrenamiento =
-    Color(0xFF8A6814)
+private val AmarilloEntrenamiento: Color @Composable get() = LineaDeCal.colores.amarilloTexto // antes Color(0xFF8A6814)
 
-private val FondoEntrenamiento =
-    Color(0xFFF7F9F8)
+private val FondoEntrenamiento: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFF7F9F8)
 
-private val GrisEntrenamiento =
-    Color(0xFF5F666A)
+private val GrisEntrenamiento: Color @Composable get() = LineaDeCal.colores.textoSecundario // antes Color(0xFF5F666A)
 
 @Composable
 fun PantallaEntrenamientos(
@@ -111,6 +124,20 @@ fun PantallaEntrenamientos(
 
     val esDt =
         estado.rol == Rol.DT
+
+    // 7.4: contadores con los datos ya cargados (semana actual, de lunes a domingo)
+    val inicioSemana = java.time.LocalDate.now().with(java.time.DayOfWeek.MONDAY)
+    val deEstaSemana = estado.entrenamientos.filter { e ->
+        val dia = java.time.Instant.ofEpochMilli(e.fechaHoraEpochMillis)
+            .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        e.estado == EstadoEntrenamiento.PUBLICADO &&
+            !dia.isBefore(inicioSemana) && dia.isBefore(inicioSemana.plusDays(7))
+    }
+    val contadoresEntrenamientos = listOf(
+        "${deEstaSemana.size}" to "Esta semana",
+        "${deEstaSemana.sumOf { it.duracionTotalMinutos }}" to "Minutos",
+        "${estado.entrenamientos.count { it.estado == EstadoEntrenamiento.CANCELADO }}" to "Cancelados"
+    )
 
     val equipo =
         estado.equipos
@@ -155,16 +182,11 @@ fun PantallaEntrenamientos(
                             true
                     },
                     containerColor =
-                        VerdeEntrenamiento,
+                        LineaDeCal.colores.lima,
                     contentColor =
-                        Color.White
+                        LineaDeCal.colores.navy
                 ) {
-                    Text(
-                        "+",
-                        fontSize = 25.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
+                    Icon(Icons.Rounded.Add, contentDescription = "Planificar entrenamiento")
                 }
             }
         }
@@ -186,62 +208,20 @@ fun PantallaEntrenamientos(
                     bottom = 90.dp
                 )
         ) {
+            // Línea de cal: cabecera de césped (mismos textos y el mismo "Volver")
             item {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(46.dp),
-                    horizontalArrangement =
-                        Arrangement.SpaceBetween,
-                    verticalAlignment =
-                        Alignment.CenterVertically
+                CabeceraCancha(
+                    titulo = if (esDt) {
+                        "Entrenamientos"
+                    } else {
+                        "Mis entrenamientos"
+                    },
+                    etiqueta = "PLANIFICACIÓN",
+                    onVolver = onVolver,
+                    descripcionVolver = "Volver",
+                    modifier = Modifier.anchoCompleto(16.dp)
                 ) {
-                    TextButton(
-                        onClick = onVolver
-                    ) {
-                        Text(
-                            "← Volver",
-                            color =
-                                AzulEntrenamiento,
-                            fontWeight =
-                                FontWeight.SemiBold
-                        )
-                    }
-
-                    Text(
-                        "SPORTPRO",
-                        color =
-                            AzulEntrenamiento,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-                }
-            }
-
-            item {
-                Column {
-                    Text(
-                        "PLANIFICACIÓN",
-                        color =
-                            VerdeEntrenamiento,
-                        fontSize = 11.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-
-                    Text(
-                        if (esDt) {
-                            "Entrenamientos"
-                        } else {
-                            "Mis entrenamientos"
-                        },
-                        color =
-                            AzulEntrenamiento,
-                        fontSize = 26.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
+                    FilaContadores(contadoresEntrenamientos)
                 }
             }
 
@@ -370,7 +350,7 @@ fun PantallaEntrenamientos(
                     MensajeEntrenamiento(
                         texto = error,
                         fondo =
-                            Color(0xFFFFE8E8),
+                            LineaDeCal.colores.errorFondo /* antes 0xFFFFE8E8 */,
                         color =
                             RojoEntrenamiento
                     )
@@ -384,7 +364,7 @@ fun PantallaEntrenamientos(
                     MensajeEntrenamiento(
                         texto = mensaje,
                         fondo =
-                            Color(0xFFE5F5EB),
+                            LineaDeCal.colores.okFondo /* antes 0xFFE5F5EB */,
                         color =
                             VerdeEntrenamiento
                     )
@@ -416,7 +396,7 @@ fun PantallaEntrenamientos(
                         modifier =
                             Modifier.fillMaxWidth(),
                         color =
-                            Color.White,
+                            LineaDeCal.colores.superficie,
                         shape =
                             RoundedCornerShape(
                                 12.dp
@@ -528,9 +508,9 @@ private fun FiltroEntrenamiento(
             ButtonDefaults.buttonColors(
                 containerColor =
                     if (seleccionado) {
-                        AzulEntrenamiento
+                        LineaDeCal.colores.superficieOscura
                     } else {
-                        Color(0xFFEDEFF0)
+                        LineaDeCal.colores.apagadoFondo /* antes 0xFFEDEFF0 */
                     },
                 contentColor =
                     if (seleccionado) {
@@ -542,7 +522,7 @@ private fun FiltroEntrenamiento(
     ) {
         Text(
             texto,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             fontWeight =
                 FontWeight.SemiBold
         )
@@ -556,26 +536,20 @@ private fun TarjetaEntrenamiento(
     onEditar: () -> Unit,
     onCancelar: () -> Unit
 ) {
-    Card(
-        modifier =
-            Modifier.fillMaxWidth(),
-        shape =
-            RoundedCornerShape(
-                14.dp
-            ),
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    Color.White,
-                contentColor =
-                    AzulEntrenamiento
-            )
+    // Línea de cal (6.6, img 05): ticket con hora y fecha en el talón.
+    // Los cancelados se ven apagados y tachados y se conservan en el historial.
+    TarjetaTicket(
+        hora = entrenamiento.hora,
+        fecha = fechaCortaEntrenamiento(entrenamiento.fecha),
+        variante = if (entrenamiento.estado == EstadoEntrenamiento.CANCELADO) {
+            VarianteTicket.TACHADA
+        } else {
+            VarianteTicket.VERDE
+        }
     ) {
         Column(
             modifier =
-                Modifier.padding(
-                    13.dp
-                ),
+                Modifier,
             verticalArrangement =
                 Arrangement.spacedBy(
                     5.dp
@@ -592,9 +566,7 @@ private fun TarjetaEntrenamiento(
                 Text(
                     entrenamiento.nombreEquipo,
                     modifier =
-                        Modifier.width(
-                            210.dp
-                        ),
+                        Modifier.weight(1f),
                     color =
                         AzulEntrenamiento,
                     fontSize = 15.sp,
@@ -627,8 +599,29 @@ private fun TarjetaEntrenamiento(
                 "${entrenamiento.duracionTotalMinutos} min · ${entrenamiento.ejercicios.size} ejercicios",
                 color =
                     GrisEntrenamiento,
-                fontSize = 11.sp
+                fontSize = 12.sp
             )
+
+            // 6.6: el cambio de horario se muestra como nota naranja (historial que ya existe)
+            entrenamiento.historialCambiosHorario.lastOrNull()?.let { cambio ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.Schedule,
+                        contentDescription = null,
+                        tint = LineaDeCal.colores.pendienteTexto,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        "Cambió de ${cambio.fechaAnterior} ${cambio.horaAnterior} a ${cambio.fechaNueva} ${cambio.horaNueva}",
+                        color = LineaDeCal.colores.pendienteTexto,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
 
             if (
                 entrenamiento.ejercicios
@@ -646,7 +639,7 @@ private fun TarjetaEntrenamiento(
                         },
                     color =
                         GrisEntrenamiento,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     maxLines = 2
                 )
             }
@@ -684,7 +677,7 @@ private fun TarjetaEntrenamiento(
                     ) {
                         Text(
                             "Editar sesión",
-                            fontSize = 11.sp
+                            fontSize = 12.sp
                         )
                     }
 
@@ -706,7 +699,7 @@ private fun TarjetaEntrenamiento(
                     ) {
                         Text(
                             "Cancelar sesión",
-                            fontSize = 11.sp
+                            fontSize = 12.sp
                         )
                     }
                 }
@@ -723,38 +716,59 @@ private fun EstadoEntrenamientoEtiqueta(
         estado ==
                 EstadoEntrenamiento.PUBLICADO
 
-    Surface(
-        color =
-            if (publicado) {
-                Color(0xFFE5F5EB)
-            } else {
-                Color(0xFFFFE8E8)
-            },
-        shape =
-            RoundedCornerShape(
-                50.dp
-            )
+    ChipEstado(
+        if (publicado) {
+            "Publicado"
+        } else {
+            "Cancelado"
+        },
+        if (publicado) TipoEstado.OK else TipoEstado.APAGADO
+    )
+}
+
+/** "2026-11-24" → "LUN 24" para el talón del ticket; si no se puede leer, se deja igual. */
+private fun fechaCortaEntrenamiento(fecha: String): String =
+    try {
+        java.time.LocalDate.parse(fecha.trim())
+            .format(java.time.format.DateTimeFormatter.ofPattern("EEE d", java.util.Locale.forLanguageTag("es-PE")))
+            .replace(".", "")
+            .uppercase()
+    } catch (e: Exception) {
+        fecha
+    }
+
+/** Caja LED de Planificar: minutos de los ejercicios sobre la duración total, con barra. */
+@Composable
+private fun CajaLedMinutos(usados: Int, total: Int) {
+    val c = LineaDeCal.colores
+    val excede = total > 0 && usados > total
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(c.ledFondo, RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            if (publicado) {
-                "Publicado"
-            } else {
-                "Cancelado"
-            },
-            modifier =
-                Modifier.padding(
-                    horizontal = 9.dp,
-                    vertical = 4.dp
-                ),
-            color =
-                if (publicado) {
-                    VerdeEntrenamiento
-                } else {
-                    RojoEntrenamiento
-                },
-            fontSize = 10.sp,
-            fontWeight =
-                FontWeight.Bold
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "EJERCICIOS",
+                color = c.amarillo,
+                style = EstiloEtiqueta,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                "$usados/$total",
+                color = if (excede) c.naranja else c.lima,
+                style = EstiloMarcador.copy(fontSize = 24.sp, lineHeight = 26.sp)
+            )
+        }
+        LinearProgressIndicator(
+            progress = { if (total > 0) (usados.toFloat() / total).coerceIn(0f, 1f) else 0f },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp),
+            color = if (excede) c.naranja else c.lima,
+            trackColor = Color.White.copy(alpha = 0.15f)
         )
     }
 }
@@ -1079,13 +1093,9 @@ private fun FormularioEntrenamiento(
                                 minutosEjercicios >
                                 minutosSesion
                             ) {
-                                Color(
-                                    0xFFFFF4D6
-                                )
+                                LineaDeCal.colores.amarilloFondo /* antes 0xFFFFF4D6 */
                             } else {
-                                Color(
-                                    0xFFE8F2F5
-                                )
+                                LineaDeCal.colores.neutroFondo /* antes 0xFFE8F2F5 */
                             },
                         shape =
                             RoundedCornerShape(
@@ -1106,6 +1116,12 @@ private fun FormularioEntrenamiento(
                                     FontWeight.Bold
                             )
 
+                            // 6.6: caja LED "EJERCICIOS x/y" con barra
+                            CajaLedMinutos(
+                                usados = minutosEjercicios,
+                                total = minutosSesion
+                            )
+
                             Text(
                                 "$minutosEjercicios min de $minutosSesion min",
                                 color =
@@ -1119,7 +1135,7 @@ private fun FormularioEntrenamiento(
                                     } else {
                                         GrisEntrenamiento
                                     },
-                                fontSize = 11.sp
+                                fontSize = 12.sp
                             )
 
                             if (
@@ -1132,7 +1148,7 @@ private fun FormularioEntrenamiento(
                                     "Los ejercicios superan la duración total.",
                                     color =
                                         AmarilloEntrenamiento,
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     fontWeight =
                                         FontWeight.SemiBold
                                 )
@@ -1157,9 +1173,7 @@ private fun FormularioEntrenamiento(
                         colors =
                             CardDefaults.cardColors(
                                 containerColor =
-                                    Color(
-                                        0xFFF0F2F3
-                                    )
+                                    LineaDeCal.colores.apagadoFondo /* antes 0xFFF0F2F3 */
                             )
                     ) {
                         Column(
@@ -1184,7 +1198,7 @@ private fun FormularioEntrenamiento(
                                 "${duracionEjercicio(id)} min",
                                 color =
                                     GrisEntrenamiento,
-                                fontSize = 10.sp
+                                fontSize = 12.sp
                             )
 
                             Row(
@@ -1236,7 +1250,7 @@ private fun FormularioEntrenamiento(
                                             0.dp
                                         )
                                 ) {
-                                    Text("↑")
+                                    Icon(Icons.Rounded.KeyboardArrowUp, contentDescription = "Subir ejercicio")
                                 }
 
                                 OutlinedButton(
@@ -1278,7 +1292,7 @@ private fun FormularioEntrenamiento(
                                             0.dp
                                         )
                                 ) {
-                                    Text("↓")
+                                    Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = "Bajar ejercicio")
                                 }
 
                                 Button(
@@ -1314,8 +1328,7 @@ private fun FormularioEntrenamiento(
                                 ) {
                                     Text(
                                         "Quitar",
-                                        fontSize =
-                                            10.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                             }
@@ -1349,7 +1362,7 @@ private fun FormularioEntrenamiento(
                         colors =
                             CardDefaults.cardColors(
                                 containerColor =
-                                    Color.White
+                                    LineaDeCal.colores.superficie
                             )
                     ) {
                         Column(
@@ -1374,7 +1387,7 @@ private fun FormularioEntrenamiento(
                                 "${ejercicio.objetivo} · ${ejercicio.duracionMinutos} min",
                                 color =
                                     GrisEntrenamiento,
-                                fontSize = 10.sp
+                                fontSize = 12.sp
                             )
 
                             Button(
@@ -1412,7 +1425,7 @@ private fun FormularioEntrenamiento(
                             mensaje,
                             color =
                                 RojoEntrenamiento,
-                            fontSize = 11.sp
+                            fontSize = 12.sp
                         )
                     }
                 }

@@ -63,7 +63,8 @@ class AlineacionReactivaTest {
         mostrarIndicador("Ana Uno, 2 goles")
         mostrarIndicador("Ana Uno, tarjeta amarilla")
         mostrarIndicador("Ana Uno, tarjeta roja")
-        compose.onNodeWithText("⚽×2", useUnmergedTree = true).assertIsDisplayed()
+        // D-01 (Línea de cal): el balón ahora es un ícono; se comprueba la cantidad visible "×2"
+        compose.onNodeWithText("×2", useUnmergedTree = true).assertIsDisplayed()
 
         // Al corregir un gol para B, los totales de A disminuyen.
         val corregido = segundoGol.copy(idJugador = "B", version = 2)

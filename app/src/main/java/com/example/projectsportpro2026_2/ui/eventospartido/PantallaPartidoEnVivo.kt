@@ -1,5 +1,33 @@
 package com.example.projectsportpro2026_2.ui.eventospartido
 
+import com.example.projectsportpro2026_2.ui.sincronizacion.iconoEvento
+import com.example.projectsportpro2026_2.ui.comun.ColorFicha
+import com.example.projectsportpro2026_2.ui.comun.FichaTactica
+import com.example.projectsportpro2026_2.ui.comun.MiniCancha
+import com.example.projectsportpro2026_2.datos.partido.AlmacenSegundoTiempo
+import com.example.projectsportpro2026_2.datos.partido.RelojPartido
+import androidx.compose.ui.unit.Dp
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.MoreHoriz
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.rounded.CropPortrait
+import com.example.projectsportpro2026_2.ui.comun.MarcadorLed
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.WarningAmber
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -112,6 +140,13 @@ fun PantallaPartidoEnVivo(
     val eventosActuales = remember(sync.cargado, sync.eventos, estado.eventos) {
         if (sync.cargado) sync.eventos.map { it.evento } else estado.eventos
     }
+
+    // Línea de cal · 7.2: fechaCaptura del INICIO que ya está en caché y hora del 2T
+    // marcada en este dispositivo (D-02: sin INICIO_2T en el catálogo)
+    val contextoAndroid = LocalContext.current
+    val almacenSegundoTiempo = remember { AlmacenSegundoTiempo(contextoAndroid) }
+    var inicioSegundoTiempo by remember(idPartido) { mutableStateOf(almacenSegundoTiempo.leer(idPartido)) }
+    val capturaInicio = remember(eventosActuales) { RelojPartido.capturaInicio(eventosActuales) }
     val candidato = EventoPartido(
         id = estado.eventoSeleccionado?.id ?: "~nuevo",
         minuto = estado.formulario.minuto.toIntOrNull() ?: Int.MAX_VALUE,
@@ -132,6 +167,14 @@ fun PantallaPartidoEnVivo(
     val estadoPartidoActual =
         sync.partido?.estado
             ?: contexto?.partido?.estado
+
+    // Línea de cal · 7.2: reloj del LED (se actualiza cada segundo mientras está EN CURSO)
+    val ahora by produceState(System.currentTimeMillis(), estadoPartidoActual) {
+        while (estadoPartidoActual == EstadoPartido.EN_CURSO) {
+            value = System.currentTimeMillis()
+            delay(1_000L)
+        }
+    }
 
     /*
      * HU16: sin conexión y sin datos locales no se permite
@@ -178,8 +221,9 @@ fun PantallaPartidoEnVivo(
                     onClick = onVolver,
                     contentPadding = PaddingValues(0.dp)
                 ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
                     Text(
-                        text = "← Partidos",
+                        text = "Partidos",
                         color = SportProVerde,
                         fontWeight = FontWeight.Bold
                     )
@@ -294,8 +338,30 @@ fun PantallaPartidoEnVivo(
                             ?: contexto.partido.estado,
 
                     avisoRevision =
-                        textoAvisoMarcador(sync)
+                        textoAvisoMarcador(sync),
+
+                    reloj =
+                        RelojPartido.segundosDeJuego(capturaInicio, inicioSegundoTiempo, ahora)
+                            ?.let(RelojPartido::textoReloj)
                 )
+            }
+
+            // Línea de cal · 7.2 (D-02): marcar el inicio del 2T solo en este dispositivo
+            if (estadoPartidoActual == EstadoPartido.EN_CURSO && capturaInicio != null) {
+                item {
+                    ControlSegundoTiempo(
+                        inicio2T = inicioSegundoTiempo,
+                        onMarcar = {
+                            val marca = System.currentTimeMillis()
+                            almacenSegundoTiempo.guardar(idPartido, marca)
+                            inicioSegundoTiempo = marca
+                        },
+                        onQuitar = {
+                            almacenSegundoTiempo.borrar(idPartido)
+                            inicioSegundoTiempo = null
+                        }
+                    )
+                }
             }
 
             if (estadoPartidoActual == EstadoPartido.EN_CURSO) {
@@ -344,7 +410,13 @@ fun PantallaPartidoEnVivo(
 
                         onEvento = { tipo ->
                             viewModel.abrirEvento(
-                                tipo
+                                tipo,
+                                // 7.2: minuto sugerido sin red; null sin INICIO → campo vacío
+                                RelojPartido.minutoSugerido(
+                                    capturaInicio,
+                                    inicioSegundoTiempo,
+                                    System.currentTimeMillis()
+                                )
                             )
                         }
                     )
@@ -709,101 +781,48 @@ private fun TarjetaMarcador(
     golesRival: Int,
     estadoPartido: EstadoPartido,
     // HU16: advertencia de información no sincronizada
-    avisoRevision: String? = null
+    avisoRevision: String? = null,
+    // 7.2: reloj "mm:ss" calculado desde el INICIO (y desde la marca del 2T)
+    reloj: String? = null
 ) {
-    Card(
+    // Línea de cal (6.9, img 01/02): marcador LED grande con los mismos textos
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = SportProNavy
-        )
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 18.dp,
-                    vertical = 20.dp
-                ),
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-            verticalArrangement =
-                Arrangement.spacedBy(12.dp)
-        ) {
-
-            Text(
-                text =
-                    if (
-                        estadoPartido ==
-                        EstadoPartido.EN_CURSO
-                    ) {
-                        "PARTIDO EN CURSO"
-                    } else {
-                        textoEstadoPartido(
-                            estadoPartido
-                        )
-                    },
-                color = SportProVerdeClaro,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment =
-                    Alignment.CenterVertically,
-                horizontalArrangement =
-                    Arrangement.SpaceBetween
-            ) {
-
-                Text(
-                    text =
-                        nombreEquipo.uppercase(),
-                    modifier = Modifier.weight(1f),
-                    color = Color.White,
-                    style =
-                        MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text =
-                        "$golesPropios–$golesRival",
-                    modifier = Modifier.padding(
-                        horizontal = 18.dp
-                    ),
-                    color = Color.White,
-                    style =
-                        MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Black
-                )
-
-                Text(
-                    text =
-                        nombreRival.uppercase(),
-                    modifier = Modifier.weight(1f),
-                    color = Color.White,
-                    style =
-                        MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            if (
+        MarcadorLed(
+            local = nombreEquipo,
+            rival = nombreRival,
+            golesLocal = golesPropios,
+            golesRival = golesRival,
+            etiquetaSuperior = if (
                 estadoPartido ==
                 EstadoPartido.EN_CURSO
             ) {
-                Text(
-                    text = "EN CURSO",
-                    color = SportProVerdeClaro,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
+                "PARTIDO EN CURSO"
+            } else {
+                textoEstadoPartido(
+                    estadoPartido
                 )
-            }
-
-            // HU16: el marcador no es definitivo
-            avisoRevision?.let { aviso ->
+            },
+            etiquetaInferior = if (estadoPartido == EstadoPartido.EN_CURSO) {
+                listOfNotNull("EN CURSO", reloj).joinToString(" · ")
+            } else {
+                null
+            },
+            enVivo = estadoPartido == EstadoPartido.EN_CURSO,
+            provisional = avisoRevision != null
+        )
+        // HU16: el marcador no es definitivo
+        avisoRevision?.let { aviso ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = SyncNaranja,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(6.dp))
                 Text(
                     text = aviso,
                     color = SyncNaranja,
@@ -820,181 +839,141 @@ private fun PanelEventosRapidos(
     tipos: List<TipoEventoCatalogo>,
     onEvento: (TipoEventoCatalogo) -> Unit
 ) {
+    /*
+     * Línea de cal · 7.2 (HU-14): panel rápido sobre la mini cancha (img 01/02).
+     * Las fichas se leen del catálogo ACTIVO (no están escritas fijas): si un tipo no está
+     * activo, su ficha no aparece. "Más tipos" lista todos los demás tipos activos
+     * (incluidos FIN y los personalizados). Cada ficha abre el formulario actual con
+     * abrirEvento(tipo). INICIO se muestra deshabilitado, como antes.
+     */
+    val principales = listOf("TARJETA", "FALTA", "GOL", "CAMBIO", "TIRO_ESQUINA")
+    val porCodigo = tipos.associateBy { it.codigo }
+    val resto = tipos.filter { it.codigo !in principales }
+    var masAbierto by remember { mutableStateOf(false) }
+
     Column(
-        verticalArrangement =
-            Arrangement.spacedBy(7.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        MiniCancha(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+        ) {
+            porCodigo["TARJETA"]?.let {
+                FichaEvento(it, ColorFicha.AMARILLA, onEvento, Modifier.align(Alignment.TopStart).padding(12.dp))
+            }
+            porCodigo["FALTA"]?.let {
+                FichaEvento(it, ColorFicha.BLANCA, onEvento, Modifier.align(Alignment.BottomStart).padding(12.dp))
+            }
+            porCodigo["GOL"]?.let {
+                FichaEvento(it, ColorFicha.LIMA, onEvento, Modifier.align(Alignment.Center), tamano = 58.dp)
+            }
+            porCodigo["CAMBIO"]?.let {
+                FichaEvento(it, ColorFicha.BLANCA, onEvento, Modifier.align(Alignment.TopEnd).padding(12.dp))
+            }
+            porCodigo["TIRO_ESQUINA"]?.let {
+                FichaEvento(it, ColorFicha.NAVY, onEvento, Modifier.align(Alignment.BottomEnd).padding(12.dp))
+            }
+        }
 
-        tipos
-            .chunked(4)
-            .forEach { fila ->
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement =
-                        Arrangement.spacedBy(7.dp)
+        if (resto.isNotEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                FichaTactica(
+                    icono = Icons.Rounded.MoreHoriz,
+                    etiqueta = "Más tipos",
+                    onClick = { masAbierto = true },
+                    color = ColorFicha.BLANCA,
+                    tamano = 46.dp,
+                    colorEtiqueta = SportProNavy
+                )
+                DropdownMenu(
+                    expanded = masAbierto,
+                    onDismissRequest = { masAbierto = false }
                 ) {
-
-                    fila.forEach { tipo ->
-
-                        val habilitado =
-                            tipo.codigo != "INICIO"
-
-                        BotonEventoRapido(
-                            tipo = tipo,
-                            habilitado = habilitado,
-                            modifier =
-                                Modifier.weight(1f),
+                    resto.forEach { tipo ->
+                        DropdownMenuItem(
+                            text = { Text(tipo.nombre) },
+                            leadingIcon = {
+                                Icon(iconoEvento(tipo.codigo), contentDescription = null)
+                            },
+                            enabled = tipo.codigo != "INICIO",
                             onClick = {
+                                masAbierto = false
                                 onEvento(tipo)
                             }
                         )
                     }
-
-                    repeat(
-                        4 - fila.size
-                    ) {
-                        Spacer(
-                            modifier =
-                                Modifier.weight(1f)
-                        )
-                    }
                 }
             }
-    }
-}
-
-@Composable
-private fun BotonEventoRapido(
-    tipo: TipoEventoCatalogo,
-    habilitado: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-
-    val estilo =
-        estiloEventoEnVivo(
-            tipo.codigo
-        )
-
-    val destacado =
-        tipo.afectaMarcador
-
-    Surface(
-        modifier = modifier
-            .height(76.dp)
-            .clickable(
-                enabled = habilitado,
-                onClick = onClick
-            ),
-        shape = RoundedCornerShape(14.dp),
-        color =
-            if (habilitado) {
-                if (destacado) {
-                    SportProVerde
-                } else {
-                    SportProSuperficie
-                }
-            } else {
-                Color(0xFFE8ECEA)
-            },
-        border =
-            BorderStroke(
-                1.dp,
-                if (
-                    habilitado &&
-                    !destacado
-                ) {
-                    estilo.borde
-                } else {
-                    Color.Transparent
-                }
-            )
-    ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(7.dp),
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-            verticalArrangement =
-                Arrangement.Center
-        ) {
-
-            Surface(
-                modifier =
-                    Modifier.size(32.dp),
-                shape =
-                    RoundedCornerShape(9.dp),
-                color =
-                    if (
-                        destacado &&
-                        habilitado
-                    ) {
-                        Color.White.copy(
-                            alpha = 0.18f
-                        )
-                    } else {
-                        estilo.fondoIcono
-                    }
-            ) {
-
-                Box(
-                    contentAlignment =
-                        Alignment.Center
-                ) {
-
-                    Text(
-                        text =
-                            estilo.icono,
-                        color =
-                            if (
-                                destacado &&
-                                habilitado
-                            ) {
-                                Color.White
-                            } else {
-                                estilo.colorIcono
-                            },
-                        style =
-                            MaterialTheme.typography.titleMedium,
-                        fontWeight =
-                            FontWeight.Black
-                    )
-                }
-            }
-
-            Spacer(
-                modifier =
-                    Modifier.height(4.dp)
-            )
-
-            Text(
-                text =
-                    nombreCortoEvento(
-                        tipo.nombre
-                    ),
-                color =
-                    if (
-                        destacado &&
-                        habilitado
-                    ) {
-                        Color.White
-                    } else {
-                        SportProNavy
-                    },
-                style =
-                    MaterialTheme.typography.labelSmall,
-                fontWeight =
-                    FontWeight.Bold,
-                maxLines = 1,
-                overflow =
-                    TextOverflow.Ellipsis
-            )
         }
     }
 }
+
+/** Ficha táctica de un tipo de evento del catálogo (nombre del catálogo como etiqueta). */
+@Composable
+private fun FichaEvento(
+    tipo: TipoEventoCatalogo,
+    color: ColorFicha,
+    onEvento: (TipoEventoCatalogo) -> Unit,
+    modifier: Modifier = Modifier,
+    tamano: Dp = 48.dp
+) {
+    FichaTactica(
+        icono = iconoEvento(tipo.codigo),
+        etiqueta = tipo.nombre,
+        onClick = { onEvento(tipo) },
+        modifier = modifier,
+        color = color,
+        tamano = tamano
+    )
+}
+
+/*
+ * Línea de cal · 7.2 con D-02: "Marcar inicio del 2T" guarda la hora SOLO en este
+ * dispositivo. El reloj y el minuto sugerido del 2do tiempo la usan.
+ */
+@Composable
+private fun ControlSegundoTiempo(
+    inicio2T: Long?,
+    onMarcar: () -> Unit,
+    onQuitar: () -> Unit
+) {
+    if (inicio2T == null) {
+        OutlinedButton(
+            onClick = onMarcar,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(Icons.Rounded.Timer, contentDescription = null, tint = SportProNavy, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Marcar inicio del 2T", color = SportProNavy, fontWeight = FontWeight.SemiBold)
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Rounded.Timer, contentDescription = null, tint = SportProVerde, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = "2T marcado a las ${horaCorta(inicio2T)} · solo en este dispositivo",
+                color = SportProTextoSecundario,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = onQuitar) {
+                Text("Quitar marca", color = SportProRojo, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
+
+private fun horaCorta(milisegundos: Long): String =
+    java.text.SimpleDateFormat("HH:mm", java.util.Locale.forLanguageTag("es-PE"))
+        .format(java.util.Date(milisegundos))
 
 @Composable
 private fun TarjetaCronologiaEvento(
@@ -1101,14 +1080,11 @@ private fun TarjetaCronologiaEvento(
                 }
             }
 
-            Text(
-                text = "›",
-                color =
-                    SportProTextoSecundario,
-                style =
-                    MaterialTheme.typography.titleLarge,
-                fontWeight =
-                    FontWeight.Bold
+            Icon(
+                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = null,
+                tint = SportProTextoSecundario,
+                modifier = Modifier.size(22.dp)
             )
         }
     }
@@ -1223,14 +1199,11 @@ private fun ModalRegistroEvento(
                                 contentAlignment = Alignment.Center
                             ) {
 
-                                Text(
-                                    text = estilo.icono,
-                        fontSize = 28.sp,
-                                    color = estilo.colorIcono,
-                                    style =
-                                        MaterialTheme.typography.titleLarge,
-                                    fontWeight =
-                                        FontWeight.Black
+                                Icon(
+                                    imageVector = estilo.icono,
+                                    contentDescription = null,
+                                    tint = estilo.colorIcono,
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
@@ -1261,39 +1234,67 @@ private fun ModalRegistroEvento(
                         contentAlignment =
                             Alignment.Center
                     ) {
-                        Text(
-                            text = "×",
-                            color = SportProNavy,
-                            fontWeight =
-                                FontWeight.Bold
+                        Icon(
+                            Icons.Rounded.Close,
+                            contentDescription = "Cerrar",
+                            tint = SportProNavy,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
 
-            OutlinedTextField(
-                value =
-                    formulario.minuto,
-                onValueChange =
-                    onCambiarMinuto,
-                modifier =
-                    Modifier.fillMaxWidth(),
-                enabled = !registrando,
-                singleLine = true,
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType =
-                            KeyboardType.Number
-                    ),
-                label = {
-                    Text("Minuto")
-                },
-                placeholder = {
-                    Text("Ej. 37")
-                },
-                shape =
-                    RoundedCornerShape(12.dp)
-            )
+            // Línea de cal · 7.2 (HU-14): el minuto llega precargado con la sugerencia
+            // (si hay INICIO en caché), se ajusta con − / + y sigue siendo editable.
+            // El operador confirma el minuto al registrar.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                IconButton(
+                    onClick = {
+                        val actual = formulario.minuto.toIntOrNull() ?: 1
+                        onCambiarMinuto((actual - 1).coerceAtLeast(0).toString())
+                    },
+                    enabled = !registrando
+                ) {
+                    Icon(Icons.Rounded.Remove, contentDescription = "Restar un minuto", tint = SportProNavy)
+                }
+
+                OutlinedTextField(
+                    value =
+                        formulario.minuto,
+                    onValueChange =
+                        onCambiarMinuto,
+                    modifier =
+                        Modifier.weight(1f),
+                    enabled = !registrando,
+                    singleLine = true,
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType =
+                                KeyboardType.Number
+                        ),
+                    label = {
+                        Text("Minuto")
+                    },
+                    placeholder = {
+                        Text("Ej. 37")
+                    },
+                    shape =
+                        RoundedCornerShape(12.dp)
+                )
+
+                IconButton(
+                    onClick = {
+                        val actual = formulario.minuto.toIntOrNull() ?: 0
+                        onCambiarMinuto((actual + 1).toString())
+                    },
+                    enabled = !registrando
+                ) {
+                    Icon(Icons.Rounded.Add, contentDescription = "Sumar un minuto", tint = SportProNavy)
+                }
+            }
 
             if (tipo.requiereEquipo || tipo.codigo == "CAMBIO") {
 
@@ -1399,7 +1400,7 @@ private fun ModalRegistroEvento(
                 } else {
 
                     Text(
-                        text = "↓ JUGADOR QUE SALE",
+                        text = "JUGADOR QUE SALE",
                         color = SportProRojo,
                         fontWeight = FontWeight.Bold
                     )
@@ -1414,7 +1415,7 @@ private fun ModalRegistroEvento(
                     )
 
                     Text(
-                        text = "↑ JUGADOR QUE ENTRA",
+                        text = "JUGADOR QUE ENTRA",
                         color = SportProVerde,
                         fontWeight = FontWeight.Bold
                     )
@@ -1513,12 +1514,11 @@ private fun ModalRegistroEvento(
 
                 BotonTipoTarjeta(
                     texto = "Amarilla",
-                    simbolo = "▰",
                     seleccionado =
                         formulario.tipoTarjeta ==
                                 TipoTarjeta.AMARILLA,
                     habilitado = !registrando,
-                    color = Color(0xFFD9A900),
+                    color = LineaDeCal.colores.amarillo /* antes 0xFFD9A900 */,
                     modifier =
                         Modifier.weight(1f),
                     onClick = {
@@ -1530,12 +1530,11 @@ private fun ModalRegistroEvento(
 
                 BotonTipoTarjeta(
                     texto = "Roja",
-                    simbolo = "▰",
                     seleccionado =
                         formulario.tipoTarjeta ==
                                 TipoTarjeta.ROJA,
                     habilitado = !registrando,
-                    color = Color(0xFFC62828),
+                    color = LineaDeCal.colores.rojo /* antes 0xFFC62828 */,
                     modifier =
                         Modifier.weight(1f),
                     onClick = {
@@ -1655,7 +1654,6 @@ private fun ModalRegistroEvento(
 @Composable
 private fun BotonTipoTarjeta(
     texto: String,
-    simbolo: String,
     seleccionado: Boolean,
     habilitado: Boolean,
     color: Color,
@@ -1704,11 +1702,11 @@ private fun BotonTipoTarjeta(
                 Arrangement.Center
         ) {
 
-            Text(
-                text = simbolo,
-                color = color,
-                fontWeight =
-                    FontWeight.Black
+            Icon(
+                Icons.Rounded.CropPortrait,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(20.dp)
             )
 
             Spacer(
@@ -1858,9 +1856,11 @@ private fun SelectorJugador(
                             TextOverflow.Ellipsis
                     )
 
-                    Text(
-                        text = "⌄",
-                        color = SportProNavy
+                    Icon(
+                        Icons.Rounded.ExpandMore,
+                        contentDescription = null,
+                        tint = SportProNavy,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -1948,14 +1948,18 @@ private fun CabeceraPartidoEnVivo(
             Surface(
                 modifier = Modifier.size(38.dp),
                 shape = RoundedCornerShape(10.dp),
-                color = SportProNavy
+                color = SportProNavyFondo
             ) {
 
                 Box(
                     contentAlignment =
                         Alignment.Center
                 ) {
-                    Text("⚽")
+                    Icon(
+                        Icons.Rounded.SportsSoccer,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
 

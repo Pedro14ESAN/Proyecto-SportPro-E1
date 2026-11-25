@@ -1,5 +1,12 @@
 package com.example.projectsportpro2026_2.ui.seguimiento
 
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.SportsSoccer
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
 import com.example.projectsportpro2026_2.datos.repositorio.evento.MarcadorPartido
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -92,7 +99,11 @@ fun PantallaMisPartidos(
                         .background(VivoFondoOscuro, RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("⚽")
+                    Icon(
+                        Icons.Rounded.SportsSoccer,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
 
                 Spacer(Modifier.width(10.dp))
@@ -118,8 +129,9 @@ fun PantallaMisPartidos(
                 onClick = onVolver,
                 contentPadding = PaddingValues(0.dp)
             ) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
                 Text(
-                    text = "← Inicio",
+                    text = "Inicio",
                     color = SportProVerde,
                     fontWeight = FontWeight.Bold
                 )
@@ -144,8 +156,8 @@ fun PantallaMisPartidos(
                 Text(
                     text = "Sin conexión · la lista puede estar desactualizada",
                     color = SyncNaranjaTexto,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp
+                    fontFamily = FamiliaEtiquetas,
+                    fontSize = 12.sp
                 )
             }
         }
@@ -240,7 +252,7 @@ private fun TarjetaPartidoSeguible(
         when (partido.estado) {
             EstadoPartido.EN_CURSO -> Triple("● EN VIVO", SyncVerdeFondo, SyncVerdeTexto)
             EstadoPartido.PROGRAMADO -> Triple("PROGRAMADO", SyncNaranjaFondo, SyncNaranjaTexto)
-            EstadoPartido.FINALIZADO -> Triple("FINALIZADO", Color(0xFFEEF2F1), SportProTextoSecundario)
+            EstadoPartido.FINALIZADO -> Triple("FINALIZADO", LineaDeCal.colores.apagadoFondo /* antes 0xFFEEF2F1 */, SportProTextoSecundario)
             EstadoPartido.CANCELADO -> Triple("CANCELADO", SyncRojoFondo, SyncRojoTexto)
         }
 
@@ -274,9 +286,9 @@ private fun TarjetaPartidoSeguible(
                         text = textoEstado,
                         modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
                         color = colorEstado,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = FamiliaEtiquetas,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -317,10 +329,16 @@ private fun TarjetaPartidoSeguible(
                     }
 
                     Text(
-                        text = if (enVivo) "Seguir en vivo →" else "Ver partido →",
+                        text = if (enVivo) "Seguir en vivo" else "Ver partido",
                         color = SportProVerde,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.labelLarge
+                    )
+                    Icon(
+                        Icons.AutoMirrored.Rounded.ArrowForward,
+                        contentDescription = null,
+                        tint = SportProVerde,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }

@@ -1,5 +1,14 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Verified
+import androidx.compose.material.icons.Icons
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.*
@@ -167,10 +176,10 @@ fun FormularioAvisoPrueba(
                 }
             }
             Text(
-                text = if (fechaEnElPasado) "⚠ La fecha y hora deben ser posteriores a este momento"
+                text = if (fechaEnElPasado) "La fecha y hora deben ser posteriores a este momento"
                 else "La fecha debe ser igual o posterior a hoy",
                 color = if (fechaEnElPasado) SportProRojo else EtiquetaAzul,
-                fontSize = 11.sp
+                fontSize = 12.sp
             )
 
             TituloCampoSportPro("UBICACIÓN *")
@@ -196,12 +205,15 @@ fun FormularioAvisoPrueba(
 
             // Aviso oficial: se muestra quién publica (RC-05)
             Surface(color = EtiquetaAzulFondo, shape = FormaCampoSportPro, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "✔ Se publicará como $nombreAutor con badge oficial [${rolAutor?.name ?: ""}]",
-                    color = EtiquetaAzul,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(12.dp)
-                )
+                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.Verified, contentDescription = null, tint = EtiquetaAzul, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Se publicará como $nombreAutor con badge oficial [${rolAutor?.name ?: ""}]",
+                        color = EtiquetaAzul,
+                        fontSize = 12.sp
+                    )
+                }
             }
 
             if (error != null) {
@@ -235,7 +247,9 @@ fun FormularioAvisoPrueba(
             }
 
             TextButton(onClick = onCerrar, modifier = Modifier.fillMaxWidth()) {
-                Text("← Volver", color = SportProNavy)
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, tint = SportProNavy, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Volver", color = SportProNavy)
             }
         }
     }

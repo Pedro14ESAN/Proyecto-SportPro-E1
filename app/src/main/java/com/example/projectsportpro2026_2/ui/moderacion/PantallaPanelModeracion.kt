@@ -1,5 +1,15 @@
 package com.example.projectsportpro2026_2.ui.moderacion
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -50,7 +60,7 @@ fun PantallaPanelModeracion(
 
     LaunchedEffect(estado.mensaje) {
         estado.mensaje?.let { texto ->
-            avisos.showSnackbar("✓ $texto")
+            avisos.showSnackbar(texto)
             viewModel.limpiarMensajes()
         }
     }
@@ -61,7 +71,7 @@ fun PantallaPanelModeracion(
             SnackbarHost(avisos) { datos ->
                 Snackbar(
                     snackbarData = datos,
-                    containerColor = SportProNavy,
+                    containerColor = SportProNavyFondo,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -79,12 +89,18 @@ fun PantallaPanelModeracion(
             item { CabeceraSportPro() }
 
             item {
-                Text(
-                    text = "← Comunidad",
-                    color = SportProVerde,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onVolver() }
-                )
+                Row(
+                    modifier = Modifier.clickable { onVolver() }.padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, tint = SportProVerde, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = "Comunidad",
+                        color = SportProVerde,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
             item {
@@ -97,8 +113,8 @@ fun PantallaPanelModeracion(
                         Text(
                             text = "PANEL ADMINISTRADOR",
                             color = SportProTextoSecundario,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp,
+                            fontFamily = FamiliaEtiquetas,
+                            fontSize = 12.sp,
                             letterSpacing = 1.sp
                         )
                         Text(
@@ -144,7 +160,7 @@ fun PantallaPanelModeracion(
 
                 estado.reportesVisibles.isEmpty() && estado.error == null -> item {
                     Text(
-                        text = if (estado.filtro == FiltroReportes.PENDIENTES) "No hay reportes pendientes 🎉"
+                        text = if (estado.filtro == FiltroReportes.PENDIENTES) "No hay reportes pendientes"
                         else "No hay reportes en esta sección.",
                         color = SportProTextoSecundario,
                         modifier = Modifier.padding(vertical = 24.dp)
@@ -249,7 +265,7 @@ private fun TarjetaReporte(
                 else EtiquetaSportPro("RESUELTO", EtiquetaGris, EtiquetaGrisFondo)
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = if (n == 0) "Moderación directa" else "🚩 $n ${if (n == 1) "reporte" else "reportes"}",
+                    text = if (n == 0) "Moderación directa" else "$n ${if (n == 1) "reporte" else "reportes"}",
                     color = SportProRojo,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp
@@ -278,8 +294,8 @@ private fun TarjetaReporte(
                     text = "Primer reporte: ${formatearFecha(reporte.fechaPrimerReporte)} · " +
                             "Último: ${formatearFecha(reporte.fechaUltimoReporte)}",
                     color = SportProTextoSecundario,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 10.sp
+                    fontFamily = FamiliaEtiquetas,
+                    fontSize = 12.sp
                 )
             }
 
@@ -294,7 +310,7 @@ private fun TarjetaReporte(
                             fontSize = 12.sp
                         )
                         Text("Motivo: ${reporte.motivoDecision}", color = SportProTextoPrincipal, fontSize = 12.sp)
-                        Text(formatearFecha(reporte.fechaDecision), color = SportProTextoSecundario, fontSize = 10.sp)
+                        Text(formatearFecha(reporte.fechaDecision), color = SportProTextoSecundario, fontSize = 12.sp)
                     }
                 }
             }
@@ -320,7 +336,7 @@ private fun TarjetaReporte(
                         Button(
                             onClick = { onDecidir(DecisionModeracion.CERRADO) },
                             shape = FormaBotonSportPro,
-                            colors = ButtonDefaults.buttonColors(containerColor = EtiquetaNaranja),
+                            colors = ButtonDefaults.buttonColors(containerColor = LineaDeCal.colores.naranja),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Cerrar", fontSize = 12.sp, fontWeight = FontWeight.Bold)

@@ -337,6 +337,49 @@ class RepositorioEventosPartido(
         observacion: String,
         uid: String
     ): Result<EventoPartido> =
+        registrarEventoConEstado(
+            idPartido = idPartido,
+            idTipoEvento = idTipoEvento,
+            minuto = minuto,
+            equipoEvento = equipoEvento,
+            idJugador = idJugador,
+            nombreJugadorRival = nombreJugadorRival,
+            idJugadorSale = idJugadorSale,
+            nombreJugadorSaleRival = nombreJugadorSaleRival,
+            idJugadorEntra = idJugadorEntra,
+            nombreJugadorEntraRival = nombreJugadorEntraRival,
+            tipoTarjeta = tipoTarjeta,
+            observacion = observacion,
+            uid = uid
+        ).map { it.evento }
+
+    /** Resultado de registrar: el evento y si el servidor ya lo confirmó. */
+    data class RegistroEvento(
+        val evento: EventoPartido,
+        // false = quedó en la cola local ("Pendiente de sync") y se enviará al reconectar
+        val sincronizado: Boolean
+    )
+
+    /*
+     * Línea de cal · 7.2 (HU-14): misma lógica que registrarEvento (que delega aquí y conserva
+     * su firma), pero informa si confirmarOEncolar confirmó la escritura. La cola offline,
+     * los pendientes y los rechazos de la HU-16 no cambian.
+     */
+    suspend fun registrarEventoConEstado(
+        idPartido: String,
+        idTipoEvento: String,
+        minuto: Int,
+        equipoEvento: EquipoEvento,
+        idJugador: String,
+        nombreJugadorRival: String,
+        idJugadorSale: String,
+        nombreJugadorSaleRival: String,
+        idJugadorEntra: String,
+        nombreJugadorEntraRival: String,
+        tipoTarjeta: TipoTarjeta,
+        observacion: String,
+        uid: String
+    ): Result<RegistroEvento> =
         intentar {
 
             val partido =
@@ -634,7 +677,7 @@ class RepositorioEventosPartido(
              * confirmación un momento y, si no llega, el
              * evento queda "Pendiente de sync".
              */
-            confirmarOEncolar(
+            val sincronizado = confirmarOEncolar(
                 tarea = lote.commit(),
                 alFallarDespues = { e ->
                     RegistroRechazos.agregar(
@@ -645,7 +688,7 @@ class RepositorioEventosPartido(
                 }
             )
 
-            evento
+            RegistroEvento(evento, sincronizado)
         }
 
     private fun validarEquipo(

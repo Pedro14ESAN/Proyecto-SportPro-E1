@@ -1,5 +1,14 @@
 package com.example.projectsportpro2026_2.ui.seguimiento
 
+import com.example.projectsportpro2026_2.ui.theme.EstiloMarcador
+import com.example.projectsportpro2026_2.ui.partidos.SportProVerde
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -194,12 +203,20 @@ fun PantallaSeguimientoPartido(
                     shape = RoundedCornerShape(16.dp),
                     border = BorderStroke(1.dp, SportProBorde)
                 ) {
-                    Text(
-                        text = "✨ Ver resumen del partido  →",
+                    Row(
                         modifier = Modifier.padding(16.dp),
-                        color = SportProTextoPrincipal,
-                        fontWeight = FontWeight.Bold
-                    )
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = SportProVerde, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Ver resumen del partido",
+                            modifier = Modifier.weight(1f),
+                            color = SportProTextoPrincipal,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null, tint = SportProTextoPrincipal, modifier = Modifier.size(20.dp))
+                    }
                 }
             }
 
@@ -236,7 +253,7 @@ fun PantallaSeguimientoPartido(
                     text = "CRONOLOGÍA DE EVENTOS",
                     modifier = Modifier.weight(1f),
                     color = SportProTextoSecundario,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = FamiliaEtiquetas,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
                     letterSpacing = 1.sp
@@ -252,8 +269,8 @@ fun PantallaSeguimientoPartido(
                                     if (estado.anulados == 1) "anulado" else "anulados",
                             modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
                             color = SyncRojoTexto,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp
+                            fontFamily = FamiliaEtiquetas,
+                            fontSize = 12.sp
                         )
                     }
                 }
@@ -318,8 +335,8 @@ fun PantallaSeguimientoPartido(
                     .fillMaxWidth()
                     .padding(top = 18.dp),
                 color = SportProTextoSecundario.copy(alpha = 0.7f),
-                fontFamily = FontFamily.Monospace,
-                fontSize = 10.sp,
+                fontFamily = FamiliaEtiquetas,
+                fontSize = 12.sp,
                 letterSpacing = 1.sp,
                 textAlign = TextAlign.Center
             )
@@ -349,14 +366,20 @@ private fun CabeceraVivo(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "← Partido",
+            Row(
                 modifier = Modifier
                     .clickable(onClick = onVolver)
                     .padding(vertical = 6.dp),
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge
-            )
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = "Partido",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
 
             Spacer(Modifier.weight(1f))
 
@@ -382,8 +405,8 @@ private fun CabeceraVivo(
                     Text(
                         text = "$golesPropios",
                         color = VivoVerdeBrillante,
-                        fontSize = 54.sp,
-                        fontWeight = FontWeight.Black
+                        // Línea de cal: números del marcador en Doto
+                        style = EstiloMarcador.copy(fontSize = 54.sp, lineHeight = 56.sp)
                     )
 
                     Box(
@@ -399,8 +422,8 @@ private fun CabeceraVivo(
                     Text(
                         text = "$golesRival",
                         color = Color.White,
-                        fontSize = 54.sp,
-                        fontWeight = FontWeight.Black
+                        // Línea de cal: números del marcador en Doto
+                        style = EstiloMarcador.copy(fontSize = 54.sp, lineHeight = 56.sp)
                     )
                 }
 
@@ -412,14 +435,14 @@ private fun CabeceraVivo(
                         else -> " "
                     },
                     color = if (provisional) SyncNaranja else VivoTextoTenue,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp
+                    fontFamily = FamiliaEtiquetas,
+                    fontSize = 12.sp
                 )
             }
 
             EscudoEquipo(
                 nombre = nombreRival,
-                colorInicial = Color(0xFFFF6B6B),
+                colorInicial = LineaDeCal.colores.rojo /* antes 0xFFFF6B6B */,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -431,8 +454,8 @@ private fun CabeceraVivo(
                 text = subtitulo.uppercase(),
                 modifier = Modifier.fillMaxWidth(),
                 color = VivoTextoTenue,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 10.sp,
+                fontFamily = FamiliaEtiquetas,
+                fontSize = 12.sp,
                 letterSpacing = 2.sp,
                 textAlign = TextAlign.Center
             )
@@ -454,7 +477,7 @@ private fun ChipEstadoVivo(
                 "FINALIZADO" to VivoTextoTenue
 
             EstadoPartido.CANCELADO ->
-                "CANCELADO" to Color(0xFFFF6B6B)
+                "CANCELADO" to LineaDeCal.colores.rojo /* antes 0xFFFF6B6B */
 
             EstadoPartido.PROGRAMADO ->
                 "POR INICIAR" to SyncNaranja
@@ -495,9 +518,9 @@ private fun ChipEstadoVivo(
             Text(
                 text = texto,
                 color = colorPunto,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FamiliaEtiquetas,
                 fontWeight = FontWeight.Bold,
-                fontSize = 11.sp
+                fontSize = 12.sp
             )
         }
     }
@@ -590,9 +613,9 @@ private fun FranjaActualizacion(
             text = texto,
             modifier = Modifier.weight(1f),
             color = color,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = FamiliaEtiquetas,
             fontWeight = FontWeight.Bold,
-            fontSize = 11.sp
+            fontSize = 12.sp
         )
 
         Spacer(Modifier.width(8.dp))
@@ -600,8 +623,8 @@ private fun FranjaActualizacion(
         Text(
             text = horaConSegundos(ultimaActualizacion),
             color = SportProTextoSecundario,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 10.sp
+            fontFamily = FamiliaEtiquetas,
+            fontSize = 12.sp
         )
     }
 }
@@ -647,7 +670,7 @@ private fun TarjetaEventoVivo(
         when {
             anulado -> SyncRojoBorde.copy(alpha = 0.5f)
             esGol -> SyncVerdeBorde
-            else -> Color(0xFFE7ECEB)
+            else -> LineaDeCal.colores.borde /* antes 0xFFE7ECEB */
         }
 
     Surface(
@@ -670,7 +693,7 @@ private fun TarjetaEventoVivo(
                     color = when {
                         anulado -> SyncRojoFondo
                         esGol -> SyncVerde
-                        else -> Color(0xFFEEF2F1)
+                        else -> LineaDeCal.colores.apagadoFondo /* antes 0xFFEEF2F1 */
                     }
                 ) {
                     Text(
@@ -681,9 +704,9 @@ private fun TarjetaEventoVivo(
                             esGol -> Color.White
                             else -> SportProTextoSecundario
                         },
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = FamiliaEtiquetas,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
+                        fontSize = 12.sp
                     )
                 }
 
@@ -726,7 +749,7 @@ private fun TarjetaEventoVivo(
                             ChipEquipo(nombreEquipo, SyncVerdeFondo, SyncVerdeTexto)
 
                         EquipoEvento.RIVAL ->
-                            ChipEquipo(nombreRival, Color(0xFFEEF2F1), SportProTextoSecundario)
+                            ChipEquipo(nombreRival, LineaDeCal.colores.apagadoFondo /* antes 0xFFEEF2F1 */, SportProTextoSecundario)
 
                         EquipoEvento.NINGUNO -> Unit
                     }
@@ -751,9 +774,9 @@ private fun TarjetaEventoVivo(
                                     ""
                                 },
                         color = SyncRojoTexto,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = FamiliaEtiquetas,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -761,7 +784,7 @@ private fun TarjetaEventoVivo(
             if (esNuevo) {
                 Insignia(texto = "NUEVO", fondo = SyncRojoFondo, color = SyncRojoTexto)
             } else if (corregido) {
-                Insignia(texto = "✎ CORREGIDO", fondo = SyncNaranjaFondo, color = SyncNaranjaTexto)
+                Insignia(texto = "CORREGIDO", fondo = SyncNaranjaFondo, color = SyncNaranjaTexto)
             }
         }
     }
@@ -781,9 +804,9 @@ private fun ChipEquipo(
             text = nombre,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
             color = color,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = FamiliaEtiquetas,
             fontWeight = FontWeight.Bold,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -805,9 +828,9 @@ private fun Insignia(
             text = texto,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
             color = color,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = FamiliaEtiquetas,
             fontWeight = FontWeight.Bold,
-            fontSize = 9.sp
+            fontSize = 12.sp
         )
     }
 }

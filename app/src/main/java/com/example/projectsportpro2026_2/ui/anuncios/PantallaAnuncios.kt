@@ -1,5 +1,18 @@
 package com.example.projectsportpro2026_2.ui.anuncios
 
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Campaign
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
+import com.example.projectsportpro2026_2.ui.partidos.SportProNavyFondo
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
+import androidx.compose.runtime.Composable
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -42,12 +55,12 @@ import java.util.Date
 import java.util.Locale
 
 // Colores de las etiquetas de audiencia (tomados del Figma)
-private val AzulEtiqueta = Color(0xFF3550A0)
-private val AzulEtiquetaFondo = Color(0xFFE8EEFF)
-private val NaranjaEtiqueta = Color(0xFFA35F00)
-private val NaranjaEtiquetaFondo = Color(0xFFFFF1DD)
-private val GrisEtiqueta = Color(0xFF66737E)
-private val GrisEtiquetaFondo = Color(0xFFEEF0F1)
+private val AzulEtiqueta: Color @Composable get() = LineaDeCal.colores.azulTexto // antes Color(0xFF3550A0)
+private val AzulEtiquetaFondo: Color @Composable get() = LineaDeCal.colores.azulFondo // antes Color(0xFFE8EEFF)
+private val NaranjaEtiqueta: Color @Composable get() = LineaDeCal.colores.pendienteTexto // antes Color(0xFFA35F00)
+private val NaranjaEtiquetaFondo: Color @Composable get() = LineaDeCal.colores.pendienteFondo // antes Color(0xFFFFF1DD)
+private val GrisEtiqueta: Color @Composable get() = LineaDeCal.colores.apagadoTexto // antes Color(0xFF66737E)
+private val GrisEtiquetaFondo: Color @Composable get() = LineaDeCal.colores.apagadoFondo // antes Color(0xFFEEF0F1)
 
 @Composable
 fun PantallaAnuncios(
@@ -83,12 +96,18 @@ fun PantallaAnuncios(
             item { CabeceraSportPro() }
 
             item {
-                Text(
-                    text = "← Inicio",
-                    color = SportProVerde,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onVolver() }
-                )
+                Row(
+                    modifier = Modifier.clickable { onVolver() }.padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, tint = SportProVerde, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = "Inicio",
+                        color = SportProVerde,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
             // Título + botón "+ Nuevo"
@@ -102,8 +121,8 @@ fun PantallaAnuncios(
                         Text(
                             text = "COMUNICADOS DEL CLUB",
                             color = SportProTextoSecundario,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp,
+                            fontFamily = FamiliaEtiquetas,
+                            fontSize = 12.sp,
                             letterSpacing = 1.sp
                         )
                         Text(
@@ -121,10 +140,12 @@ fun PantallaAnuncios(
                                 viewModel.limpiarMensajes()
                                 formularioAbierto = true
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = SportProNavy),
+                            colors = ButtonDefaults.buttonColors(containerColor = SportProNavyFondo),
                             shape = FormaBotonSportPro
                         ) {
-                            Text("+ Nuevo", fontWeight = FontWeight.Bold)
+                            Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Nuevo", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -218,32 +239,8 @@ fun PantallaAnuncios(
 
 @Composable
 private fun CabeceraSportPro() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Surface(
-            modifier = Modifier.size(38.dp),
-            shape = RoundedCornerShape(10.dp),
-            color = SportProNavy
-        ) {
-            Box(contentAlignment = Alignment.Center) { Text("⚽") }
-        }
-        Column {
-            Text(
-                text = "SPORTPRO",
-                color = SportProNavy,
-                fontWeight = FontWeight.Black,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "CLUB DEPORTIVO",
-                color = SportProTextoSecundario,
-                fontSize = 10.sp,
-                letterSpacing = 1.sp
-            )
-        }
-    }
+    // Línea de cal: la cabecera decorativa (logo ⚽ y campana 🔔 sin acción) se quitó;
+    // cada pantalla muestra su título y su botón de volver.
 }
 
 // "internal": se puede usar desde FormularioAnuncio.kt, pero no desde fuera del módulo
@@ -256,7 +253,7 @@ internal fun ChipAnuncio(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
-        color = if (seleccionado) SportProNavy else SportProVerdeClaro
+        color = if (seleccionado) SportProNavyFondo else SportProVerdeClaro
     ) {
         Text(
             text = texto,
@@ -274,7 +271,7 @@ private fun Etiqueta(texto: String, color: Color, fondo: Color) {
         Text(
             text = texto,
             color = color,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
         )
@@ -283,26 +280,26 @@ private fun Etiqueta(texto: String, color: Color, fondo: Color) {
 
 private data class EstiloAudiencia(
     val texto: String,
-    val emoji: String,
     val color: Color,
     val fondo: Color
 )
 
+@androidx.compose.runtime.Composable
 private fun estiloAudiencia(anuncio: Anuncio): EstiloAudiencia =
     when (anuncio.tipoAudiencia) {
         TipoAudiencia.ACADEMIA ->
-            EstiloAudiencia("Toda la academia", "🏟️", AzulEtiqueta, AzulEtiquetaFondo)
+            EstiloAudiencia("Toda la academia", AzulEtiqueta, AzulEtiquetaFondo)
         TipoAudiencia.EQUIPO ->
             EstiloAudiencia(
                 "Equipo · ${anuncio.nombreEquipo}".trimEnd(' ', '·'),
-                "👥", SportProVerde, SportProVerdeClaro
+                SportProVerde, SportProVerdeClaro
             )
         TipoAudiencia.ROL ->
-            EstiloAudiencia(textoRol(anuncio.rolDestino), "🎯", NaranjaEtiqueta, NaranjaEtiquetaFondo)
+            EstiloAudiencia(textoRol(anuncio.rolDestino), NaranjaEtiqueta, NaranjaEtiquetaFondo)
         TipoAudiencia.PUBLICO ->
             EstiloAudiencia(
                 "Público · ${anuncio.nombreAcademia}".trimEnd(' ', '·'),
-                "🌐", AzulEtiqueta, AzulEtiquetaFondo
+                AzulEtiqueta, AzulEtiquetaFondo
             )
     }
 
@@ -347,7 +344,8 @@ private fun TarjetaAnuncio(
                 color = estilo.fondo
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(estilo.emoji, fontSize = 18.sp)
+                    // Línea de cal (6.11): ícono de megáfono; la audiencia va en su chip
+                    Icon(Icons.Rounded.Campaign, contentDescription = null, tint = estilo.color, modifier = Modifier.size(22.dp))
                 }
             }
 
@@ -381,16 +379,16 @@ private fun TarjetaAnuncio(
                     text = "${anuncio.nombreAutor} · ${anuncio.rolAutor.name} · " +
                             formatearFecha(anuncio.fechaCreacion),
                     color = SportProTextoSecundario,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 10.sp
+                    fontFamily = FamiliaEtiquetas,
+                    fontSize = 12.sp
                 )
 
                 if (anuncio.editado) {
                     Text(
                         text = "Actualizado: ${formatearFecha(anuncio.fechaActualizacion)}",
                         color = NaranjaEtiqueta,
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 10.sp
+                        fontFamily = FamiliaEtiquetas,
+                        fontSize = 12.sp
                     )
                 }
 

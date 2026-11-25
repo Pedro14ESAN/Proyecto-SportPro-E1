@@ -1,5 +1,18 @@
 package com.example.projectsportpro2026_2.ui.partidos
 
+import com.example.projectsportpro2026_2.ui.theme.TokenOscuroTexto2
+import com.example.projectsportpro2026_2.ui.comun.FilaContadores
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.comun.VarianteTicket
+import com.example.projectsportpro2026_2.ui.comun.TarjetaTicket
+import com.example.projectsportpro2026_2.ui.comun.anchoCompleto
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -81,15 +94,11 @@ fun PantallaPartidos(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onCrearPartido,
-                containerColor = SportProVerde,
-                contentColor = Color.White,
+                containerColor = LineaDeCal.colores.lima,
+                contentColor = LineaDeCal.colores.navy,
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text(
-                    text = "+",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                Icon(Icons.Rounded.Add, contentDescription = "Crear partido")
             }
         }
     ) { relleno ->
@@ -106,7 +115,14 @@ fun PantallaPartidos(
             item {
                 EncabezadoPantallaPartidos(
                     nombreAcademia = nombreAcademia,
-                    onVolver = onVolver
+                    onVolver = onVolver,
+                    // 7.4: contadores con los datos ya cargados
+                    jugados = finalizados.size,
+                    ganados = finalizados.count { p ->
+                        val m = estado.marcadoresPorPartido[p.id]
+                        m != null && m.propio > m.rival
+                    },
+                    proximos = proximos.size
                 )
             }
 
@@ -184,48 +200,26 @@ fun PantallaPartidos(
 @Composable
 private fun EncabezadoPantallaPartidos(
     nombreAcademia: String,
-    onVolver: () -> Unit
+    onVolver: () -> Unit,
+    jugados: Int = 0,
+    ganados: Int = 0,
+    proximos: Int = 0
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 18.dp, bottom = 4.dp)
+    // Línea de cal (6.8, img 07): cabecera de césped (mismos textos y el mismo "Volver")
+    CabeceraCancha(
+        titulo = "Partidos",
+        subtitulo = nombreAcademia.takeIf { it.isNotBlank() },
+        etiqueta = "TEMPORADA 2026",
+        onVolver = onVolver,
+        modifier = Modifier.anchoCompleto(20.dp)
     ) {
-
-        TextButton(
-            onClick = onVolver
-        ) {
-            Text(
-                text = "← Volver",
-                color = SportProVerde
+        FilaContadores(
+            listOf(
+                "$jugados" to "Jugados",
+                "$ganados" to "Ganados",
+                "$proximos" to "Próximos"
             )
-        }
-
-        Text(
-            text = "TEMPORADA 2026",
-            style = MaterialTheme.typography.labelMedium,
-            color = SportProVerde,
-            fontWeight = FontWeight.Bold
         )
-
-        Spacer(
-            modifier = Modifier.height(4.dp)
-        )
-
-        Text(
-            text = "Partidos",
-            style = MaterialTheme.typography.headlineLarge,
-            color = SportProNavy,
-            fontWeight = FontWeight.Black
-        )
-
-        if (nombreAcademia.isNotBlank()) {
-            Text(
-                text = nombreAcademia,
-                style = MaterialTheme.typography.bodySmall,
-                color = SportProTextoSecundario
-            )
-        }
     }
 }
 
@@ -308,7 +302,7 @@ private fun TarjetaPartidoSportPro(
     val marcadorVisible = if (enCurso) marcadorEnVivo else marcador
     val fondo = when (partido.estado) {
         EstadoPartido.EN_CURSO ->
-            SportProNavy
+            SportProNavyFondo
 
         EstadoPartido.CANCELADO ->
             SportProRojoClaro
@@ -330,7 +324,7 @@ private fun TarjetaPartidoSportPro(
 
     val textoSecundario = when (partido.estado) {
         EstadoPartido.EN_CURSO ->
-            Color(0xFFD7E5EC)
+            TokenOscuroTexto2 // texto claro fijo: el ticket en curso es oscuro en los dos modos (antes 0xFFD7E5EC)
 
         EstadoPartido.CANCELADO ->
             SportProRojo
@@ -339,21 +333,20 @@ private fun TarjetaPartidoSportPro(
             SportProTextoSecundario
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = FormaTarjetaSportPro,
-        colors = CardDefaults.cardColors(
-            containerColor = fondo
-        ),
-        border = if (partido.estado == EstadoPartido.EN_CURSO) {
-            null
-        } else {
-            CardDefaults.outlinedCardBorder()
-        }
+    // Línea de cal (6.8): ticket con talón amarillo; el partido en curso va en un ticket oscuro
+    TarjetaTicket(
+        hora = partido.hora,
+        fecha = fechaCortaPartido(partido.fecha),
+        variante = when (partido.estado) {
+            EstadoPartido.EN_CURSO -> VarianteTicket.OSCURA
+            EstadoPartido.PROGRAMADO -> VarianteTicket.AMARILLA
+            EstadoPartido.FINALIZADO -> VarianteTicket.NORMAL
+            EstadoPartido.CANCELADO -> VarianteTicket.TACHADA
+        },
+        onClick = onAbrir
     ) {
-
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
@@ -370,18 +363,25 @@ private fun TarjetaPartidoSportPro(
                 TextButton(
                     onClick = onAbrir
                 ) {
+                    val colorAccion = if (enCurso) {
+                        LineaDeCal.colores.lima /* antes 0xFFA7F36A */
+                    } else {
+                        SportProVerde
+                    }
                     Text(
                         text = if (enCurso) {
-                            "Ver detalles →"
+                            "Ver detalles"
                         } else {
-                            "Ver partido →"
+                            "Ver partido"
                         },
-                        color = if (enCurso) {
-                            Color(0xFFA7F36A)
-                        } else {
-                            SportProVerde
-                        },
+                        color = colorAccion,
                         fontWeight = FontWeight.Bold
+                    )
+                    Icon(
+                        Icons.AutoMirrored.Rounded.ArrowForward,
+                        contentDescription = null,
+                        tint = colorAccion,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -458,13 +458,13 @@ private fun ChipEstadoPartido(
 ) {
     val fondo = when (estado) {
         EstadoPartido.EN_CURSO ->
-            Color(0xFFCBFFA7)
+            LineaDeCal.colores.lima /* antes 0xFFCBFFA7 */
 
         EstadoPartido.PROGRAMADO ->
             SportProVerdeClaro
 
         EstadoPartido.FINALIZADO ->
-            Color(0xFFE9ECEE)
+            LineaDeCal.colores.apagadoFondo /* antes 0xFFE9ECEE */
 
         EstadoPartido.CANCELADO ->
             SportProRojoClaro
@@ -484,22 +484,29 @@ private fun ChipEstadoPartido(
             SportProRojo
     }
 
-    Surface(
-        color = fondo,
-        shape = CircleShape
-    ) {
-        Text(
-            text = textoEstadoPartido(estado),
-            style = MaterialTheme.typography.labelSmall,
-            color = texto,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(
-                horizontal = 12.dp,
-                vertical = 6.dp
-            )
-        )
-    }
+    // Línea de cal: ChipEstado con los 4 estados (Programado, En curso, Finalizado y Cancelado)
+    ChipEstado(
+        textoEstadoPartido(estado),
+        when (estado) {
+            EstadoPartido.EN_CURSO -> TipoEstado.OK
+            EstadoPartido.PROGRAMADO -> TipoEstado.NEUTRO
+            EstadoPartido.FINALIZADO -> TipoEstado.APAGADO
+            EstadoPartido.CANCELADO -> TipoEstado.ERROR
+        },
+        conPunto = estado == EstadoPartido.EN_CURSO
+    )
 }
+
+/** "2026-11-28" → "SÁB 28" para el talón del ticket; si no se puede leer, se deja igual. */
+private fun fechaCortaPartido(fecha: String): String =
+    try {
+        java.time.LocalDate.parse(fecha.trim())
+            .format(java.time.format.DateTimeFormatter.ofPattern("EEE d", java.util.Locale.forLanguageTag("es-PE")))
+            .replace(".", "")
+            .uppercase()
+    } catch (e: Exception) {
+        fecha
+    }
 
 private fun textoEstadoPartido(
     estado: EstadoPartido

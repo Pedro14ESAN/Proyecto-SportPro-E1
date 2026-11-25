@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.anuncios
 
+import com.example.projectsportpro2026_2.ui.theme.FamiliaEtiquetas
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -82,8 +83,8 @@ fun FormularioAnuncio(
             Text(
                 text = if (esEdicion) "EDITAR ANUNCIO" else "NUEVO ANUNCIO",
                 color = SportProVerde,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 11.sp,
+                fontFamily = FamiliaEtiquetas,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
             )
@@ -246,8 +247,8 @@ private fun TituloCampo(texto: String) {
     Text(
         text = texto,
         color = SportProTextoSecundario,
-        fontFamily = FontFamily.Monospace,
-        fontSize = 11.sp,
+        fontFamily = FamiliaEtiquetas,
+        fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.sp
     )

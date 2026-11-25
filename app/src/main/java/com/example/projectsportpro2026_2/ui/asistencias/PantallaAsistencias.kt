@@ -1,5 +1,24 @@
 package com.example.projectsportpro2026_2.ui.asistencias
 
+import com.example.projectsportpro2026_2.ui.comun.FilaDeChipsSportPro
+import com.example.projectsportpro2026_2.ui.comun.ChipSportPro
+import com.example.projectsportpro2026_2.ui.comun.ContadorLed
+import com.example.projectsportpro2026_2.ui.comun.TipoEstado
+import com.example.projectsportpro2026_2.ui.comun.ChipEstado
+import com.example.projectsportpro2026_2.ui.theme.FamiliaTitulos
+import androidx.compose.foundation.background
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import com.example.projectsportpro2026_2.ui.comun.anchoCompleto
+import com.example.projectsportpro2026_2.ui.comun.CabeceraCancha
+import com.example.projectsportpro2026_2.ui.theme.LineaDeCal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,32 +65,23 @@ import com.example.projectsportpro2026_2.datos.modelo.EstadoAsistencia
 import com.example.projectsportpro2026_2.datos.modelo.Jugador
 import com.example.projectsportpro2026_2.datos.modelo.Rol
 
-private val AzulSportPro =
-    Color(0xFF0B3547)
+private val AzulSportPro: Color @Composable get() = LineaDeCal.colores.textoPrincipal // antes Color(0xFF0B3547)
 
-private val VerdeSportPro =
-    Color(0xFF168F5B)
+private val VerdeSportPro: Color @Composable get() = LineaDeCal.colores.verde // antes Color(0xFF168F5B)
 
-private val RojoSportPro =
-    Color(0xFFB83232)
+private val RojoSportPro: Color @Composable get() = LineaDeCal.colores.rojo // antes Color(0xFFB83232)
 
-private val AmarilloSportPro =
-    Color(0xFF8A6814)
+private val AmarilloSportPro: Color @Composable get() = LineaDeCal.colores.amarilloTexto // antes Color(0xFF8A6814)
 
-private val VerdeClaro =
-    Color(0xFFE6F5EC)
+private val VerdeClaro: Color @Composable get() = LineaDeCal.colores.okFondo // antes Color(0xFFE6F5EC)
 
-private val RojoClaro =
-    Color(0xFFFFE9E9)
+private val RojoClaro: Color @Composable get() = LineaDeCal.colores.errorFondo // antes Color(0xFFFFE9E9)
 
-private val AmarilloClaro =
-    Color(0xFFFFF4D6)
+private val AmarilloClaro: Color @Composable get() = LineaDeCal.colores.amarilloFondo // antes Color(0xFFFFF4D6)
 
-private val GrisClaro =
-    Color(0xFFF0F2F3)
+private val GrisClaro: Color @Composable get() = LineaDeCal.colores.apagadoFondo // antes Color(0xFFF0F2F3)
 
-private val FondoSportPro =
-    Color(0xFFF7F9F8)
+private val FondoSportPro: Color @Composable get() = LineaDeCal.colores.fondo // antes Color(0xFFF7F9F8)
 
 @Composable
 fun PantallaAsistencias(
@@ -92,6 +102,9 @@ fun PantallaAsistencias(
     remember {
         mutableStateOf(false)
     }
+
+    // 7.4: filtro del historial Todas / Ausencias / Justificadas (en el cliente)
+    var filtroHistorial by remember { mutableStateOf("Todas") }
 
     LaunchedEffect(Unit) {
         viewModel.iniciar()
@@ -124,66 +137,19 @@ fun PantallaAsistencias(
                     bottom = 20.dp
                 )
         ) {
+            // Línea de cal: cabecera de césped (mismos textos y el mismo "Volver")
             item {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(46.dp),
-                    verticalAlignment =
-                        Alignment.CenterVertically,
-                    horizontalArrangement =
-                        Arrangement.SpaceBetween
-                ) {
-                    TextButton(
-                        onClick =
-                            onVolver
-                    ) {
-                        Text(
-                            "← Volver",
-                            color =
-                                AzulSportPro,
-                            fontWeight =
-                                FontWeight.SemiBold
-                        )
-                    }
-
-                    Text(
-                        "SPORTPRO",
-                        color =
-                            AzulSportPro,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-                }
-            }
-
-            item {
-                Column {
-                    Text(
-                        "ASISTENCIA",
-                        color =
-                            VerdeSportPro,
-                        fontSize = 11.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-
-                    Text(
-                        if (
-                            puedeGestionar
-                        ) {
-                            "Registro de asistencia"
-                        } else {
-                            "Historial de asistencia"
-                        },
-                        color =
-                            AzulSportPro,
-                        fontSize = 26.sp,
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-                }
+                CabeceraCancha(
+                    titulo = if (puedeGestionar) {
+                        "Registro de asistencia"
+                    } else {
+                        "Historial de asistencia"
+                    },
+                    etiqueta = "ASISTENCIA",
+                    onVolver = onVolver,
+                    descripcionVolver = "Volver",
+                    modifier = Modifier.anchoCompleto(16.dp)
+                )
             }
 
             if (puedeGestionar) {
@@ -454,7 +420,7 @@ fun PantallaAsistencias(
                                     ButtonDefaults
                                         .buttonColors(
                                             containerColor =
-                                                AzulSportPro,
+                                                LineaDeCal.colores.superficieOscura,
                                             contentColor =
                                                 Color.White
                                         )
@@ -604,7 +570,7 @@ fun PantallaAsistencias(
                                     ButtonDefaults
                                         .buttonColors(
                                             containerColor =
-                                                AzulSportPro,
+                                                LineaDeCal.colores.superficieOscura,
                                             contentColor =
                                                 Color.White
                                         )
@@ -771,9 +737,22 @@ fun PantallaAsistencias(
                         )
                     }
                 } else {
+                    item {
+                        FilaDeChipsSportPro {
+                            ChipSportPro("Todas", filtroHistorial == "Todas") { filtroHistorial = "Todas" }
+                            ChipSportPro("Ausencias", filtroHistorial == "Ausencias") { filtroHistorial = "Ausencias" }
+                            ChipSportPro("Justificadas", filtroHistorial == "Justificadas") { filtroHistorial = "Justificadas" }
+                        }
+                    }
                     items(
                         items =
-                            estado.historial,
+                            estado.historial.filter {
+                                when (filtroHistorial) {
+                                    "Ausencias" -> it.estado == EstadoAsistencia.AUSENTE
+                                    "Justificadas" -> it.estado == EstadoAsistencia.JUSTIFICADO
+                                    else -> true
+                                }
+                            },
                         key = {
                             it.id
                         }
@@ -808,7 +787,7 @@ private fun TarjetaJugadorEditable(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    Color.White,
+                    LineaDeCal.colores.superficie,
                 contentColor =
                     AzulSportPro
             )
@@ -835,8 +814,8 @@ private fun TarjetaJugadorEditable(
                 Text(
                     jugador.categoria,
                     color =
-                        Color(0xFF5B6266),
-                    fontSize = 11.sp
+                        LineaDeCal.colores.textoSecundario /* antes 0xFF5B6266 */,
+                    fontSize = 12.sp
                 )
             }
 
@@ -915,48 +894,39 @@ private fun BotonEstado(
     ancho: androidx.compose.ui.unit.Dp,
     onClick: () -> Unit
 ) {
-    Button(
-        onClick =
-            onClick,
+    // Línea de cal (6.7, img 06): ficha redonda P / A / J. TalkBack lee el estado completo.
+    Box(
         modifier =
             Modifier
                 .width(ancho)
                 .height(46.dp),
-        shape =
-            RoundedCornerShape(
-                10.dp
-            ),
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor =
-                    if (
-                        seleccionado
-                    ) {
-                        colorSeleccionado
-                    } else {
-                        GrisClaro
-                    },
-                contentColor =
-                    if (
-                        seleccionado
-                    ) {
-                        Color.White
-                    } else {
-                        AzulSportPro
-                    }
-            ),
-        contentPadding =
-            PaddingValues(
-                horizontal = 2.dp
-            )
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            texto,
-            fontSize = 10.sp,
-            maxLines = 1,
-            fontWeight =
-                FontWeight.SemiBold
-        )
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(if (seleccionado) colorSeleccionado else GrisClaro)
+                .border(
+                    1.dp,
+                    if (seleccionado) colorSeleccionado else LineaDeCal.colores.borde,
+                    CircleShape
+                )
+                .clickable(role = Role.RadioButton, onClick = onClick)
+                .semantics {
+                    contentDescription = texto
+                    selected = seleccionado
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                texto.take(1).uppercase(),
+                color = if (seleccionado) Color.White else AzulSportPro,
+                fontFamily = FamiliaTitulos,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+        }
     }
 }
 
@@ -975,7 +945,7 @@ private fun TarjetaJugadorRegistrado(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    Color.White
+                    LineaDeCal.colores.superficie
             )
     ) {
         Row(
@@ -1011,8 +981,8 @@ private fun TarjetaJugadorRegistrado(
                     Text(
                         jugador.categoria,
                         color =
-                            Color(0xFF5B6266),
-                        fontSize = 11.sp
+                            LineaDeCal.colores.textoSecundario /* antes 0xFF5B6266 */,
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -1031,46 +1001,17 @@ private fun TarjetaResumen(
     fondo: Color,
     color: Color
 ) {
-    Surface(
-        modifier =
-            Modifier
-                .width(102.dp)
-                .height(72.dp),
-        color =
-            fondo,
-        shape =
-            RoundedCornerShape(
-                12.dp
-            )
-    ) {
-        Column(
-            modifier =
-                Modifier.padding(
-                    vertical = 8.dp
-                ),
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-            verticalArrangement =
-                Arrangement.Center
-        ) {
-            Text(
-                cantidad.toString(),
-                color =
-                    color,
-                fontSize = 21.sp,
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-            Text(
-                texto,
-                color =
-                    Color(0xFF454B4E),
-                fontSize = 9.sp,
-                maxLines = 1
-            )
+    // Línea de cal (6.7): ContadorLed de presentes, ausentes y justificados
+    ContadorLed(
+        valor = cantidad.toString(),
+        etiqueta = texto,
+        modifier = Modifier.width(104.dp),
+        color = when (fondo) {
+            RojoClaro -> LineaDeCal.colores.naranja
+            AmarilloClaro -> LineaDeCal.colores.amarillo
+            else -> LineaDeCal.colores.lima
         }
-    }
+    )
 }
 
 @Composable
@@ -1119,31 +1060,19 @@ private fun EtiquetaEstado(
                 AmarilloSportPro
 
             null ->
-                Color(0xFF555555)
+                LineaDeCal.colores.textoSecundario /* antes 0xFF555555 */
         }
 
-    Surface(
-        color =
-            fondo,
-        shape =
-            RoundedCornerShape(
-                50.dp
-            )
-    ) {
-        Text(
-            texto,
-            modifier =
-                Modifier.padding(
-                    horizontal = 10.dp,
-                    vertical = 5.dp
-                ),
-            color =
-                color,
-            fontSize = 11.sp,
-            fontWeight =
-                FontWeight.Bold
-        )
-    }
+    // Línea de cal: ChipEstado con los estados reales
+    ChipEstado(
+        texto,
+        when (estado) {
+            EstadoAsistencia.PRESENTE -> TipoEstado.OK
+            EstadoAsistencia.AUSENTE -> TipoEstado.ERROR
+            EstadoAsistencia.JUSTIFICADO -> TipoEstado.AMARILLO
+            null -> TipoEstado.APAGADO
+        }
+    )
 }
 
 @Composable
@@ -1160,7 +1089,7 @@ private fun TarjetaHistorial(
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    Color.White
+                    LineaDeCal.colores.superficie
             )
     ) {
         Row(
@@ -1192,8 +1121,8 @@ private fun TarjetaHistorial(
                 Text(
                     asistencia.fechaEntrenamiento,
                     color =
-                        Color(0xFF5B6266),
-                    fontSize = 11.sp
+                        LineaDeCal.colores.textoSecundario /* antes 0xFF5B6266 */,
+                    fontSize = 12.sp
                 )
             }
 
@@ -1243,7 +1172,7 @@ private fun TextoVacio(
         modifier =
             Modifier.fillMaxWidth(),
         color =
-            Color.White,
+            LineaDeCal.colores.superficie,
         shape =
             RoundedCornerShape(
                 12.dp
@@ -1256,7 +1185,7 @@ private fun TextoVacio(
                     16.dp
                 ),
             color =
-                Color(0xFF5B6266),
+                LineaDeCal.colores.textoSecundario /* antes 0xFF5B6266 */,
             fontSize = 13.sp
         )
     }

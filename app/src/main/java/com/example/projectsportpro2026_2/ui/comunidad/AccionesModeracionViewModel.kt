@@ -1,5 +1,6 @@
 package com.example.projectsportpro2026_2.ui.comunidad
 
+import com.example.projectsportpro2026_2.datos.modelo.EstadoReporte
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projectsportpro2026_2.datos.modelo.Bloqueo
@@ -29,7 +30,9 @@ data class EstadoAccionesModeracion(
     val error: String? = null,
     val mensaje: String? = null,
     val bloqueados: List<Bloqueo> = emptyList(),
-    val cargandoBloqueados: Boolean = false
+    val cargandoBloqueados: Boolean = false,
+    // Línea de cal (6.10.2): reportes PENDIENTES de sus academias (null = no se pudo leer → sin número)
+    val reportesPendientes: Int? = null
 )
 
 class AccionesModeracionViewModel(
@@ -53,8 +56,29 @@ class AccionesModeracionViewModel(
             if (uid.isBlank()) return@launch
 
             moderacion.puedeModerar(uid)
-                .onSuccess { puede -> _estado.update { it.copy(puedeModerar = puede) } }
+                .onSuccess { puede ->
+                    _estado.update { it.copy(puedeModerar = puede) }
+                    if (puede) leerPendientes(uid)
+                }
         }
+    }
+
+    /*
+     * Número sobre el escudo de "Moderar". Solo lectura: reutiliza la misma consulta del panel
+     * de moderación (listarReportes) y cuenta los PENDIENTES. Si falla, el escudo va sin número.
+     */
+    fun cargarPendientes() {
+        val actual = _estado.value
+        if (!actual.puedeModerar || actual.uid.isBlank()) return
+        viewModelScope.launch { leerPendientes(actual.uid) }
+    }
+
+    private suspend fun leerPendientes(uid: String) {
+        moderacion.listarReportes(uid)
+            .onSuccess { lista ->
+                _estado.update { it.copy(reportesPendientes = lista.count { r -> r.estado == EstadoReporte.PENDIENTE }) }
+            }
+            .onFailure { _estado.update { it.copy(reportesPendientes = null) } }
     }
 
     fun reportar(
